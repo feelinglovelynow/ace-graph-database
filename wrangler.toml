@@ -1,0 +1,13 @@
+name = "ace-graph-database"
+main = "src/worker.js"
+compatibility_date = "2023-12-18"
+
+
+[[durable_objects.bindings]]
+name = "AceGraphDatabase"
+class_name = "AceGraphDatabase"
+
+
+[[migrations]]
+tag = "v1" # Should be unique for each entry
+new_classes = ["AceGraphDatabase"] # Array of new classes
