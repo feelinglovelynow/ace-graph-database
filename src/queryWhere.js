@@ -1,18 +1,20 @@
 import { getRelationshipNode } from './getRelationshipNode.js'
-import { td, enums, Schema, QueryWhere, QueryWhereGroup } from '#manifest'
+import { td, enums, Schema, QueryWhere, QueryWhereDefined, QueryWhereUndefined, QueryWhereGroup, QueryProperty, QueryValue } from '#manifest'
 
 
 /**
  * @param { Schema } schema 
- * @param { any } queryFormatSection
+ * @param { td.QueryRequestFormat } queryFormatSection
  * @param { any[] } array 
- * @param { td.QueryWhere } $where 
  * @param { string } nodeName
+ * @param { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } $where 
  */
-export function queryWhere (schema, queryFormatSection, array, $where, nodeName) {
+export function queryWhere (schema, queryFormatSection, array, nodeName, $where) {
   for (let iArray = array.length - 1; iArray >= 0; iArray--) {
-    if ($where.is.str === 'QueryWhere') preSplice(/** @type { QueryWhere } */($where), iArray, true)
-    else if ($where.is.str === 'QueryWhereGroup') loopGroupQueries(/** @type { QueryWhereGroup } */($where), iArray, true)
+    if ($where.info.name === enums.classInfoNames.QueryWhere) splice(/** @type { QueryWhere } */($where), iArray, array[iArray], true)
+    else if ($where.info.name === enums.classInfoNames.QueryWhereDefined) splice(/** @type { QueryWhereDefined } */($where), iArray, array[iArray], true)
+    else if ($where.info.name === enums.classInfoNames.QueryWhereUndefined) splice(/** @type { QueryWhereUndefined } */($where), iArray, array[iArray], true)
+    else if ($where.info.name === enums.classInfoNames.QueryWhereGroup) loopGroupQueries(/** @type { QueryWhereGroup } */($where), iArray, true)
   }
 
     
@@ -28,7 +30,7 @@ export function queryWhere (schema, queryFormatSection, array, $where, nodeName)
       case enums.queryWhereGroupSymbol.or:
         let keepArrayItem = false
 
-        for (const query of queryWhereGroup.queries) {
+        for (const query of queryWhereGroup.items) {
           if (innerLoopGroupQueries(query) === false) { // on first splice false => keepArrayItem <- true
             keepArrayItem = true
             break
@@ -43,7 +45,7 @@ export function queryWhere (schema, queryFormatSection, array, $where, nodeName)
       case enums.queryWhereGroupSymbol.and:
         let removeArrayItem = false
 
-        for (const query of queryWhereGroup.queries) {
+        for (const query of queryWhereGroup.items) {
           if (innerLoopGroupQueries(query) === true) { // on first splice true => removeArrayItem <- true
             removeArrayItem = true
             break
@@ -59,18 +61,21 @@ export function queryWhere (schema, queryFormatSection, array, $where, nodeName)
 
 
     /**
-     * @param { QueryWhereGroup | QueryWhere } query 
+     * @param { QueryWhereGroup | QueryWhere | QueryWhereDefined | QueryWhereUndefined } query 
      * @returns { boolean | undefined }
      */
     function innerLoopGroupQueries (query) {
       let r
 
-      if (query.is.str === 'QueryWhere') {
-        const queryWhere = /** @type { QueryWhere } */ (query)
-        r = preSplice(queryWhere, iArray, false)
-      } else if (query.is.str === 'QueryWhereGroup') {
-        const qwg = /** @type { QueryWhereGroup } */ (query)
-        r = loopGroupQueries(qwg, iArray, false)
+      switch (query.info.name) {
+        case enums.classInfoNames.QueryWhere:
+        case enums.classInfoNames.QueryWhereDefined:
+        case enums.classInfoNames.QueryWhereUndefined:
+          r = splice(/** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined } */(query), iArray, array[iArray], false)
+          break
+        case enums.classInfoNames.QueryWhereGroup:
+          r = loopGroupQueries(/** @type { QueryWhereGroup } */(query), iArray, false)
+          break
       }
 
       return r
@@ -81,68 +86,86 @@ export function queryWhere (schema, queryFormatSection, array, $where, nodeName)
 
 
   /**
-   * @param { QueryWhere } queryWhere 
-   * @param { number } iArray 
-   * @param { boolean } doSplice 
-   */
-  function preSplice (queryWhere, iArray, doSplice) {
-    if (!queryWhere.relationships?.length) return splice(queryWhere, iArray, array[iArray], doSplice)
-    else {
-      const relationshipNode = getRelationshipNode(schema, queryWhere.relationships, nodeName, queryFormatSection, array[iArray])
-      return splice(queryWhere, iArray, relationshipNode, doSplice)
-    }
-  }
-
-
-  /**
-   * @param { QueryWhere } queryWhere 
+   * @param { QueryWhere | QueryWhereDefined | QueryWhereUndefined } $where 
    * @param { number } arrayIndex 
-   * @param { any } obj 
+   * @param { any } graphNode 
    * @param { boolean } doSplice 
    * @returns { boolean }
    */
-  function splice (queryWhere, arrayIndex, obj, doSplice) {
+  function splice ($where, arrayIndex, graphNode, doSplice) {
     let spliced = false
-    const isUndefined = typeof obj?.[queryWhere.property] === 'undefined'
 
     const bye = () => {
       if (doSplice) array.splice(arrayIndex, 1)
       spliced = true
     }
 
-    switch (queryWhere.symbol) {
-      case enums.queryWhereSymbol.equals:
-        if (isUndefined || obj?.[queryWhere.property] !== queryWhere.value) bye()
-        break
-      case enums.queryWhereSymbol.doesNotEqual:
-        if (isUndefined || obj?.[queryWhere.property] === queryWhere.value) bye()
-        break
-      case enums.queryWhereSymbol.greaterThan:
-        if (isUndefined || obj?.[queryWhere.property] <= Number(queryWhere.value)) bye()
-        break
-      case enums.queryWhereSymbol.lessThan:
-        if (isUndefined || obj?.[queryWhere.property] >= Number(queryWhere.value)) bye()
-        break
-      case enums.queryWhereSymbol.greaterThanOrEqualTo:
-        if (isUndefined || obj?.[queryWhere.property] < Number(queryWhere.value)) bye()
-        break
-      case enums.queryWhereSymbol.lessThanOrEqualTo:
-        if (isUndefined || obj?.[queryWhere.property] > Number(queryWhere.value)) bye()
-        break
-      case enums.queryWhereSymbol.startsWith:
-        if (isUndefined || typeof obj?.[queryWhere.property] !== 'string' || !obj[queryWhere.property].startsWith(String(queryWhere.value))) bye()
-        break
-      case enums.queryWhereSymbol.endsWith:
-        if (isUndefined || typeof obj?.[queryWhere.property] !== 'string' || !obj[queryWhere.property].endsWith(String(queryWhere.value))) bye()
-        break
-      case enums.queryWhereSymbol.isDefined:
-        if (isUndefined) bye()
-        break
-      case enums.queryWhereSymbol.isUndefined:
-        if (typeof obj?.[queryWhere.property] !== 'undefined') bye()
-        break
+    if ($where.info.name === enums.classInfoNames.QueryWhereDefined) {
+      if (typeof getValue(/** @type { QueryWhereDefined } */($where).property, graphNode) === 'undefined') bye()
+    } else if ($where.info.name === enums.classInfoNames.QueryWhereUndefined) {
+      if (typeof getValue(/** @type { QueryWhereDefined } */($where).property, graphNode) !== 'undefined') bye()
+    } else {
+      const queryWhere = /** @type { QueryWhere } */ ($where)
+      const leftValue = getValue(queryWhere.items[0], graphNode)
+      const rightValue = getValue(queryWhere.items[1], graphNode)
+      const isUndefined = typeof leftValue === 'undefined' || typeof rightValue === 'undefined'
+
+      switch (queryWhere.symbol) {
+        case enums.queryWhereSymbol.equals:
+          if (isUndefined || leftValue !== rightValue) bye()
+          break
+        case enums.queryWhereSymbol.doesNotEqual:
+          if (isUndefined || leftValue === rightValue) bye()
+          break
+        case enums.queryWhereSymbol.greaterThan:
+          if (isUndefined || leftValue <= Number(rightValue)) bye()
+          break
+        case enums.queryWhereSymbol.lessThan:
+          if (isUndefined || leftValue >= Number(rightValue)) bye()
+          break
+        case enums.queryWhereSymbol.greaterThanOrEqualTo:
+          if (isUndefined || leftValue < Number(rightValue)) bye()
+          break
+        case enums.queryWhereSymbol.lessThanOrEqualTo:
+          if (isUndefined || leftValue > Number(rightValue)) bye()
+          break
+        case enums.queryWhereSymbol.startsWith:
+          if (isUndefined || typeof leftValue !== 'string' || !leftValue.startsWith(String(rightValue))) bye()
+          break
+        case enums.queryWhereSymbol.endsWith:
+          if (isUndefined || typeof leftValue !== 'string' || !leftValue.endsWith(String(rightValue))) bye()
+          break
+      }
     }
 
     return spliced
+  }
+
+
+  /**
+   * @param { QueryProperty | QueryValue } propertyOrValue 
+   * @param { any } graphNode
+   * @returns { any }
+   */
+  function getValue (propertyOrValue, graphNode) {
+    let value
+
+    switch (propertyOrValue.info.name) {
+      case enums.classInfoNames.QueryValue:
+        const queryValue = /** @type { QueryValue } */ (propertyOrValue)
+        value = queryValue.value
+        break
+      case enums.classInfoNames.QueryProperty:
+        const queryProperty = /** @type { QueryProperty } */ (propertyOrValue)
+
+        if (!queryProperty.relationships?.length) value = graphNode[queryProperty.property]
+        else {
+          const relationshipNode = getRelationshipNode(schema, queryProperty.relationships, queryFormatSection, graphNode)
+          if (relationshipNode?.[queryProperty.property]) value = relationshipNode[queryProperty.property]
+        }
+        break
+    }
+
+    return value
   }
 }

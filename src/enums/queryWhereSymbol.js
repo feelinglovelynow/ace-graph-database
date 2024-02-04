@@ -5,8 +5,6 @@ export const queryWhereSymbol = new Set([
   'lessThan',
   'greaterThanOrEqualTo',
   'lessThanOrEqualTo',
-  'isDefined',
-  'isUndefined',
   'startsWith',
   'endsWith',
 ])

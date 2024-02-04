@@ -1,12 +1,15 @@
 {
   "files": [
     "src/delete.js",
-    "src/getDerivedNode.js",
+    "src/getAlias.js",
+    "src/getDerivedValue.js",
     "src/getRelationshipNode.js",
     "src/index.js",
     "src/list.js",
     "src/mutate.js",
     "src/query.js",
+    "src/queryOptions.js",
+    "src/queryWhere.js",
     "src/schema.js",
     "src/variables.js",
   ], // all src files (including index.js) (not including .test.js)

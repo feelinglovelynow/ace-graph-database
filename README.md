@@ -17,10 +17,11 @@ pnpm add @feelinglovelynow/ace-graph-database
   * [50 GB of Graph Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
   * [1 million Graph requests a month](https://developers.cloudflare.com/durable-objects/platform/pricing/)
   * [10 million Serverless requests a month](https://developers.cloudflare.com/workers/platform/pricing/#workers)
-  * [Transactions](https://developers.cloudflare.com/durable-objects/api/transactional-storage-api/)
-  * [Simple Migrations](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/)
-  * [Memory Data Caching](https://developers.cloudflare.com/durable-objects/learning/in-memory-state/)
-  * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
+  * [10 million Cache requests a month](https://developers.cloudflare.com/kv/platform/pricing/)
+  * [Transaction Mutations](https://developers.cloudflare.com/durable-objects/api/transactional-storage-api/)
+  * [Simple Graph Migrations](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/)
+  * [Graph Memory Data Caching](https://developers.cloudflare.com/durable-objects/learning/in-memory-state/)
+  * [Graph Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
 
 
 ## 🎁 All Our Packages
