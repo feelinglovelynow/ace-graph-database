@@ -8,9 +8,10 @@ import { dataTypes } from './enums/dataTypes.js'
 import { endpoints } from './enums/endpoints.js'
 import { has } from './enums/has.js'
 import { indices } from './enums/indices.js'
-import { must } from './enums/must.js'
 import { queryDerivedSymbol } from './enums/queryDerivedSymbol.js'
 import { queryWhereGroupSymbol } from './enums/queryWhereGroupSymbol.js'
+import { schemaPropOptions } from './enums/schemaPropOptions.js'
+import { schemaRelationshipPropOptions } from './enums/schemaRelationshipPropOptions.js'
 import { queryWhereSymbol } from './enums/queryWhereSymbol.js'
 import { reservedQueryFormatKeys } from './enums/reservedQueryFormatKeys.js'
 import { sortOptions } from './enums/sortOptions.js'
@@ -88,9 +89,10 @@ import { sortOptions } from './enums/sortOptions.js'
       enumsMap.set('endpoints', endpoints)
       enumsMap.set('has', has)
       enumsMap.set('indices', indices)
-      enumsMap.set('must', must)
       enumsMap.set('queryDerivedSymbol', queryDerivedSymbol)
       enumsMap.set('queryWhereGroupSymbol', queryWhereGroupSymbol)
+      enumsMap.set('schemaPropOptions', schemaPropOptions)
+      enumsMap.set('schemaRelationshipPropOptions', schemaRelationshipPropOptions)
       enumsMap.set('queryWhereSymbol', queryWhereSymbol)
       enumsMap.set('nodeNames', new Set(Object.keys(schema?.nodes || {})))
       enumsMap.set('relationshipNames', new Set(Object.keys(schema?.relationships || {})))
@@ -284,13 +286,13 @@ export class QueryValue {
 
 export class QueryProperty {
   info = { name: enums.classInfoNames.QueryProperty, QueryProperty: true }
-  relationships = /** @type { enums.relationshipNames[] | undefined } */ (undefined)
+  relationships = /** @type { string[] | undefined } */ (undefined)
   /** @type { string } */
   property
 
   /**
    * @typedef { object } QueryPropertyOptions
-   * @property { enums.relationshipNames[] } [ relationships ]
+   * @property { string[] } [ relationships ]
    * @property { string } property
    *
    * @param { QueryPropertyOptions } options
@@ -373,13 +375,13 @@ export class QueryWhereGroup {
 
 
 export class Schema {
-  nodes = /** @type { { [nodeName: string]: { [propName: string]: SchemaProp } } | undefined } */ (undefined)
-  relationships = /** @type { { [relationshipName: string]: SchemaRelationship } | undefined } */ (undefined)
+  nodes = /** @type { { [nodeName: string]: { [propName: string]: SchemaProp | SchemaRelationshipProp } } | undefined } */ (undefined)
+  relationships = /** @type { { [relationshipName: string]: SchemaOneToOne | SchemaOneToMany | SchemaManyToMany } | undefined } */ (undefined)
 
   /**
    * @typedef { object } SchemaOptions
-   * @property { { [nodeName: string]: { [propName: string]: SchemaProp } } } [ nodes ]
-   * @property { { [relationshipName: string]: SchemaRelationship } } [ relationships ]
+   * @property { { [nodeName: string]: { [propName: string]: SchemaProp | SchemaRelationshipProp } } } [ nodes ]
+   * @property { { [relationshipName: string]: SchemaOneToOne | SchemaOneToMany | SchemaManyToMany } } [ relationships ]
    *
    * @param { SchemaOptions } options
    */
@@ -390,71 +392,72 @@ export class Schema {
 
 
 export class SchemaProp {
+  info = { name: enums.classInfoNames.SchemaProp, SchemaProp: true }
   /** @type { enums.dataTypes } */
   dataType
   indices = /** @type { enums.indices[] | undefined } */ (undefined)
-  must = /** @type { enums.must[] | undefined } */ (undefined)
+  options = /** @type { enums.schemaPropOptions[] | undefined } */ (undefined)
 
   /**
    * @typedef { object } SchemaPropOptions
    * @property { enums.dataTypes } dataType
    * @property { enums.indices[] } [ indices ]
-   * @property { enums.must[] } [ must ]
+   * @property { enums.schemaPropOptions[] } [ options ]
    *
    * @param { SchemaPropOptions } options
    */
   constructor (options) {
     this.dataType = options.dataType
     this.indices = options.indices
-    this.must = options.must
+    this.options = options.options
   }
 }
 
 
-export class SchemaRelationship {
-  /** @type { [ SchemaRelationshipDirection, SchemaRelationshipDirection ] } */
-  directions
-  props = /** @type { { [ propName: string ]: SchemaProp } | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } SchemaRelationshipOptions
-   * @property { [ SchemaRelationshipDirection, SchemaRelationshipDirection ] } directions
-   * @property { { [ propName: string ]: SchemaProp } } [ props ]
-   *
-   * @param { SchemaRelationshipOptions } options
-   */
-  constructor (options) {
-    this.directions = options.directions
-    this.props = options.props
-  }
-}
-
-
-export class SchemaRelationshipDirection {
-  /** @type { string } */
-  nodeName
+export class SchemaRelationshipProp {
+  info = { name: enums.classInfoNames.SchemaRelationshipProp, SchemaRelationshipProp: true }
   /** @type { enums.has } */
   has
-  /** @type { enums.must[] | undefined } */
-  must
   /** @type { string } */
-  nodePropName
+  nodeName
+  /** @type { string } */
+  relationshipName
+  options = /** @type { enums.schemaRelationshipPropOptions[] | undefined } */ (undefined)
 
   /**
-   * @typedef { object } SchemaRelationshipDirectionOptions
-   * @property { string } nodeName
+   * @typedef { object } SchemaRelationshipPropOptions
    * @property { enums.has } has
-   * @property { enums.must[] } [ must ]
-   * @property { string } nodePropName
+   * @property { string } nodeName
+   * @property { string } relationshipName
+   * @property { enums.schemaRelationshipPropOptions[] } [ options ]
    *
-   * @param { SchemaRelationshipDirectionOptions } options
+   * @param { SchemaRelationshipPropOptions } options
    */
   constructor (options) {
-    this.nodeName = options.nodeName
     this.has = options.has
-    this.must = options.must
-    this.nodePropName = options.nodePropName
+    this.nodeName = options.nodeName
+    this.relationshipName = options.relationshipName
+\    this.options = options.options
   }
+}
+
+
+class SchemaXToY {
+  props = /** @type { { [propName: string]: SchemaProp } | undefined } */ (undefined)
+
+  /** @param { { [propName: string]: SchemaProp } } [ props ] */
+  constructor(props) {
+    this.props = props
+  }
+}
+export class SchemaOneToOne extends SchemaXToY {
+  info = { name: enums.classInfoNames.SchemaOneToOne, SchemaOneToOne: true }
+}
+export class SchemaOneToMany extends SchemaXToY {
+  info = { name: enums.classInfoNames.SchemaOneToMany, SchemaOneToMany: true }
+}
+export class SchemaManyToMany extends SchemaXToY {
+  info = { name: enums.classInfoNames.SchemaManyToMany, SchemaManyToMany: true }
 }\n\n\n`
 
 
@@ -463,24 +466,67 @@ export class SchemaRelationshipDirection {
        * @returns { string }
        */
       function getPropDescription (prop) {
-        return `Set to true if you would love to see the property \`${ prop }\` in the response. To show this prop and set an alias, \`{ alias: 'example' }\``
+        return `Set to true if you would love to see the property \`${ prop }\` in the response.`
       }
 
 
       if (schema?.nodes) {
+        let relationshipClasses = ''
+
         for (const nodeName in schema.nodes) {
+          const relationshipClassMap = /** Map<formatClassName, {}> @type { Map<string, { propValue: any, capHas: string, relationship: any }> } */ (new Map())
           const exactTypedefs = /** Common exact typedef code @type { string[] } */ ([])
-          const schemaProps = /** <propName, { mustBeDefined, dataType }> @type { Map<string, { mustBeDefined: boolean, dataType: string | boolean | number }> } */ (new Map())
-          const schemaRelationships = /** <relationshipName, relationshipNode> @type { Map<string, any> } */ (new Map())
+          const schemaProps = /** <propName, { }> @type { Map<string, { propValue: any, mustBeDefined: boolean, dataType: string | boolean | number }> } */ (new Map())
 
-          for (const propKey in schema.nodes[nodeName]) {
-            const propValue = schema.nodes[nodeName][propKey]
+          for (const propName in schema.nodes[nodeName]) {
+            const propValue = schema.nodes[nodeName][propName]
             const dataType = getDataType(propValue.dataType)
-            const mustBeDefined = propValue.must?.includes('defined') || false
+            const mustBeDefined = propValue.options?.includes('defined') || false
 
-            schemaProps.set(propKey, { mustBeDefined, dataType })
-            if (propValue.indices?.includes('exact')) exactTypedefs.push(`{ property: '${ propKey }', value: ${ dataType } }`)
+            if (propValue.info.name === 'SchemaRelationshipProp') {
+              const capHas = propValue.has === 'one' ? 'One' : 'Many'
+              const formatClassName = `${ propValue.relationshipName }${ propValue.nodeName }Format${ capHas }`
+
+              if (!relationshipClassMap.has(formatClassName)) relationshipClassMap.set(formatClassName, { capHas, propValue, relationship: schema.relationships?.[ propValue.relationshipName ] })
+            }
+
+            schemaProps.set(propName, { propValue, mustBeDefined, dataType })
+            if (propValue.indices?.includes('exact')) exactTypedefs.push(`{ property: '${ propName }', value: ${ dataType } }`)
           }
+
+          relationshipClassMap.forEach(({ capHas, propValue, relationship }, formatClassName) => {
+            let commaProps = "'_uid', "
+            let fields = '  _uid = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n'
+            let constructorProps = `   * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getPropDescription('_uid') }\n`
+
+            if (relationship.props) {
+              for (const propName in relationship.props) {
+                commaProps += `'${ propName }', `
+                fields += `  ${ propName } = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n`
+                constructorProps += `   * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
+              }
+            }
+
+            fields = fields.slice(0, -1) // remove trailing \n
+            commaProps = commaProps.slice(0, -2) // remove trailing comma
+            constructorProps = constructorProps.slice(0, -1) // remove trailing \n
+
+            relationshipClasses += `export class ${ formatClassName } extends ${ propValue.nodeName }Format${ capHas } {
+  $info = { name: enums.classInfoNames.${ capHas }, ${ capHas }: true, nodeName: '${ propValue.nodeName }', relationshipName: '${ propValue.relationshipName }', ${ formatClassName }: true }
+${ fields }
+
+  /**
+   * @typedef { object } ${ formatClassName }Options
+${ constructorProps }
+   *
+   * @param { ${ propValue.nodeName }Format${ capHas }Options & ${ formatClassName }Options } options
+   */
+  constructor (options) {
+    super(options)
+    construct(this, options, [ ${ commaProps } ])
+  }
+}\n\n\n`
+          })
 
           const exactTypedef = exactTypedefs.join(' | ')
 
@@ -503,46 +549,62 @@ export class SchemaRelationshipDirection {
   constructor (options) { construct(this, options, [ 'url', 'exact', 'property', 'format' ]) }
 }`
 
-          if (schema.relationships) {
-            for (const relationshipKey in schema.relationships) {
-              const relationship = schema.relationships[relationshipKey]
-
-              if (relationship.directions[0].nodeName === nodeName) schemaRelationships.set(relationship.directions[0].nodePropName, `${ relationship.directions[1].nodeName }Format${ relationship.directions[0].has === 'one' ? 'One' : 'Many' }`)
-              else if (relationship.directions[1].nodeName === nodeName) schemaRelationships.set(relationship.directions[1].nodePropName, `${ relationship.directions[0].nodeName }Format${ relationship.directions[1].has === 'one' ? 'One' : 'Many' }`)
-            }
-          }
-
           const formatOneType = '(QueryDerivedProperty | QueryAliasProperty)[]'
           const formatManyType = '(QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup | QueryDerivedProperty | QueryAliasProperty)[]'
 
-          let bindProps = ''
+          let fieldsNode = ''
           let fieldsInsert = ''
+          let bindPropsNode = ''
+          let constuctorNode = ''
           let pipeQueryProps = ''
+          let bindPropsInsert = ''
           let fieldsQueryFormat = ''
           let constructorInsert = ''
           let constructorQueryFormat = ''
           let commaQueryPropsAndRelationships = ''
 
-          schemaProps.forEach(({ mustBeDefined, dataType }, propName) => {
-            bindProps += `    this.${ propName } = options.${ propName }\n`
+          schemaProps.forEach(({ propValue, mustBeDefined, dataType }, propName) => {
             pipeQueryProps += `'${ propName }' | `
             commaQueryPropsAndRelationships += `'${ propName }', `
-            fieldsInsert += mustBeDefined ? 
+            bindPropsNode += `    this.${ propName } = options.${ propName }\n` 
+
+            const bracketPropName = mustBeDefined ? propName : `[ ${ propName } ]`
+            const relationshipDataType = `${ propValue.nodeName }${ propValue.has === 'many' ? '[]' : '' }`
+            const relationshipFormatDataType = `${ propValue.relationshipName }${ propValue.nodeName }Format${ propValue.has === 'many' ? 'Many' : 'One' }`
+            const defaultFields = mustBeDefined ?
               `  /** @type { ${ dataType } } */\n  ${ propName }\n` :
               `  ${ propName } = /** @type { ${ dataType } | undefined } */ (undefined)\n`
-            fieldsQueryFormat += `  ${ propName } = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n`
-            constructorInsert += `   * @property { ${ dataType } } ${ mustBeDefined ? propName : `[ ${ propName } ]` }\n`
-            constructorQueryFormat += `   * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
+
+            fieldsInsert += propValue.info.name === 'SchemaProp' ? defaultFields : ''
+
+            constructorQueryFormat += propValue.info.name === 'SchemaProp' ?
+              `   * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n` :
+              `   * @property { ${ relationshipFormatDataType } } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
+            
+            fieldsQueryFormat += propValue.info.name === 'SchemaProp' ?
+              `  ${ propName } = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n` :
+              `  ${ propName } = /** @type { ${ relationshipFormatDataType } | undefined } */ (undefined)\n`
+
+            fieldsNode += propValue.info.name === 'SchemaProp' ?
+              defaultFields :
+              mustBeDefined ?
+                `  /** @type { ${ relationshipDataType } } */\n  ${ propName }\n` :
+                `  ${ propName } = /** @type { ${ relationshipDataType } | undefined } */ (undefined)\n` 
+
+            constuctorNode += propValue.info.name === 'SchemaProp' ?
+              `   * @property { ${ dataType } } ${ bracketPropName }\n` :
+              `   * @property { ${ relationshipDataType } } ${ bracketPropName }\n`
+
+            if (propValue.info.name === 'SchemaProp') {
+              bindPropsInsert += `    this.${ propName } = options.${ propName }\n`
+              constructorInsert += `   * @property { ${ dataType } } ${ bracketPropName }\n`
+            }
           })
 
-          schemaRelationships.forEach((relationshipNode, relationshipName) => {
-            commaQueryPropsAndRelationships += `'${ relationshipName }', `
-            fieldsQueryFormat += `  ${ relationshipName } = /** @type { ${ relationshipNode } | undefined } */ (undefined)\n`
-            constructorQueryFormat += `   * @property { ${ relationshipNode} } [ ${ relationshipName } ] - Set to a ${ relationshipNode } object if you'd love to see \`${ relationshipName }\` information in the response\n`
-          })
-
-          bindProps = bindProps.slice(0, -1) // remove trailing \n
+          bindPropsNode = bindPropsNode.slice(0, -1) // remove trailing \n
+          bindPropsInsert = bindPropsInsert.slice(0, -1) // remove trailing \n
           pipeQueryProps = pipeQueryProps.slice(0, -2) // remove trailing pipe
+          constuctorNode = constuctorNode.slice(0, -1) // remove trailing \n
           constructorInsert = constructorInsert.slice(0, -1) // remove trailing \n
           commaQueryPropsAndRelationships = commaQueryPropsAndRelationships.slice(0, -2) // remove trailing comma
           constructorQueryFormat = constructorQueryFormat.slice(0, -1) // remove trailing \n
@@ -552,17 +614,17 @@ export class SchemaRelationshipDirection {
 export class ${ nodeName } {
   /** @type { string } */
   uid
-${ fieldsInsert }
+${ fieldsNode }
   /**
    * @typedef { object } ${ nodeName }Options
    * @property { string } uid
-${ constructorInsert }
+${ constuctorNode }
    *
    * @param { ${ nodeName }Options } options
    */
   constructor (options) {
     this.uid = options.uid
-${ bindProps }
+${ bindPropsNode }
   }
 }
 
@@ -581,7 +643,7 @@ ${ constructorInsert }
    */
   constructor (options) {
     this.uid = options.uid
-${ bindProps }
+${ bindPropsInsert }
   }
 }
 
@@ -679,80 +741,51 @@ ${ constructorQueryFormat }
   }
 }\n\n\n`
         }
+
+        code += relationshipClasses
       }
 
       if (schema?.relationships) {
         for (const relationshipName in schema.relationships) {
           const options = schema.relationships[relationshipName]
-          const directionPropsMatch = options.directions[0].nodeName === options.directions[1].nodeName && options.directions[0].nodePropName === options.directions[1].nodePropName
 
-          /**
-           * @param { 'one' | 'many' } has 
-           */
-          function getRelationshipDataType (has) {
-            let response = ''
+          let bindProps = `    this.a = options.a\n    this.b = options.b\n`
+          let constructorRelationship = ''
+          let fieldsRelationship = ''
+          
+          if (options.props) {
+            for (const propName in options.props) {
+              const schemaPropOptions = options.props[propName]
+              const dataType = getDataType(schemaPropOptions.dataType)
+              const mustBeDefined = schemaPropOptions.options?.includes('defined') || false
 
-            if (directionPropsMatch) response = '[ string, string ]'
-            else if (has === 'many') response = 'string[]'
-            else response = 'string'
-
-            return response
-          }
-
-          /**
-           * @param { number } index 
-           * @returns { string }
-           */
-          function getConstructorRelationship (index) {
-            return `   * @property { ${ getRelationshipDataType(options.directions[index].has) } } ${ options.directions[index].nodePropName }\n`
-          }
-
-          /**
-           * @param { number } index 
-           * @returns { string }
-           */
-          function getFieldsRelationship (index) {
-            return `  /** @type { ${ getRelationshipDataType(options.directions[index].has) } } */\n  ${ options.directions[index].nodePropName }\n`
-          }
-
-          let bindProps = `    this.${ options.directions[0].nodePropName } = options.${ options.directions[0].nodePropName }\n`
-          let constructorRelationship = getConstructorRelationship(0)
-          let fieldsRelationship = getFieldsRelationship(0)
-
-          if (!directionPropsMatch) {
-            bindProps += `    this.${ options.directions[1].nodePropName } = options.${ options.directions[1].nodePropName }\n`
-            constructorRelationship += getConstructorRelationship(1)
-            fieldsRelationship += getFieldsRelationship(1)
-          }
-
-          for (const propName in options.props) {
-            const schemaPropOptions = options.props[propName]
-            const dataType = getDataType(schemaPropOptions.dataType)
-
-            bindProps += `    this.${ propName } = options.${ propName }\n`
-            constructorRelationship += `   * @property { ${ dataType } } ${ propName }\n`
-            fieldsRelationship += `  /** @type { ${ dataType } } */\n  ${ propName }\n`
+              bindProps += `    this.${ propName } = options.${ propName }\n`
+              constructorRelationship += mustBeDefined ? `\n   * @property { ${ dataType } } ${ propName }` : `\n   * @property { ${ dataType } } [ ${ propName } ]`
+              fieldsRelationship += mustBeDefined ? `\n  /** @type { ${ dataType } } */\n  ${ propName }` : `\n  ${ propName } = /** @type { ${ dataType } | undefined } */ (undefined)`
+            }
           }
 
           bindProps = bindProps.slice(0, -1) // remove trailing \n
-          fieldsRelationship = fieldsRelationship.slice(0, -1) // remove trailing \n
-          constructorRelationship = constructorRelationship.slice(0, -1) // remove trailing \n
 
           code += `/** RELATIONSHIP: ${ relationshipName } */
 export class ${ relationshipName }Insert {
   $relationshipName = '${ relationshipName }'
-${ fieldsRelationship }
+  /** @type { string } */
+  a
+  /** @type { string } */
+  b${ fieldsRelationship }
 
   /**
    * @typedef { object } ${ relationshipName }InsertOptions
-${ constructorRelationship }
+   * @property { string } a
+   * @property { string } b${ constructorRelationship }
    *
    * @param { ${ relationshipName }InsertOptions } options
    */
   constructor (options) {
 ${ bindProps }
   }
-}\n\n`
+}\n\n\n`
         }
       }
 
@@ -805,8 +838,8 @@ import * as classes from './${ files.classes }'
  * @property { never } [ exact ]
  * @property { QueryRequestFormatMany } format
  *
- * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.One, One: true, nodeName: string },      uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatOne
- * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string },    uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryLimit | classes.QuerySort | classes.QuerySumAsProperty | classes.QueryAverageAsProperty | classes.QueryWhere | classes.QueryWhereGroup | classes.QueryWhereDefined | classes.QueryWhereUndefined | classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatMany
+ * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.One, One: true, nodeName: string, relationshipName?: string },      uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatOne
+ * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string, relationshipName?: string },    uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryLimit | classes.QuerySort | classes.QuerySumAsProperty | classes.QueryAverageAsProperty | classes.QueryWhere | classes.QueryWhereGroup | classes.QueryWhereDefined | classes.QueryWhereUndefined | classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatMany
  *
  * @typedef { QueryRequestFormatOne | QueryRequestFormatMany } QueryRequestFormat
  * 
@@ -931,30 +964,23 @@ ${ manifestNodeTypedefs() }
           result += `\n/** @typedef { string } ${ enumStr } */
 export const ${ enumStr } =  ''\n\n\n`
         } else {
+          result += `/** @typedef {`
+
+          let typedef = ''
+          let enumProps = ''
+
           enumDataStructure.forEach((a, b) => {
             const { key, value } = getKeyAndValue(enumStr, a, b)
-            result += `
-/** @type { '${ value }' } */
-const ${ key } = '${ value }'\n`
+            typedef += ` '${ key }' |`
+            enumProps += `  ${ key }: /** @type { '${ value }' } */ ('${ value }'),\n`
           })
 
-          result += `\n/** @typedef {`
-
-          enumDataStructure.forEach((a, b) => {
-            const { key } = getKeyAndValue(enumStr, a, b)
-            result += ` '${ key }' |`
-          })
-
-          result = result.replace(/.$/, `} ${ enumStr } */
-export const ${ enumStr } = {`)
-
-          enumDataStructure.forEach((a, b) => {
-            const { key } = getKeyAndValue(enumStr, a, b)
-            result += ` ${ key },`
-          })
-
-          result = result.replace(/.$/, ' }\n\n\n')
-          }
+          result += typedef
+          result = result.slice(0, -1) // remove trailing pipe
+          result += `} ${ enumStr } */\nexport const ${ enumStr } = {\n`
+          result += enumProps
+          result += '}\n\n\n'
+        }
       })
 
       return result.trim()
@@ -985,16 +1011,11 @@ export const ${ enumStr } = {`)
             if (options.indices?.includes('exact')) hasExactIndex = true
           }
 
-          let relationshipFormat = ''
-
           if (schema?.relationships) {
             for (const relationshipName in schema.relationships) {
               const options = schema.relationships[relationshipName]
 
               mutateRequest += `classes.${ relationshipName }Insert | `
-
-              if (options.directions[0].nodeName === nodeName) relationshipFormat += `\n * @property { ace${ options.directions[1].nodeName }QueryFormat${ options.directions[0].has === 'one' ? 'One' : 'Many' } } [ ${ options.directions[0].nodePropName } ]`
-              else if (options.directions[1].nodeName === nodeName) relationshipFormat += `\n * @property { ace${ options.directions[0].nodeName }QueryFormat${ options.directions[1].has === 'one' ? 'One' : 'Many' } } [ ${ options.directions[1].nodePropName } ]`
             }
           }
 

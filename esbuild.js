@@ -8,9 +8,10 @@ esbuild.build({ // // https://esbuild.github.io/api/
   outdir: './dist', // Sets the output directory for the build operation.
   entryPoints: [ // This is an array of files that each serve as an input to the bundling algorithm.
     './tsc/src/delete.js',
-    './tsc/src/getAlias',
-    './tsc/src/getDerivedValue',
-    './tsc/src/getRelationshipNode',
+    './tsc/src/getAlias.js',
+    './tsc/src/getDerivedValue.js',
+    './tsc/src/getRelationshipNode.js',
+    './tsc/src/getRelationshipOptionsDetails.js',
     './tsc/src/index.js',
     './tsc/src/list.js',
     './tsc/src/mutate.js',

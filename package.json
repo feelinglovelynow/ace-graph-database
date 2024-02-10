@@ -2,7 +2,7 @@
   "name": "@feelinglovelynow/ace-graph-database",
   "version": "1.0.0-beta.1",
   "author": "https://github.com/feelinglovelynow?tab=repositories",
-  "description": "If you are a JavaScript developer, and you are looking for a database, you just found the best one! Thanks to JSDoc comments and TypeScript types that Ace generates based on your JSON schema, autocomplete and pre save errors work beautifully for TypeScript AND JavaScript developers! Ace is a Graph Database... So no joins... So (typesafe) relationship queries are fast!",
+  "description": "Greetings JavaScript developer! If you are looking for a database, you just found the best one! Thanks to JSDoc comments and TypeScript types that Ace generates based on your JSON schema, autocomplete and pre save errors work beautifully for TypeScript AND JavaScript developers! Ace is a Graph Database... So one to one, one to many AND many to many relationships in your schema may be queried with 0 joins... So (typesafe) queries with relationships that span many levels are fast!",
   "license": "MIT",
   "type": "module",
   "types": "./dist/index.ts",

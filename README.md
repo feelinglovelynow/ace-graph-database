@@ -8,9 +8,9 @@ pnpm add @feelinglovelynow/ace-graph-database
 
 
 ## 🙏 JavaScipt's BEST Database!
-* If you are a JavaScript developer, and you are looking for a database, you just found the best one!
+* Greetings JavaScript developer! If you are looking for a database, you just found the best one!
 * Thanks to JSDoc comments and TypeScript types that Ace generates based on your JSON schema, autocomplete and pre save errors work beautifully for TypeScript AND JavaScript developers!
-* Ace is a Graph Database... So no joins... So (typesafe) relationship queries are fast!
+* Ace is a Graph Database... So one to one, one to many AND many to many relationships in your schema may be queried with 0 joins... So (typesafe) queries with relationships that span many levels are fast!
 * Open source (MIT)
 * Data stored as [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/)
 * [$5 monthly to Cloudflare](https://developers.cloudflare.com/durable-objects/platform/pricing/) + ***Ace Graph Database***  provides:

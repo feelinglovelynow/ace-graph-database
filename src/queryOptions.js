@@ -21,7 +21,7 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
         case enums.classInfoNames.QueryWhereDefined:
         case enums.classInfoNames.QueryWhereUndefined:
         case enums.classInfoNames.QueryWhereGroup:
-          queryWhere(schema, queryFormatSection, array, queryFormatSection.$info.nodeName, /** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } */(option))
+          queryWhere(schema, queryFormatSection, array, /** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } */(option))
           break
 
 

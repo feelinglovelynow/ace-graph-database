@@ -6,10 +6,9 @@ import { td, enums, Schema, QueryWhere, QueryWhereDefined, QueryWhereUndefined, 
  * @param { Schema } schema 
  * @param { td.QueryRequestFormat } queryFormatSection
  * @param { any[] } array 
- * @param { string } nodeName
  * @param { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } $where 
  */
-export function queryWhere (schema, queryFormatSection, array, nodeName, $where) {
+export function queryWhere (schema, queryFormatSection, array, $where) {
   for (let iArray = array.length - 1; iArray >= 0; iArray--) {
     if ($where.info.name === enums.classInfoNames.QueryWhere) splice(/** @type { QueryWhere } */($where), iArray, array[iArray], true)
     else if ($where.info.name === enums.classInfoNames.QueryWhereDefined) splice(/** @type { QueryWhereDefined } */($where), iArray, array[iArray], true)

@@ -1,6 +1,6 @@
-import { td, enums }from '#manifest'
 import { _list } from './list.js'
 import { _query } from './query.js'
+import { td, enums }from '#manifest'
 import { _mutate } from './mutate.js'
 import { endpoints } from './enums/endpoints.js'
 import { _deleteDataAndSchema } from './delete.js'

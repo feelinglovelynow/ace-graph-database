@@ -8,6 +8,7 @@
     "src/getAlias.js",
     "src/getDerivedValue.js",
     "src/getRelationshipNode.js",
+    "src/getRelationshipOptionsDetails.js",
     "src/index.js",
     "src/list.js",
     "src/mutate.js",
