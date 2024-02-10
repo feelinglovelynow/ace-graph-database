@@ -7,4 +7,6 @@ export const queryWhereSymbol = new Set([
   'lessThanOrEqualTo',
   'startsWith',
   'endsWith',
+  'contains',
+  'doesNotContain',
 ])

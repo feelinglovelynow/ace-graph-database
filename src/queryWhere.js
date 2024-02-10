@@ -134,6 +134,12 @@ export function queryWhere (schema, queryFormatSection, array, $where) {
         case enums.queryWhereSymbol.endsWith:
           if (isUndefined || typeof leftValue !== 'string' || !leftValue.endsWith(String(rightValue))) bye()
           break
+        case enums.queryWhereSymbol.contains:
+          if (isUndefined || typeof leftValue !== 'string' || !leftValue.includes(String(rightValue))) bye()
+          break
+        case enums.queryWhereSymbol.doesNotContain:
+          if (isUndefined || typeof leftValue !== 'string' || leftValue.includes(String(rightValue))) bye()
+          break
       }
     }
 

@@ -128,44 +128,46 @@ function construct (self, options, props) {
 }
 
 
-export class QueryAverageAsProperty {
-  info = { name: enums.classInfoNames.QueryAverageAsProperty, QueryAverageAsProperty: true }
+class QueryMathAsProperty {
   /** @type { string } */
-  averageProperty
+  computeProperty
   /** @type { string } */
   newProperty
 
   /**
-   * @typedef { object } QueryAverageAsPropertyeOptions
-   * @property { string } averageProperty
-   * @property { string } newProperty
+   * @typedef { object } QueryMathAsPropertyOptions
+   * @property { string } computeProperty - The property to apply computations to
+   * @property { string } newProperty The new property to add the computation results to
    *
-   * @param { QueryAverageAsPropertyeOptions } options
+   * @param { QueryMathAsPropertyOptions } options
    */
   constructor(options) {
-    this.averageProperty = options.averageProperty
+    this.computeProperty = options.computeProperty
     this.newProperty = options.newProperty
   }
 }
-
-
-export class QuerySumAsProperty {
+export class QueryAverageAsProperty extends QueryMathAsProperty {
+  info = { name: enums.classInfoNames.QueryAverageAsProperty, QueryAverageAsProperty: true }
+}
+export class QuerySumAsProperty extends QueryMathAsProperty {
   info = { name: enums.classInfoNames.QuerySumAsProperty, QuerySumAsProperty: true }
-  /** @type { string } */
-  sumProperty
+}
+export class QueryMinAmountAsProperty extends QueryMathAsProperty {
+  info = { name: enums.classInfoNames.QueryMinAmountAsProperty, QueryMinAmountAsProperty: true }
+}
+export class QueryMaxAmountAsProperty extends QueryMathAsProperty {
+  info = { name: enums.classInfoNames.QueryMaxAmountAsProperty, QueryMaxAmountAsProperty: true }
+}
+
+
+export class QueryCountAsProperty {
+  info = { name: enums.classInfoNames.QueryCountAsProperty, QueryCountAsProperty: true }
   /** @type { string } */
   newProperty
 
-  /**
-   * @typedef { object } QuerySumAsPropertyOptions
-   * @property { string } sumProperty
-   * @property { string } newProperty
-   *
-   * @param { QuerySumAsPropertyOptions } options
-   */
-  constructor(options) {
-    this.sumProperty = options.sumProperty
-    this.newProperty = options.newProperty
+  /** @param { string } newProperty */
+  constructor (newProperty) {
+    this.newProperty = newProperty
   }
 }
 
@@ -550,7 +552,7 @@ ${ constructorProps }
 }`
 
           const formatOneType = '(QueryDerivedProperty | QueryAliasProperty)[]'
-          const formatManyType = '(QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup | QueryDerivedProperty | QueryAliasProperty)[]'
+          const formatManyType = '(QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMaxAmountAsProperty | QueryCountAsProperty | QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup | QueryDerivedProperty | QueryAliasProperty)[]'
 
           let fieldsNode = ''
           let fieldsInsert = ''
@@ -839,7 +841,7 @@ import * as classes from './${ files.classes }'
  * @property { QueryRequestFormatMany } format
  *
  * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.One, One: true, nodeName: string, relationshipName?: string },      uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatOne
- * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string, relationshipName?: string },    uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryLimit | classes.QuerySort | classes.QuerySumAsProperty | classes.QueryAverageAsProperty | classes.QueryWhere | classes.QueryWhereGroup | classes.QueryWhereDefined | classes.QueryWhereUndefined | classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatMany
+ * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string, relationshipName?: string },    uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryLimit | classes.QuerySort | classes.QuerySumAsProperty | classes.QueryAverageAsProperty | classes.QueryMinAmountAsProperty | classes.QueryMaxAmountAsProperty | classes.QueryCountAsProperty |  classes.QueryWhere | classes.QueryWhereGroup | classes.QueryWhereDefined | classes.QueryWhereUndefined | classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatMany
  *
  * @typedef { QueryRequestFormatOne | QueryRequestFormatMany } QueryRequestFormat
  * 

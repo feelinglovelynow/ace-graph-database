@@ -1,7 +1,7 @@
 import { getAlias } from './getAlias.js'
 import { queryWhere } from './queryWhere.js'
 import { getDerivedValue } from './getDerivedValue.js'
-import { td, enums, Schema, QueryWhere, QueryWhereGroup, QueryLimit, QuerySort, QueryDerivedProperty, QueryWhereDefined, QueryWhereUndefined, QueryAliasProperty, QuerySumAsProperty, QueryAverageAsProperty } from '#manifest'
+import { td, enums, Schema, QueryWhere, QueryWhereGroup, QueryLimit, QuerySort, QueryDerivedProperty, QueryWhereDefined, QueryWhereUndefined, QuerySumAsProperty, QueryAverageAsProperty, QueryCountAsProperty, QueryMaxAmountAsProperty, QueryMinAmountAsProperty } from '#manifest'
 
 
 /**
@@ -15,6 +15,7 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
   if (queryFormatSection.$options) {
     for (let option of queryFormatSection.$options) {
       let sum = 0
+      let amount = 0
 
       switch (option.info.name) {
         case enums.classInfoNames.QueryWhere:
@@ -60,7 +61,7 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
           const querySumAsProperty = /** @type { QuerySumAsProperty } */ (option)
 
           for (let arrayItem of array) {
-            sum += arrayItem[querySumAsProperty.sumProperty]
+            sum += arrayItem[querySumAsProperty.computeProperty]
           }
 
           for (let arrayItem of array) {
@@ -74,7 +75,7 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
           const queryAverageAsProperty = /** @type { QueryAverageAsProperty } */ (option)
 
           for (let arrayItem of array) {
-            sum += arrayItem[queryAverageAsProperty.averageProperty]
+            sum += arrayItem[queryAverageAsProperty.computeProperty]
           }
 
           const average = array.length ? sum / array.length : 0
@@ -82,9 +83,43 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
           for (let arrayItem of array) {
             arrayItem[queryAverageAsProperty.newProperty] = average
           }
-
           break
-      }
+
+
+        case enums.classInfoNames.QueryMinAmountAsProperty:
+          const queryMinAmountAsProperty = /** @type { QueryMinAmountAsProperty } */ (option)
+
+          for (let arrayItem of array) {
+            if (!amount || arrayItem[queryMinAmountAsProperty.computeProperty] < amount) amount = arrayItem[queryMinAmountAsProperty.computeProperty]
+          }
+
+          for (let arrayItem of array) {
+            arrayItem[queryMinAmountAsProperty.newProperty] = amount
+          }
+          break
+
+
+        case enums.classInfoNames.QueryMaxAmountAsProperty:
+          const queryMaxAmountAsProperty = /** @type { QueryMaxAmountAsProperty } */ (option)
+
+          for (let arrayItem of array) {
+            if (!amount || arrayItem[queryMaxAmountAsProperty.computeProperty] > amount) amount = arrayItem[queryMaxAmountAsProperty.computeProperty]
+          }
+
+          for (let arrayItem of array) {
+            arrayItem[queryMaxAmountAsProperty.newProperty] = amount
+          }
+          break
+
+
+        case enums.classInfoNames.QueryCountAsProperty:
+          const queryCountAsProperty = /** @type { QueryCountAsProperty } */ (option)
+
+          for (let arrayItem of array) {
+            arrayItem[queryCountAsProperty.newProperty] = array.length
+          }
+          break        
+        }
     }
   }
 
