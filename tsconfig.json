@@ -16,6 +16,7 @@
     "src/queryOptions.js",
     "src/queryWhere.js",
     "src/schema.js",
+    "src/throw.js",
     "src/manifest.js",
     "src/variables.js",
     "src/worker.js",

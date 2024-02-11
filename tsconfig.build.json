@@ -11,6 +11,7 @@
     "src/queryOptions.js",
     "src/queryWhere.js",
     "src/schema.js",
+    "src/throw.js",
     "src/variables.js",
   ], // all src files (including index.js) (not including .test.js)
   "compilerOptions": {

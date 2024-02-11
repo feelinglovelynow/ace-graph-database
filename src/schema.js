@@ -1,3 +1,4 @@
+import { error } from './throw.js'
 import { SCHEMA_KEY } from './variables.js'
 import { td, enums, Schema, SchemaProp, SchemaRelationshipProp } from '#manifest'
 import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
@@ -36,9 +37,9 @@ export async function _setSchema (storage, schema) {
   try {
     storage.put(SCHEMA_KEY, validateSchema(schema))
     return schema
-  } catch (error) {
-    console.log('error', error)
-    throw error
+  } catch (e) {
+    console.log('error', e)
+    throw e
   }
 }
 
@@ -62,25 +63,25 @@ export async function setSchema (url, schema) {
  * @param { Schema } schema
  */
 function validateSchema (schema) {
-  if (!schema.nodes || typeof schema.nodes !== 'object') throw { id: 'validateSchema__invalid-nodes', message: 'Please add nodes object', _errorData: { schema } }
-  if (!schema.relationships || typeof schema.relationships !== 'object') throw { id: 'validateSchema__invalid-relationships', message: 'Please add relationships object', _errorData: { schema } }
+  if (!schema.nodes || typeof schema.nodes !== 'object' || Array.isArray(schema.nodes)) throw error('schema__invalid-nodes', 'The provided schema requires a nodes object please', { schema })
+  if (schema.relationships && (typeof schema.relationships !== 'object' || Array.isArray(schema.relationships))) throw error('schema__invalid-relationships', 'If you would love to provide relationships with your schema, please pass it as an object', { schema })
 
   const nodeNameSet = new Set()
   const relationshipNameSet = new Set()
   const relationshipPropNodeNameSet = new Set()
-  const relationshipNames = Object.keys(schema.relationships) || []
+  const relationshipNames = Object.keys(schema.relationships || {})
   const directionsMap = /** Map<relationshipName, [{ nodeName, nodePropName, isBidirectional, isInverse }]> @type { Map<string, { nodeName: String, nodePropName: string, isBidirectional: boolean, isInverse: boolean }[]> } */ (new Map())
   const uniqueNodePropsMap = /** Map<nodeName, Set<nodePropName>> @type { Map<string, Set<string>> } */ (new Map()) // each nodePropName is unique for the nodeName
   const uniqueRelationshipPropsMap = /** Map<relationshipName, Set<propName>> @type { Map<string, Set<string>> } */ (new Map()) // each relationshipPropName is unique for the relationshipName
 
   for (const nodeName in schema.nodes) {
-    if (nodeNameSet.has(nodeName)) throw { id: 'validateSchema__not-unique-node-name', message: 'Please ensure each nodeName is unique', _errorData: { nodeName, schema } }
+    if (nodeNameSet.has(nodeName)) throw error('schema__not-unique-node-name', `The node name ${ nodeName } is not unique, please ensure each nodeName is unique`, { nodeName, schema })
 
     nodeNameSet.add(nodeName)
 
-    if (typeof nodeName !== 'string') throw { id: 'validateSchema__invalid-node-type', message: 'Please add node that has a type of string', _errorData: { nodeName, schema } }
-    if (!nodeName.match(/[A-Z]{0,1}/)) throw { id: 'validateSchema__invalid-node-first-character', message: 'Please add node that starts with a capital letter (helpful for jsdoc types)', _errorData: { nodeName, schema } }
-    if (!nodeName.match(/^[A-Za-z\_]+$/)) throw { id: 'validateSchema__invalid-node-characters', message: 'Please add node that has character a-z or A-Z or underscores (helpful for jsdoc types & db keys)', _errorData: { nodeName, schema } }
+    if (typeof nodeName !== 'string') throw error('schema__invalid-node-type', `The node name ${ nodeName } is an invalid type, please add node that is a type of string`, { nodeName, schema })
+    if (!nodeName.match(/[A-Z]{0,1}/)) throw error('schema__invalid-node-first-character', `The node name ${ nodeName } is does not start with a capital letter, please add node names that start with a capital letters (helpful for generated jsdoc and ts types)`, { nodeName, schema })
+    if (!nodeName.match(/^[A-Za-z\_]+$/)) throw error('schema__invalid-node-characters', `The node name ${ nodeName } has invalid characters, please add node names that have characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { nodeName, schema })
 
     for (const nodePropName in schema.nodes[nodeName]) {
       validateSchemaProp(nodePropName, schema.nodes[nodeName][nodePropName], false)
@@ -92,7 +93,7 @@ function validateSchema (schema) {
 
         if (!mapValue) uniqueNodePropsMap.set(nodeName, new Set([ nodePropName ]))
         else {
-          if (mapValue.has(nodePropName)) throw { id: 'validateSchema__not-unique-node-prop-name', message: 'Please ensure all node prop names are unique for the node', _errorData: { nodeName, nodePropName, schema } }
+          if (mapValue.has(nodePropName)) throw error('schema__not-unique-node-prop-name', `The node name ${ nodeName } and prop name ${ nodePropName } is not unique, please ensure all node prop names are unique for the node`, { nodeName, nodePropName, schema })
           else mapValue.add(nodePropName)
         }
       } else {
@@ -110,23 +111,23 @@ function validateSchema (schema) {
   }
 
   relationshipPropNodeNameSet.forEach(relationshipPropNodeName => {
-    if (!nodeNameSet.has(relationshipPropNodeName)) throw { id: 'validateSchema__invalid-relationship-prop-node-name', message: 'Please add relationship prop node names that are valid (a node in the schema)', _errorData: { schema, nodeName: relationshipPropNodeName } }
+    if (!nodeNameSet.has(relationshipPropNodeName)) throw error('schema__invalid-relationship-prop-node-name', `The node name ${ relationshipPropNodeName } that is defined as a prop nodeName is not defined @ schema.nodes, please add relationship prop node names that are valid (a node in the schema)`, { nodeName: relationshipPropNodeName, schema})
   })
 
   for (const relationshipName of relationshipNames) {
-    if (relationshipNameSet.has(relationshipName)) throw { id: 'validateSchema__not-unique-relationship-name', message: 'Please ensure each relationshipName is unique', _errorData: { relationshipName, schema } }
+    if (relationshipNameSet.has(relationshipName)) throw error('schema__not-unique-relationship-name', `The relationship name ${ relationshipName } is not unique, please ensure each relationshipName is unique`, { relationshipName, schema })
 
     relationshipNameSet.add(relationshipName)
 
-    const relationship = schema.relationships[relationshipName]
+    const relationship = schema.relationships?.[relationshipName]
     const _errorData = { schema, relationshipName, relationship }
 
-    if (typeof relationshipName !== 'string') throw { id: 'validateSchema__invalid-relationship-type', message: 'Please add relationship that has a type of string', _errorData }
-    if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw { id: 'validateSchema__invalid-relationship-characters', message: 'Please add relationship that has character a-z or A-Z or underscores (helpful for jsdoc types & db keys)', _errorData }
-    if (relationship.info.name !== enums.classInfoNames.SchemaOneToOne && relationship.info.name !== enums.classInfoNames.SchemaOneToMany && relationship.info.name !== enums.classInfoNames.SchemaManyToMany) throw { id: 'validateSchema__invalid-relationship-info-name', message: 'Please ensure relationships have a valid relationship info name of SchemaOneToOne, SchemaOneToMany or SchemaManyToMany', _errorData }
+    if (typeof relationshipName !== 'string') throw error('schema__invalid-relationship-type', `The relationship name ${ relationshipName } is not a type of string, please add relationships that are a type of string`, _errorData)
+    if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw error('schema__invalid-relationship-characters', `The relationship name ${ relationshipName } has invalid characters, please add relationships include characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, _errorData)
+    if (relationship?.info.name !== enums.classInfoNames.SchemaOneToOne && relationship?.info.name !== enums.classInfoNames.SchemaOneToMany && relationship?.info.name !== enums.classInfoNames.SchemaManyToMany) throw error('schema__invalid-relationship-info-name', `The relationship name ${ relationshipName } is not an object that includes the property .info.name, please ensure relationships have a valid relationship info name of SchemaOneToOne, SchemaOneToMany or SchemaManyToMany`, _errorData)
 
     if (relationship.props) {
-      if (typeof relationship.props !== 'object') throw { id: 'validateSchema__invalid-relationship-props', message: 'Please add only valid relationship.props type, which should be an object', _errorData }
+      if (typeof relationship.props !== 'object' || Array.isArray(relationship.props)) throw error('schema__invalid-relationship-props', `The relationship name ${ relationshipName } has invalid props, if you'd love to include props please ensure relationship.props type, is an object`, _errorData)
 
       for (const propName in relationship.props) {
         validateSchemaProp(propName, relationship.props[propName], true)
@@ -135,29 +136,29 @@ function validateSchema (schema) {
 
         if (!mapValue) uniqueRelationshipPropsMap.set(relationshipName, new Set([propName]))
         else {
-          if (mapValue.has(propName)) throw { id: 'validateSchema__not-unique-relationship-prop-name', message: 'Please ensure all relationship prop names are unique for the node', _errorData: { relationshipName, propName, schema } }
+          if (mapValue.has(propName)) throw error('schema__not-unique-relationship-prop-name', `The relationship name ${ relationshipName } and the prop name ${ propName } has props that are not unique, please ensure all relationship prop names are unique for the node`, { relationshipName, propName, schema })
           else mapValue.add(propName)
         }
       }
     }
   }
 
-  if (relationshipNames.length !== directionsMap.size) throw { id: 'validateSchema__invalid-relationships', message: 'All relationships listed in nodes must also be listed in relationships', _errorData: { nodeRelationshipNames: directionsMap.keys(), relationshipNames } }
+  if (relationshipNames.length !== directionsMap.size) throw error('schema__invalid-relationships', 'All relationships listed in schema.nodes must also be listed in schema.relationships', { schemaNodeRelationships: directionsMap.keys(), schemaRelationships: relationshipNames })
 
   if (relationshipNames.length) {
     for (const relationshipName of relationshipNames) {
       const directions = directionsMap.get(relationshipName)
-      const error = { id: 'validateSchema__invalid-relationship-alignment', message: 'Please ensure each relationshipName has 1 bidirectional relationship prop that is not an inverse or 2 relationship props where one is inverse and neither is bidirectional', _errorData: { relationshipName, directions } }
+      const notify = () => error('schema__invalid-relationship-alignment', `The relationship name ${ relationshipName } has invalid props, please ensure each relationship has 1 bidirectional relationship prop that is not an inverse or 2 relationship props where one is inverse and neither is bidirectional`, { relationshipName, directions })
 
-      if (!directions) throw error
-      if (directions.length !== 1 && directions.length !== 2) throw error
+      if (!directions) throw notify()
+      if (directions.length !== 1 && directions.length !== 2) throw notify()
       if (directions.length === 1) {
-        if (directions[0].isInverse) throw error
-        if (!directions[0].isBidirectional) throw error
+        if (directions[0].isInverse) throw notify()
+        if (!directions[0].isBidirectional) throw notify()
       }
       if (directions.length === 2) {
-        if ((directions[0].isInverse && !directions[1].isInverse) && (!directions[0].isInverse && directions[1].isInverse)) throw error
-        if (directions[0].isBidirectional || directions[1].isBidirectional) throw error
+        if ((directions[0].isInverse && !directions[1].isInverse) && (!directions[0].isInverse && directions[1].isInverse)) throw notify()
+        if (directions[0].isBidirectional || directions[1].isBidirectional) throw notify()
       }
     }
   }
@@ -179,47 +180,47 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
     case enums.classInfoNames.SchemaProp:
       const schemaProp = /** @type { SchemaProp } */ (propValue)
 
-      if (!schemaProp.dataType) throw { id: 'validateSchemaProp__falsy-data-type', message: 'Please add is (dataType) to schema\'s propertyValue', _errorData: { key: propName, value: schemaProp } }
-      if (!enums.dataTypes[schemaProp.dataType]) throw { id: 'validateSchemaProp__invalid-data-type', message: `Please add is (dataType) that is a valid enums.dataTypes. Valuid options are ${ enums.dataTypes }`, _errorData: { key: propName, value: schemaProp } }
+      if (!schemaProp.dataType) throw error('schema__falsy-data-type', `The schema prop ${ propName } is because its dataType is falsy, Please ensure every data type is valid`, { propName, propValue })
+      if (!enums.dataTypes[schemaProp.dataType]) throw error('schema__invalid-data-type', `The schema prop ${ propName } is invalid because its dataType is not a valid option, please add a dataType that is a valid enums.dataTypes. Valid options include ${ enums.dataTypes }`, { propName, propValue })
 
       if (schemaProp.options) {
-        if (!Array.isArray(schemaProp.options)) throw { id: 'validateSchemaProp__invalid-options', message: 'If you would love to include options please define them as an array', _errorData: { schemaProp } }
+        if (!Array.isArray(schemaProp.options)) throw error('schema__invalid-options', `The schema prop ${ propName } is invalid because the options are invalid, if you would love to include options please define them as an array`, { propName, propValue })
 
         for (const option of schemaProp.options) {
-          if (!enums.schemaPropOptions[option]) throw { id: 'validateSchemaProp__invalid-option', message: `Please include options that are an option thatis one of the following ${ enums.schemaPropOptions }`, _errorData: { schemaProp, option } }
+          if (!enums.schemaPropOptions[option]) throw error('schema__invalid-option', `The schema prop ${ propName } and the option ${ option } is invalid because the schema prop option is invalid, please include valid options from enums.schemaPropOptions, valid options include ${ enums.schemaPropOptions }`, { propName, propValue, option, validOptions: enums.schemaPropOptions })
         }
       }
 
       if (schemaProp.indices) {
         for (const index of schemaProp.indices) {
-          if (!enums.indices[index]) throw { id: 'validateSchemaProp__invalid-index', message: `Please only include valid indices. Valid options are ${ enums.indices }`, _errorData: { key: propName, value: schemaProp, index } }
+          if (!enums.indices[index]) throw error('schema__invalid-index', `The schema prop ${ propName } is invalid because the index ${ index } is invalid, please only include valid indices, the valid indices are ${ enums.indices }`, { propName, propValue, index, validIndices: enums.indices })
         }
       }
       break
     case enums.classInfoNames.SchemaRelationshipProp:
       const schemaRelationshipProp = /** @type { SchemaRelationshipProp } */ (propValue)
 
-      if (isRelationshipProp) throw { id: 'validateSchemaProp___invalid-info-name', message: `Because ${ propName } is a relationship prop it should be structured like a new SchemaProp()`, _errorData: { propName, value: schemaRelationshipProp } }
-      if (schemaRelationshipProp.has !== enums.has.one && schemaRelationshipProp.has !== enums.has.many) throw { id: 'validateSchemaProp___invalid-has', message: 'Please add schema prop that has a "has" property of "one" or "many"', _errorData: { key: propName, value: schemaRelationshipProp } }
-      if (typeof schemaRelationshipProp.nodeName !== 'string' || !schemaRelationshipProp.nodeName) throw { id: 'validateSchemaProp___invalid-node-name', message: 'Please add a schema prop that has a string truthy node name', _errorData: { key: propName, value: schemaRelationshipProp } }
-      if (typeof schemaRelationshipProp.relationshipName !== 'string' || !schemaRelationshipProp.relationshipName) throw { id: 'validateSchemaProp___invalid-relationship-name', message: 'Please add a schema prop that has a string truthy relationship name', _errorData: { key: propName, value: schemaRelationshipProp } }
+      if (isRelationshipProp) throw error('schema__invalid-info-name', `The schema prop ${ propName } is invalid because prop's must be structured like a SchemaProp() and not like a SchemaRelationshipProp()`, { propName, propValue })
+      if (schemaRelationshipProp.has !== enums.has.one && schemaRelationshipProp.has !== enums.has.many) throw error('schema__invalid-has', `The schema prop ${ propName } is invalid because has is not "one" or "many", please ensure "has" is "one" or "many"`, { propName, propValue })
+      if (typeof schemaRelationshipProp.nodeName !== 'string' || !schemaRelationshipProp.nodeName) throw error('schema__invalid-node-name', `The schema prop ${ propName } is invalid because the nodeName is not a truthy string, please ensure each schema prop that has a truthy string nodeName`, { propName, propValue })
+      if (typeof schemaRelationshipProp.relationshipName !== 'string' || !schemaRelationshipProp.relationshipName) throw error('schema__invalid-relationship-name', `The schema prop ${ propName } is invalid because the relationshipName is not a truthy string, please ensure each schema prop that has a truthy string relationshipName`, { propName, propValue })
 
       if (schemaRelationshipProp.options) {
-        if (!Array.isArray(schemaRelationshipProp.options)) throw { id: 'validateSchemaProp___options-not-array', message: 'Please include options that are an array', _errorData: { key: propName, value: schemaRelationshipProp } }
+        if (!Array.isArray(schemaRelationshipProp.options)) throw error('schema__options-not-array', `The schema prop ${ propName } is invalid because options is defined but it is not an array, if you'd love to include options, please include options that are an array`, { propName, propValue })
 
         let includesBidirectional, includesInverse
 
         for (const option of schemaRelationshipProp.options) {
-          if (!enums.schemaRelationshipPropOptions[option]) throw { id: 'validateSchemaProp__invalid-option', message: `Please include options that are an option thatis one of the following ${ enums.schemaPropOptions }`, _errorData: { option, schemaRelationshipProp } }
+          if (!enums.schemaRelationshipPropOptions[option]) throw error('schema__invalid-option', `The schema prop ${ propName } and the option ${ option } is invalid because the schema prop option is invalid, please include valid options from enums.schemaPropOptions, valid options include ${ enums.schemaPropOptions }`, { propName, propValue, option, validOptions: enums.schemaPropOptions })
           if (option === enums.schemaRelationshipPropOptions.inverse) includesInverse = true
           if (option === enums.schemaRelationshipPropOptions.bidirectional) includesBidirectional = true
         }
 
-        if (includesBidirectional && includesInverse) throw { id: 'validateSchemaProp__inverse-and-bidirectional', message: 'Prop may not be inverse and bidirectional at the same time', _errorData: { options: schemaRelationshipProp.options } }
+        if (includesBidirectional && includesInverse) throw error('schema__inverse-and-bidirectional', `The schema prop ${ propName } is invalid because a prop may not have an option of inverse and bidirectional at the same time`, { options: schemaRelationshipProp.options })
       }
       break
     default:
-      if (isRelationshipProp) throw { id: 'validateSchemaProp___invalid-info-name', message: `Because ${ propName } is a relationship prop it should be structured like a new SchemaProp()`, _errorData: { propName, propValue } }
+      if (isRelationshipProp) throw error('schema__invalid-info-name', `The schema prop ${ propName } is invalid because prop's must be structured like a SchemaProp() object`, { propName, propValue })
       break
   }
 }
@@ -231,9 +232,9 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
  * @param { boolean } isRelationshipProp
  */
 function validatePropertyKey (propertyKey, isRelationshipProp) {
-  if (typeof propertyKey !== 'string') throw { id: 'validatePropertyKey___invalid-typeof', message: 'Please add propKey that has a type of string', _errorData: { key: propertyKey } }
-  if (propertyKey.toLowerCase().startsWith('ace')) throw { id: 'validatePropertyKey___ace-start', message: 'Please add propKey that does not start with "ace"', _errorData: { key: propertyKey } }
-  if (!propertyKey.match(/^[A-Za-z\_]+$/)) throw { id: 'validatePropertyKey___invalid-characters', message: 'Please add propKey that has characters a-z or A-Z or underscores (helpful for jsdoc types & db keys)', _errorData: { key: propertyKey } }
-  if (isRelationshipProp && !propertyKey.startsWith('_')) throw { id: 'validatePropertyKey___add-underscore', message: 'Please start relationship props with an underscore, this helps know what props in a query are relationship props', _errorData: { key: propertyKey } }
-  if (!isRelationshipProp && propertyKey.startsWith('_')) throw { id: 'validatePropertyKey___remove-underscore', message: 'Please do not start node props with an underscore, relationship props start with an underscore, this helps know what props in a query are relationship props', _errorData: { key: propertyKey } }
+  if (typeof propertyKey !== 'string') throw error('validatePropertyKey___invalid-typeof', `The property key ${ propertyKey } is invalid because it is not a type of string, please ensure each property key has a type of string`, { propertyKey })
+  if (propertyKey.toLowerCase().startsWith('ace')) throw error('validatePropertyKey___ace-start', `The property key ${propertyKey } is invalid because it starts with "ace", please ensure no property keys start with "ace"`, { propertyKey })
+  if (!propertyKey.match(/^[A-Za-z\_]+$/)) throw error('validatePropertyKey___invalid-characters', `The property key ${ propertyKey } is invalid because it includes invalid characters, please ensure each property key has characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { propertyKey })
+  if (isRelationshipProp && !propertyKey.startsWith('_')) throw error('validatePropertyKey___add-underscore', `The property key ${ propertyKey } is invalid because this is a relationship prop that does not start with an underscore, please start relationship props with an underscore, this helps know what props in a query are relationship props`, { propertyKey })
+  if (!isRelationshipProp && propertyKey.startsWith('_')) throw error('validatePropertyKey___remove-underscore', `The property key ${ propertyKey } is invalid because it is not a relationship prop but it starts with an underscore, please do not start node props with an underscore, relationship props start with an underscore, this helps know what props in a query are relationship props`, { propertyKey })
 }

@@ -1,4 +1,5 @@
 import { _list } from './list.js'
+import { error } from './throw.js'
 import { _query } from './query.js'
 import { td, enums }from '#manifest'
 import { _mutate } from './mutate.js'
@@ -53,7 +54,7 @@ async function getResponse (storage, request) {
 
     // throw b/c unknown pathname provided
     default:
-      throw { id: 'aceDatabase__invalid-url', message: 'Please call with a valid url pathname', _errorData: { pathname: url.pathname, validPathnames: Object.values(endpoints) } }
+      throw error('ace__invalid-url', `The request is invalid b/c the url pathname ${ url.pathname } is invalid, please call with a valid url pathname`, { pathname: url.pathname, validPathnames: endpoints.keys() })
   }
 }
 
@@ -106,7 +107,7 @@ export class AceGraphDatabase {
         case 'DELETE':
           return await getResponse(this.state.storage, request)
         default:
-          throw { id: 'aceDatabase__invalid-method', message: 'Please call with a valid request method', _errorData: { method: request.method } }
+          throw error('ace__invalid-method', `The request method is invalid because the method ${ request.method } is invalid, please call with a valid request method, GET, POST or DELETE`, { method: request.method })
       }
     } catch (e) {
       if (typeof e === 'object') return new Response(JSON.stringify(e), { headers: getHeaders('json'), status: 400 })

@@ -1,3 +1,4 @@
+import { error } from './throw.js'
 import { td, enums, Schema, SchemaProp, SchemaRelationshipProp } from '#manifest'
 import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
 import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, getExactIndexKey, getSortIndexKey, ADD_NOW_DATE, getRelationshipProp, getNow } from './variables.js'
@@ -29,26 +30,26 @@ export async function _mutate (storage, request) {
     const schema = /** @type { Schema } */ (getEntries.get(SCHEMA_KEY) || {})  
     const $nodeUids = /** @type { $nodeUids } */ (getEntries.get(NODE_UIDS_KEY) || {})
     const mapUids = /** @type { MapUids } */ (new Map())
-    const sortIndexAdditions = /**  @type { SortIndexAdditions } */ ([])
+    const sortIndexMap = /**  @type { SortIndexMap } */ (new Map())
     const putEntries = /** @type { PutEntries } */ (new Map())
     const mustPropsMap = getMustPropMap(schema)
 
     for (const action in request) {
       if (action === 'insert' || action === 'upsert') {
-        sertNodes(schema, $nodeUids, mapUids, putEntries, sortIndexAdditions, request, request.insert ? 'insert' : 'upsert')
+        sertNodes(schema, $nodeUids, mapUids, putEntries, sortIndexMap, request, request.insert ? 'insert' : 'upsert')
         sertRelationships(request, schema, mapUids, putEntries)
       }
     }
 
     throwIfMissingMustProps(request, mustPropsMap, putEntries)
 
-    if (sortIndexAdditions.length) await addSortIndicesToGraph(storage, sortIndexAdditions, putEntries)
+    if (sortIndexMap.size) await addSortIndicesToGraph(storage, sortIndexMap, putEntries)
     addUniqueNodesToGraph($nodeUids, putEntries)
 
     return conclude(storage, putEntries, mapUids)
-  } catch (error) {
-    console.log('error', error)
-    throw error
+  } catch (e) {
+    console.log('error', e)
+    throw e
   }
 }
 
@@ -81,11 +82,11 @@ function conclude (storage, putEntries, mapUids) {
  * @param { $nodeUids } $nodeUids 
  * @param { MapUids } mapUids - As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace Graph Database uid as the value.
  * @param { PutEntries } putEntries - The entries we will put
- * @param { SortIndexAdditions } sortIndexAdditions 
+ * @param { SortIndexMap } sortIndexMap 
  * @param { any } rAny 
  * @param { 'insert' | 'upsert' } action 
  */
-function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexAdditions, rAny, action) {
+function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexMap, rAny, action) {
   const sertNodesArray = /** @type { [ td.MutateSertNode, string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate mapUids
 
 
@@ -93,7 +94,7 @@ function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexAdditions, 
     const requestItem = /** @type { td.MutateSertNode } */ (rItem)
 
     if (requestItem.$nodeName) {
-      if (!requestItem.uid || typeof requestItem.uid !== 'string') throw { id: 'mutate__falsy-uid', message: 'Please pass a request item that includes a uid that is a typeof string', errorData: { requestItem } }
+      if (!requestItem.uid || typeof requestItem.uid !== 'string') throw error('mutate__falsy-uid', 'Please pass a request item that includes a uid that is a typeof string', { requestItem })
 
       const graphUid = getGraphUidAndAddToMapUids(schema, mapUids, requestItem.uid)
 
@@ -105,20 +106,26 @@ function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexAdditions, 
         const schemaProp = /** @type { SchemaProp } */ (schema.nodes?.[requestItem.$nodeName][nodePropName])
 
         if (nodePropName !== '$nodeName' && nodePropName !== 'uid') {
-          if (schemaProp?.info?.name !== 'SchemaProp') throw 'schema props only'
+          if (schemaProp?.info?.name !== 'SchemaProp') throw error('mutate__invalid-schema-prop', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because it is not defined in your schema`, { requestItem, nodeName: requestItem.$nodeName, nodePropName, schema })
 
           const _errorData = { schema, schemaProp, requestItem, nodePropName, nodePropValue }
 
-          if (schemaProp.dataType === enums.dataTypes.string && typeof nodePropValue !== 'string') throw { id: 'mutate__invalid-property-value__string', message: 'When the schema property data type is "string", the request typeof must be a "string"', _errorData }
-          if (schemaProp.dataType === enums.dataTypes.isoString && typeof nodePropValue !== 'string') throw { id: 'mutate__invalid-property-value__isoString', message: 'When the schema property data type is "isoString", the request typeof must be a "string"', _errorData }
-          if (schemaProp.dataType === enums.dataTypes.number && typeof nodePropValue !== 'number') throw { id: 'mutate__invalid-property-value__number', message: 'When the schema property data type is "number", the request typeof must be a "number"', _errorData }
-          if (schemaProp.dataType === enums.dataTypes.boolean && typeof nodePropValue !== 'boolean') throw { id: 'mutate__invalid-property-value__boolean', message: 'When the schema property data type is "boolean", the request typeof must be a "boolean"', _errorData }
+          if (schemaProp.dataType === enums.dataTypes.string && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__string', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "string", the request typeof must be a "string"`, _errorData)
+          if (schemaProp.dataType === enums.dataTypes.isoString && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
+          if (schemaProp.dataType === enums.dataTypes.number && typeof nodePropValue !== 'number') throw error('mutate__invalid-property-value__number', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "number", the request typeof must be a "number"`, _errorData)
+          if (schemaProp.dataType === enums.dataTypes.boolean && typeof nodePropValue !== 'boolean') throw error('mutate__invalid-property-value__boolean', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "boolean", the request typeof must be a "boolean"`, _errorData)
 
           const indices = schemaProp?.indices
 
           if (indices) {
             if (indices.includes(enums.indices.exact)) putEntries.set(getExactIndexKey(requestItem.$nodeName, nodePropName, nodePropValue), graphUid)
-            if (indices.includes(enums.indices.sort)) sortIndexAdditions.push([graphUid, requestItem.$nodeName, nodePropName])
+            if (indices.includes(enums.indices.sort)) {
+              const key =`${ requestItem.$nodeName }__${ nodePropName }`
+              const value = sortIndexMap.get(key) || { nodeName: requestItem.$nodeName, nodePropName, uids: /** @type { string[] } */ ([]) }
+
+              value.uids.push(graphUid)
+              sortIndexMap.set(key, value)
+            }
           }
 
           if (schemaProp.dataType === enums.dataTypes.isoString && nodePropValue === ADD_NOW_DATE) requestItem[nodePropName] = getNow()
@@ -156,7 +163,7 @@ function sertRelationships(request, schema, mapUids, putEntries) {
       if (requestItem.$relationshipName) {
         const schemaRelationship = schema.relationships?.[requestItem.$relationshipName]
 
-        if (!schemaRelationship) throw { id: 'mutate__unknown-relationship-name', message: 'Please include a relationship name that is defined in your schema', errorData: { schemaRelationships: schema.relationships, relationshipName: requestItem.$relationshipName } }
+        if (!schemaRelationship) throw error('mutate__unknown-relationship-name', `The relationship name ${ requestItem.$relationshipName } is not defined in your schema, please include a relationship name that is defined in your schema`, { schemaRelationships: schema.relationships, relationshipName: requestItem.$relationshipName })
 
         sertRelationship(putEntries, mapUids, requestItem, schemaRelationship)
       }
@@ -208,18 +215,19 @@ function addRelationshipToNode(direction, putEntries, requestItem, relationshipP
  * @param { Schema } schema 
  * @param { MapUids } mapUids - As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace uid as the value.
  * @param { string } insertUid 
+ * @returns { string }
  */
 function getGraphUidAndAddToMapUids (schema, mapUids, insertUid) {
   let graphUid // this will be the uid that is added to the graph
 
-  if (typeof insertUid !== 'string') throw { id: 'mutate__uid-invalid-type', message: 'Please include only typeof "string" for each uid', _errorData: { schema, uid: insertUid } }
+  if (typeof insertUid !== 'string') throw error('mutate__uid-invalid-type', `The uid ${ insertUid } is invalid because the type is not string, please include only typeof "string" for each uid`, { uid: insertUid, schema })
 
   if (!insertUid.startsWith(REQUEST_UID_PREFIX)) graphUid = insertUid
   else {
-    if (mapUids.get(insertUid)) throw { id: 'mutate__duplicate-uid', message: 'Please do not include duplicate uids for insert', _errorData: { schema, uid: insertUid } } // IF this uid is already in the map (already defined as a uid / not within a prop) => throw
+    if (mapUids.get(insertUid)) throw error('mutate__duplicate-uid', `The uid ${ insertUid } is invalid because it is included as a uid for multiple nodes, please do not include duplicate uids for insert`, { uid: insertUid, schema })
 
-    graphUid = crypto.randomUUID() // set graph uid
-    mapUids.set(insertUid, graphUid) // add uid from insert array as the key and uid that'll go into the db as the value
+    graphUid = crypto.randomUUID()
+    mapUids.set(insertUid, graphUid)
   }
 
   return graphUid
@@ -238,38 +246,33 @@ function overwriteUids (mapUids, requestItem, requestItemKey) {
     const graphUid = mapUids.get(requestItemValue)
 
     if (graphUid) requestItem[requestItemKey] = graphUid
-    else throw { id: 'mutate__invalid-uid', message: 'Each uid, with an ace uid prefix, must be defined in a node', _errorData: { uid: requestItemValue } }
+    else throw error('mutate__invalid-uid', `The uid ${ requestItemValue } is invalid b/c each uid, with an ace uid prefix, must be defined in a node`, { uid: requestItemValue })
   }
 }
 
 
 /**
  * @param { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage Ace
- * @param { SortIndexAdditions } sortIndexAdditions 
+ * @param { SortIndexMap } sortIndexMap 
  * @param { PutEntries } putEntries - The entries we will put
  */
-async function addSortIndicesToGraph (storage, sortIndexAdditions, putEntries) {
-  for (const [ uid, node, prKey ] of sortIndexAdditions) {
-    const values = /** We will store the uid and the value of the pr we'd love to sort by in this array @type { Map<string, string> } */ (new Map())
-    const sortKey = getSortIndexKey(node, prKey) // the key name that will store the sorted uids
-    const uids = putEntries.get(sortKey) || (await storage.get(sortKey)) || [] // the uids that are already sorted or an empty array
+async function addSortIndicesToGraph (storage, sortIndexMap, putEntries) {
+  for (const { nodeName, nodePropName, uids } of sortIndexMap.values()) {
+    let nodes = []
+    const storageUids = []
 
-    uids.push(uid) // add provided uid to the array
+    for (const uid of uids) {
+      const putEntryNode = putEntries.get(uid)
 
-    for (const graphUid of uids) { // loop the array of sorted uids + our new uid
-      const pr = putEntries.get(graphUid) || (await storage.get(graphUid))
-
-      if (!pr) throw { id: 'mutate__invalid-sort-value', message: 'Uid does not exist in your Ace Database and we are trying to sort with it because of the sort index', _errorData: { uid: graphUid, relationship: prKey, node } }
-      if (!pr[prKey]) throw { id: 'mutate__invalid-sort-pr', message: 'Uid does not have the property / relationship we would like to sort by because of @ sort index', _errorData: { uid: graphUid, relationship: prKey, node } }
-      else values.set(graphUid, String(pr[prKey])) // cast just incase prValue is not a string (example: number)
+      if (putEntryNode) nodes.push(putEntryNode)
+      else storageUids.push(uid)
     }
 
-    /** @type { string[] } */
-    const sortedUniqueUids = [ ...values.entries() ] // unique entries
-      .sort((a, b) => Number(a[1] > b[1]) - Number(a[1] < b[1])) // + ascending
-      .map(v => v[0]) // + uids only
+    if (storageUids.length) nodes.push(...(/** @type { Map<string, any> } */ (await storage.get(storageUids)).values()))
 
-    putEntries.set(sortKey, sortedUniqueUids)
+    nodes = nodes.sort((a, b) => Number(a[nodePropName] > b[nodePropName]) - Number(a[nodePropName] < b[nodePropName])) // order ascending
+
+    putEntries.set(getSortIndexKey(nodeName, nodePropName), nodes.map(n => n.uid))
   }
 }
 
@@ -342,14 +345,14 @@ function throwIfMissingMustProps (request, mustPropsMap, putEntries) {
             case 'SchemaProp':
               const schemaProp = /** @type { SchemaProp } */ (prop)
               const rSertNode = /** @type { td.MutateSertNode }*/ (rAnyItem)
-              const error = { id: 'mutate__invalid-property-value', message: `Please ensure all required props are included as the data type in the schema for: "${ key }", "${ propName }", "${ schemaProp.dataType }"`, errorData: { key, requestItem: rSertNode, propName, dataType: schemaProp.dataType } }
+              const letEmKnow = () => error('mutate__invalid-property-value', `Please ensure all required props are included and align with the data type in the schema, an example of where this is not happening yet is: "${ key }", "${ propName }", "${ schemaProp.dataType }"`, { key, requestItem: rSertNode, propName, dataType: schemaProp.dataType })
 
               switch (schemaProp.dataType) {
                 case 'isoString':
-                  if (typeof rSertNode?.[propName] !== 'string') throw error
+                  if (typeof rSertNode?.[propName] !== 'string') throw letEmKnow()
                   break
                 default:
-                  if (typeof rSertNode?.[propName] !== schemaProp.dataType) throw error
+                  if (typeof rSertNode?.[propName] !== schemaProp.dataType) throw letEmKnow()
                   break
               }
               break
@@ -361,7 +364,7 @@ function throwIfMissingMustProps (request, mustPropsMap, putEntries) {
               if (!isBidirectional) validateNotBidirectionalMustProps(isInverse, rSertRelationship, schemaRelationshipProp, putEntries, propName)
               else { // isBidirectional
                 if (!rSertRelationship[getRelationshipProp(schemaRelationshipProp.relationshipName)]?.length) {
-                  throw { id: 'mutate__missing-must-defined-relationship', message: 'Please ensure relationships that must be defined, are defined.', errorData: { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp: rSertRelationship } }
+                  throw error('mutate__missing-must-defined-relationship', 'Please ensure relationships that must be defined, are defined.', { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp: rSertRelationship })
                 }
               }
               break
@@ -404,7 +407,7 @@ function validateNotBidirectionalMustProps (isInverse, rSchemaRelationshipProp, 
     }
   }
 
-  if (!isValid) throw { id: 'mutate__missing-must-defined-relationship', message: 'Please ensure relationships that must be defined, are defined.', errorData: { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp } }
+  if (!isValid) throw error('mutate__missing-must-defined-relationship', `${ propName } is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
 }
 
 
@@ -417,10 +420,9 @@ function validateNotBidirectionalMustProps (isInverse, rSchemaRelationshipProp, 
  * @typedef { Set<string> } DeletetEntries
  *
  * 
- * [ dbUid, node, prKey ].
- * As we find prKey's that according to the schema need a sort index insert we will keep track of them here.
- * Once we get them all together, we sort them, and then add to db.
- * @typedef { [string, string, string][] } SortIndexAdditions
+ * As we find properties that according to the schema need a sort index insert we will keep track of them here.
+ * Once we get them all together, we sort them, and then add to graph
+ * @typedef { Map<string, { nodeName: string, nodePropName: string, uids: string[] }> } SortIndexMap
  *
  * 
  * [ insertUid, node ]

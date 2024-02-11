@@ -19,6 +19,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/queryOptions.js',
     './tsc/src/queryWhere.js',
     './tsc/src/schema.js',
+    './tsc/src/throw.js',
     './tsc/src/variables.js',
   ],
 })

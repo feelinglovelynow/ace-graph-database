@@ -1,3 +1,4 @@
+import { error } from './throw.js'
 import { getAlias } from './getAlias.js'
 import { queryOptionsArray } from './queryOptions.js'
 import { td, enums, Schema, QuerySort, SchemaRelationshipProp } from '#manifest'
@@ -34,9 +35,9 @@ export async function _query (storage, rQuery) {
     if (rQuery.property) response[getAlias(rQuery.format) || rQuery.property] = await getResponse(storage, rQuery) // run requested query
 
     return response
-  } catch (error) {
-    console.log('error', error)
-    throw error
+  } catch (e) {
+    console.log('error', e)
+    throw e
   }
 }
 
@@ -48,7 +49,7 @@ export async function _query (storage, rQuery) {
  * @returns { Promise<any | any[]> }
  */
 async function getResponse (storage, request) {
-  if (!request.info.nodeName) throw ''
+  if (!request.info.nodeName) throw error('query__falsy-info-node-name', 'The request is invalid because request.info.nodeName is falsy', { request })
 
   let response = null // the response that will be returned
   const tempResponse = /** The formatted response @type { td.QueryResponse } */ ({ object: null, array: [] })
@@ -58,10 +59,10 @@ async function getResponse (storage, request) {
     const qAny = /** @type { any } */ (request)
     const query = /** @type { td.QueryRequestUid } */ (qAny)
 
-    if (!query.uid) throw ''
+    if (!query.uid) throw error('query__falsy-uid', 'The request is invalid because request.uid is falsy', { request: query })
     const schema = await storage.get(SCHEMA_KEY)
 
-    if (!schema) throw ''
+    if (!schema) throw error('query__falsy-schema', 'The request is invalid because we queried your graph for a schema but the schema is falsy', { request: query, schema })
 
     await addNodeToResponse(storage, tempResponse, query, { uid: query.uid }, cache, schema) // IF query by uid requested => add node to response by uid
     response = tempResponse.object || null
@@ -71,20 +72,18 @@ async function getResponse (storage, request) {
     const query = /** @type { td.QueryRequestExact } */ (qAny)
 
     if (query.exact) {
-      if (!query.exact) throw ''
+      if (!query.exact) throw error('query__falsy-exact', 'The request is invalid because request.exact is falsy', { request: query })
 
       const indexKey = getExactIndexKey(query.info.nodeName, query.exact.property, query.exact.value) // get uid of node via exact index
-
-      if (!indexKey) throw ''
-
       const getEntries = await storage.get([ SCHEMA_KEY, indexKey ])
       const schema = getEntries.get(SCHEMA_KEY)
 
-      if (!schema) throw ''
+      if (!schema) throw error('query__falsy-schema', 'The request is invalid because we queried your graph for a schema but the schema is falsy', { request: query, schema })
 
       const uid = getEntries.get(indexKey)
 
-      if (uid) {
+      if (!uid) throw error('query__invalid-index', `The request is invalid because the node name ${ query.info.nodeName } and the property ${ query.exact.property } does not have an exact index in your schema`, { request: query }) 
+      else {
         await addNodeToResponse(storage, tempResponse, query, uid, cache, schema) // IF uid found => add node to response by uid
         response = tempResponse.object || null
       }
@@ -117,7 +116,7 @@ async function getResponse (storage, request) {
       uids = allNodes ? allNodes[query.info.nodeName] : [] // IF property is not a sort index => get unsorted node uids from $nodeUids in database
     }
 
-    if (!anySchema) throw ''
+    if (!anySchema) error('query__falsy-schema', 'The request is invalid because we queried your graph for a schema but the schema is falsy', { request: query, schema: anySchema })
 
     const schema = /** @type { Schema } */ (anySchema)
 
@@ -170,7 +169,7 @@ async function addNodeToResponse (storage, response, query, item, cache, schema)
  * @returns { Promise<any> }
  */
 async function addToResponse (storage, item, queryFormatSection, cache, schema, graphRelationship) {
-  if (!schema.nodes?.[queryFormatSection.$info.nodeName]) throw ''
+  if (!schema.nodes?.[queryFormatSection.$info.nodeName]) throw error('query__invalid-query-format-node', `The request is invalid because the node name "${ queryFormatSection.$info.nodeName }" defined @ queryFormatSection.$info.nodeName is not a node defined in your schema`, { queryFormatSection })
 
   let graphNode = item.node
   let isValid = true // IF this is a valid relationship, start true and if any issues arise tip to false
