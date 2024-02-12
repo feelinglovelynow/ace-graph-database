@@ -4,6 +4,7 @@ import { queryOptionsArray } from './queryOptions.js'
 import { td, enums, Schema, QuerySort, SchemaRelationshipProp } from '#manifest'
 import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
 import { NODE_UIDS_KEY, getRelationshipProp, SCHEMA_KEY, getExactIndexKey, getSortIndexKey } from './variables.js'
+import { getAlgorithmOptions } from './getAlgorithmOptions.js'
 
 
 /**
@@ -25,14 +26,14 @@ export async function query (rQuery) {
  * If no results found for a query => the key is null.
  * IF a pr does not have any data => the pr in the response is null.
  * @param { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Database)
- * @param { td.QueryRequest } rQuery
+ * @param { td.QueryRequest } request
  * @returns { Promise<{ [k: string]: any }> }
  */
-export async function _query (storage, rQuery) {
+export async function _query (storage, request) {
   try {
     const response = /** @type { { [k: string]: any } } */ ({})
 
-    if (rQuery.property) response[getAlias(rQuery.format) || rQuery.property] = await getResponse(storage, rQuery) // run requested query
+    if (request.property) response[getAlias(request.format) || request.property] = await getResponse(storage, request) // run requested query
 
     return response
   } catch (e) {
@@ -64,7 +65,7 @@ async function getResponse (storage, request) {
 
     if (!schema) throw error('query__falsy-schema', 'The request is invalid because we queried your graph for a schema but the schema is falsy', { request: query, schema })
 
-    await addNodeToResponse(storage, tempResponse, query, { uid: query.uid }, cache, schema) // IF query by uid requested => add node to response by uid
+    await addNodeToResponse(storage, tempResponse, query, { uid: query.uid }, cache, schema, null) // IF query by uid requested => add node to response by uid
     response = tempResponse.object || null
   // @ts-ignore
   } else if (request.info.name === enums.classInfoNames.Exact) { // IF query using exact index requested
@@ -84,7 +85,7 @@ async function getResponse (storage, request) {
 
       if (!uid) throw error('query__invalid-index', `The request is invalid because the node name ${ query.info.nodeName } and the property ${ query.exact.property } does not have an exact index in your schema`, { request: query }) 
       else {
-        await addNodeToResponse(storage, tempResponse, query, uid, cache, schema) // IF uid found => add node to response by uid
+        await addNodeToResponse(storage, tempResponse, query, uid, cache, schema, null) // IF uid found => add node to response by uid
         response = tempResponse.object || null
       }
     }
@@ -94,7 +95,14 @@ async function getResponse (storage, request) {
     let anySchema = /** @type { any } */ (undefined)
     const qAny = /** @type { any } */ (request)
     const query = /** @type { td.QueryRequestMany } */ (qAny)
+    const hashPublicKeys = /** @type { td.HashPublicKeys } */ ({})
     const sortOptions = /** @type { QuerySort } */ (query.format.$options?.find(o => o.info.name === enums.classInfoNames.QuerySort))
+
+    if (query.hashPublicKeys) {
+      for (const key in query.hashPublicKeys) {
+        hashPublicKeys[key] = await crypto.subtle.importKey('jwk', JSON.parse(query.hashPublicKeys[key]), getAlgorithmOptions('import'), true, ['verify'])
+      }
+    }
 
     if (sortOptions) {
       const indexKey = getSortIndexKey(query.info.nodeName, sortOptions.property) // IF sorting by an property requested => see if property is a sort index
@@ -127,7 +135,8 @@ async function getResponse (storage, request) {
       uids,
       query.format,
       isUsingSortIndexNodes,
-      (node) => addNodeToResponse(storage, tempResponse, query, { node }, cache, schema),
+      hashPublicKeys,
+      (node) => addNodeToResponse(storage, tempResponse, query, { node }, cache, schema, hashPublicKeys),
       () => tempResponse.array,
       (array) => tempResponse.array = array)
 
@@ -146,10 +155,11 @@ async function getResponse (storage, request) {
  * @param { { node?: any, uid?: string } } item 
  * @param { QueryCache } cache
  * @param { Schema } schema
+ * @param { td.HashPublicKeys | null } hashPublicKeys
  * @returns { Promise<void> }
  */
-async function addNodeToResponse (storage, response, query, item, cache, schema) {
-  const responseNode = await addToResponse(storage, item, query.format, cache, schema) // validate / add the relationships in query.format to response
+async function addNodeToResponse (storage, response, query, item, cache, schema, hashPublicKeys) {
+  const responseNode = await addToResponse(storage, item, query.format, cache, schema, null, hashPublicKeys) // validate / add the relationships in query.format to response
 
   if (responseNode) { // IF relationships added to response successfully AND required node present
     if (query.exact || query.uid) response.object = responseNode // IF query.uid OR query.exact requested => set response object
@@ -165,10 +175,11 @@ async function addNodeToResponse (storage, response, query, item, cache, schema)
  * @param { td.QueryRequestFormat } queryFormatSection 
  * @param { QueryCache } cache
  * @param { Schema } schema
- * @param { { key: string, value: any } } [ graphRelationship ]
+ * @param { { key: string, value: any } | null } graphRelationship
+ * @param { td.HashPublicKeys | null } hashPublicKeys
  * @returns { Promise<any> }
  */
-async function addToResponse (storage, item, queryFormatSection, cache, schema, graphRelationship) {
+async function addToResponse (storage, item, queryFormatSection, cache, schema, graphRelationship, hashPublicKeys) {
   if (!schema.nodes?.[queryFormatSection.$info.nodeName]) throw error('query__invalid-query-format-node', `The request is invalid because the node name "${ queryFormatSection.$info.nodeName }" defined @ queryFormatSection.$info.nodeName is not a node defined in your schema`, { queryFormatSection })
 
   let graphNode = item.node
@@ -211,7 +222,7 @@ async function addToResponse (storage, item, queryFormatSection, cache, schema, 
           const rGetPutCache = await getPutCache(storage, cache, relationshipUids)
           const graphRelationship = rGetPutCache.get(relationshipUids[0])
           const relationshipUid = uid === graphRelationship.a ? graphRelationship.b : graphRelationship.a
-          await addRelationshipsToResponse(storage, responseNode, queryFormatPropertyKey, { uid: relationshipUid }, queryFormatPropertyValue, false, cache, schema, { key: uid, value: graphRelationship })
+          await addRelationshipsToResponse(storage, responseNode, queryFormatPropertyKey, { uid: relationshipUid }, queryFormatPropertyValue, false, cache, schema, { key: uid, value: graphRelationship }, hashPublicKeys)
         } else if (queryFormatPropertyValue.$info.name === enums.classInfoNames.Many && relationshipUids?.length) {
           const nodeUids = /** @type { string[] } */ ([])
           const graphRelationships = /** @type { any[] } */ ([])
@@ -246,7 +257,8 @@ async function addToResponse (storage, item, queryFormatSection, cache, schema, 
             nodeUids,
             queryFormatPropertyValue,
             false,
-            (node, i) => addRelationshipsToResponse(storage, responseNode, queryFormatPropertyKey, { node }, queryFormatPropertyValue, true, cache, schema, graphRelationships[i]),
+            hashPublicKeys,
+            (node, i) => addRelationshipsToResponse(storage, responseNode, queryFormatPropertyKey, { node }, queryFormatPropertyValue, true, cache, schema, graphRelationships[i], hashPublicKeys),
             () => responseNode[alias || queryFormatPropertyKey],
             (array) => responseNode[alias || queryFormatPropertyKey] = array)
         }
@@ -269,10 +281,11 @@ async function addToResponse (storage, item, queryFormatSection, cache, schema, 
  * @param { QueryCache } cache
  * @param { Schema } schema
  * @param { { key: string, value: any } } graphRelationship
+ * @param { td.HashPublicKeys | null } hashPublicKeys
  * @returns { Promise<void> }
  */
-async function addRelationshipsToResponse (storage, responseNode, queryFormatPropertyKey, item, queryFormatSection, isArray, cache, schema, graphRelationship) {
-  const relationshipResponseNode = await addToResponse(storage, item, queryFormatSection, cache, schema, graphRelationship) // @ relationship @ query format section, get relationship value
+async function addRelationshipsToResponse (storage, responseNode, queryFormatPropertyKey, item, queryFormatSection, isArray, cache, schema, graphRelationship, hashPublicKeys) {
+  const relationshipResponseNode = await addToResponse(storage, item, queryFormatSection, cache, schema, graphRelationship, hashPublicKeys) // @ relationship @ query format section, get relationship value
 
   if (relationshipResponseNode) {
     const relationshipPropertyName = getAlias(queryFormatSection) || queryFormatPropertyKey
@@ -292,19 +305,20 @@ async function addRelationshipsToResponse (storage, responseNode, queryFormatPro
  * @param { string[] } uids 
  * @param { td.QueryRequestFormat } queryFormatSection 
  * @param { boolean } isUsingSortIndexNodes
+ * @param { td.HashPublicKeys | null } hashPublicKeys
  * @param { (node: any, i: number) => Promise<void> } loopFunction 
  * @param { () => any[] } getArray 
  * @param { (array: any[]) => void } setArray 
  * @returns { Promise<void> }
  */
-async function runFnThenFormatArray (storage, cache, schema, uids, queryFormatSection, isUsingSortIndexNodes, loopFunction, getArray, setArray) {
+async function runFnThenFormatArray(storage, cache, schema, uids, queryFormatSection, isUsingSortIndexNodes, hashPublicKeys, loopFunction, getArray, setArray) {
   const rGetPutCache = await getPutCache(storage, cache, uids)
 
   for (let i = 0; i < uids.length; i++) { // loop nodes and get their uid's
     await loopFunction(rGetPutCache.get(uids[i]), i) // call desired function on each node
   }
 
-  setArray(queryOptionsArray(schema, queryFormatSection, getArray(), isUsingSortIndexNodes))
+  setArray(await queryOptionsArray(schema, queryFormatSection, hashPublicKeys, isUsingSortIndexNodes, getArray()))
 }
 
 

@@ -128,6 +128,27 @@ function construct (self, options, props) {
 }
 
 
+export class MutateHash {
+  info = { name: enums.classInfoNames.MutateHash, MutateHash: true }
+  /** @type { string } */
+  key
+  /** @type { string } */
+  value
+
+  /**
+   * @typedef { object } MutateHashOptions
+   * @property { string } key
+   * @property { string } value
+   *
+   * @param { MutateHashOptions } options
+   */
+  constructor (options) {
+    this.key = options.key
+    this.value = options.value
+  }
+}
+
+
 class QueryMathAsProperty {
   /** @type { string } */
   computeProperty
@@ -312,10 +333,12 @@ export class QueryWhere {
   symbol
   /** @type { [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } */
   items
+  hashPublicKey = /** @type { string | undefined } } */ (undefined)
 
   /**
    * @typedef { object } QueryWhereOptions
    * @property { enums.queryWhereSymbol } symbol
+   * @property { string } [ hashPublicKey ]
    * @property { [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } items
    *
    * @param { QueryWhereOptions } options
@@ -323,6 +346,7 @@ export class QueryWhere {
   constructor (options) {
     this.symbol = options.symbol
     this.items = options.items
+    this.hashPublicKey = options.hashPublicKey
   }
 }
 
@@ -573,11 +597,12 @@ ${ constructorProps }
             const bracketPropName = mustBeDefined ? propName : `[ ${ propName } ]`
             const relationshipDataType = `${ propValue.nodeName }${ propValue.has === 'many' ? '[]' : '' }`
             const relationshipFormatDataType = `${ propValue.relationshipName }${ propValue.nodeName }Format${ propValue.has === 'many' ? 'Many' : 'One' }`
-            const defaultFields = mustBeDefined ?
-              `  /** @type { ${ dataType } } */\n  ${ propName }\n` :
-              `  ${ propName } = /** @type { ${ dataType } | undefined } */ (undefined)\n`
 
-            fieldsInsert += propValue.info.name === 'SchemaProp' ? defaultFields : ''
+            fieldsInsert += propValue.info.name === 'SchemaProp' ?
+              mustBeDefined ?
+                `  /** @type { ${dataType} } */\n  ${propName}\n` :
+                `  ${propName} = /** @type { ${dataType} | undefined } */ (undefined)\n` :
+              ''
 
             constructorQueryFormat += propValue.info.name === 'SchemaProp' ?
               `   * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n` :
@@ -588,13 +613,15 @@ ${ constructorProps }
               `  ${ propName } = /** @type { ${ relationshipFormatDataType } | undefined } */ (undefined)\n`
 
             fieldsNode += propValue.info.name === 'SchemaProp' ?
-              defaultFields :
+              mustBeDefined ?
+                `  /** @type { ${ dataType === 'MutateHash' ? 'string' : dataType } } */\n  ${ propName }\n` :
+                `  ${ propName } = /** @type { ${ dataType === 'MutateHash' ? 'string' : dataType } | undefined } */ (undefined)\n` :
               mustBeDefined ?
                 `  /** @type { ${ relationshipDataType } } */\n  ${ propName }\n` :
                 `  ${ propName } = /** @type { ${ relationshipDataType } | undefined } */ (undefined)\n` 
 
             constuctorNode += propValue.info.name === 'SchemaProp' ?
-              `   * @property { ${ dataType } } ${ bracketPropName }\n` :
+              `   * @property { ${ dataType === 'MutateHash' ? 'string' : dataType } } ${ bracketPropName }\n` :
               `   * @property { ${ relationshipDataType } } ${ bracketPropName }\n`
 
             if (propValue.info.name === 'SchemaProp') {
@@ -658,19 +685,22 @@ export class ${ nodeName }QueryMany {
   property
   /** @type { ${ nodeName }FormatMany } */
   format
+  hashPublicKeys = /** @type { { [key: string]: string } | undefined } */ (undefined)
 
   /**
    * @typedef { object } ${ nodeName }QueryManyOptions
    * @property { string } url - This is the URL to your Ace Graph Database
    * @property { string } property - The response will be an object, the object's property that will hold this data is defined here
-   * @property { ${ nodeName }FormatMany } format - Format the response exactly how you love
+   * @property { ${ nodeName}FormatMany } format - Format the response exactly how you love
+   * @property { { [key: string]: string } } [ hashPublicKeys ] - Set these if you'd love to do a QueryWhere equals 
    *
    * @param { ${ nodeName }QueryManyOptions } options
    */
   constructor (options) {
     this.url = options.url
-    this.property = options.property
     this.format = options.format
+    this.property = options.property
+    this.hashPublicKeys = options.hashPublicKeys
   }
 }
 
@@ -812,7 +842,8 @@ import * as classes from './${ files.classes }'
 
 
 /** QUERY
- * 
+ * @typedef { { [key: string]: CryptoKey } } HashPublicKeys
+ *
  * @typedef { object } QueryRequestUid
  * @property { { name: typeof enums.classInfoNames.Uid, Uid: true, nodeName: string } } info
  * @property { string } property
@@ -839,6 +870,7 @@ import * as classes from './${ files.classes }'
  * @property { never } [ uid ]
  * @property { never } [ exact ]
  * @property { QueryRequestFormatMany } format
+ * @property { { [key: string]: string }  } [ hashPublicKeys ]
  *
  * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.One, One: true, nodeName: string, relationshipName?: string },      uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatOne
  * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string, relationshipName?: string },    uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryLimit | classes.QuerySort | classes.QuerySumAsProperty | classes.QueryAverageAsProperty | classes.QueryMinAmountAsProperty | classes.QueryMaxAmountAsProperty | classes.QueryCountAsProperty |  classes.QueryWhere | classes.QueryWhereGroup | classes.QueryWhereDefined | classes.QueryWhereUndefined | classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatMany
@@ -1015,8 +1047,6 @@ export const ${ enumStr } =  ''\n\n\n`
 
           if (schema?.relationships) {
             for (const relationshipName in schema.relationships) {
-              const options = schema.relationships[relationshipName]
-
               mutateRequest += `classes.${ relationshipName }Insert | `
             }
           }
@@ -1034,6 +1064,7 @@ export const ${ enumStr } =  ''\n\n\n`
 ${ queryRequestTypedef }
  *
  * @typedef { object } MutateRequest
+ * @property { {[key: string]: string } } [ hashPrivateKeys ]
  * @property { ${ mutateRequest ? `(${ mutateRequest })[]` : 'any[]'} } [ insert ]
  */`
 
@@ -1047,6 +1078,8 @@ ${ queryRequestTypedef }
      */
     function getDataType (dataType) {
       switch (dataType) {
+        case 'hash':
+          return 'MutateHash'
         case 'isoString':
           return 'string'
         default:

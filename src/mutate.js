@@ -1,4 +1,6 @@
+import { sign } from './hash.js'
 import { error } from './throw.js'
+import { getAlgorithmOptions } from './getAlgorithmOptions.js'
 import { td, enums, Schema, SchemaProp, SchemaRelationshipProp } from '#manifest'
 import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
 import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, getExactIndexKey, getSortIndexKey, ADD_NOW_DATE, getRelationshipProp, getNow } from './variables.js'
@@ -33,10 +35,17 @@ export async function _mutate (storage, request) {
     const sortIndexMap = /**  @type { SortIndexMap } */ (new Map())
     const putEntries = /** @type { PutEntries } */ (new Map())
     const mustPropsMap = getMustPropMap(schema)
+    const hashPrivateKeys = /** @type { HashPrivateKeys } */ ({})
+
+    if (request.hashPrivateKeys) {
+      for (const key in request.hashPrivateKeys) {
+        hashPrivateKeys[key] = await crypto.subtle.importKey('jwk', JSON.parse(request.hashPrivateKeys[key]), getAlgorithmOptions('import'), true, ['sign'])
+      }
+    }
 
     for (const action in request) {
       if (action === 'insert' || action === 'upsert') {
-        sertNodes(schema, $nodeUids, mapUids, putEntries, sortIndexMap, request, request.insert ? 'insert' : 'upsert')
+        await sertNodes(schema, $nodeUids, mapUids, putEntries, sortIndexMap, hashPrivateKeys, request, request.insert ? 'insert' : 'upsert')
         sertRelationships(request, schema, mapUids, putEntries)
       }
     }
@@ -83,14 +92,14 @@ function conclude (storage, putEntries, mapUids) {
  * @param { MapUids } mapUids - As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace Graph Database uid as the value.
  * @param { PutEntries } putEntries - The entries we will put
  * @param { SortIndexMap } sortIndexMap 
- * @param { any } rAny 
+ * @param { HashPrivateKeys } hashPrivateKeys 
+ * @param { td.MutateRequest } request 
  * @param { 'insert' | 'upsert' } action 
  */
-function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexMap, rAny, action) {
+async function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexMap, hashPrivateKeys, request, action) {
   const sertNodesArray = /** @type { [ td.MutateSertNode, string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate mapUids
 
-
-  for (const rItem of rAny[action]) {
+  for (const rItem of /** @type{ any }*/(request)[action]) {
     const requestItem = /** @type { td.MutateSertNode } */ (rItem)
 
     if (requestItem.$nodeName) {
@@ -110,10 +119,16 @@ function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexMap, rAny, 
 
           const _errorData = { schema, schemaProp, requestItem, nodePropName, nodePropValue }
 
-          if (schemaProp.dataType === enums.dataTypes.string && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__string', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "string", the request typeof must be a "string"`, _errorData)
+          if (schemaProp.dataType === enums.dataTypes.string && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
           if (schemaProp.dataType === enums.dataTypes.isoString && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
           if (schemaProp.dataType === enums.dataTypes.number && typeof nodePropValue !== 'number') throw error('mutate__invalid-property-value__number', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "number", the request typeof must be a "number"`, _errorData)
           if (schemaProp.dataType === enums.dataTypes.boolean && typeof nodePropValue !== 'boolean') throw error('mutate__invalid-property-value__boolean', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "boolean", the request typeof must be a "boolean"`, _errorData)
+
+          if (schemaProp.dataType === enums.dataTypes.hash) {
+            if (typeof nodePropValue !== 'object' || !nodePropValue?.key || !nodePropValue?.value) throw error('mutate__falsy-hash', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because when the schema property data type is "hash" and the mutation request property for ${ nodePropName } does not include a truthy key and valu`, _errorData)
+            if (!hashPrivateKeys?.[nodePropValue.key]) throw error('mutate__falsy-hash-key', `The node name ${ requestItem.$nodeName } with the prop name ${ nodePropName } is invalid because nodePropValue.key does not align with any request.hashPrivateKeys`, _errorData)
+            requestItem[nodePropName] = await sign(hashPrivateKeys[nodePropValue.key], requestItem[nodePropName].value)
+          }
 
           const indices = schemaProp?.indices
 
@@ -135,7 +150,6 @@ function sertNodes (schema, $nodeUids, mapUids, putEntries, sortIndexMap, rAny, 
       sertNodesArray.push([ requestItem, graphUid ]) // add meta data about each value to sertNodesArray array, we need to loop them all first, before adding them to the graph, to populate mapUids
     }
   }
-
 
   for (const [ requestItem, graphUid ] of sertNodesArray) { // loop the uids that we'll add to the graph
     for (const requestItemKey in requestItem) {
@@ -438,4 +452,5 @@ function validateNotBidirectionalMustProps (isInverse, rSchemaRelationshipProp, 
  * @typedef { Map<string, string> } MapUids
  * 
  * @typedef { Map<string, Map<string, (SchemaProp | SchemaRelationshipProp)>> } MustPropsMap 
+ * @typedef { { [key: string]: CryptoKey } } HashPrivateKeys 
  */

@@ -7,11 +7,12 @@ import { td, enums, Schema, QueryWhere, QueryWhereGroup, QueryLimit, QuerySort, 
 /**
  * @param { Schema } schema 
  * @param { td.QueryRequestFormat } queryFormatSection 
- * @param { any[] } array 
+ * @param { td.HashPublicKeys | null } hashPublicKeys 
  * @param { boolean } isUsingSortIndexNodes 
- * @returns { any[] }
+ * @param { any[] } array 
+ * @returns { Promise<any[]> }
  */
-export function queryOptionsArray (schema, queryFormatSection, array, isUsingSortIndexNodes) {
+export async function queryOptionsArray (schema, queryFormatSection, hashPublicKeys, isUsingSortIndexNodes, array) {
   if (queryFormatSection.$options) {
     for (let option of queryFormatSection.$options) {
       let sum = 0
@@ -22,7 +23,7 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
         case enums.classInfoNames.QueryWhereDefined:
         case enums.classInfoNames.QueryWhereUndefined:
         case enums.classInfoNames.QueryWhereGroup:
-          queryWhere(schema, queryFormatSection, array, /** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } */(option))
+          await queryWhere(schema, queryFormatSection, array, hashPublicKeys, /** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } */(option))
           break
 
 
@@ -123,7 +124,7 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
     }
   }
 
-  applyOptionsToRelationships(schema, queryFormatSection, { array })
+  applyOptionsToRelationships(schema, queryFormatSection, { array }, hashPublicKeys)
   return array
 }
 
@@ -132,8 +133,9 @@ export function queryOptionsArray (schema, queryFormatSection, array, isUsingSor
  * @param { Schema } schema 
  * @param { td.QueryRequestFormat } queryFormatSection 
  * @param { any } graphNode 
+ * @param { td.HashPublicKeys | null } hashPublicKeys 
  */
-export function queryOptionsObject (schema, queryFormatSection, graphNode) {
+export function queryOptionsObject (schema, queryFormatSection, graphNode, hashPublicKeys) {
   if (queryFormatSection.$options) {
     for (let option of queryFormatSection.$options) {
       switch (option.info.name) {
@@ -145,7 +147,7 @@ export function queryOptionsObject (schema, queryFormatSection, graphNode) {
     }
   }
 
-  applyOptionsToRelationships(schema, queryFormatSection, { graphNode })
+  applyOptionsToRelationships(schema, queryFormatSection, { graphNode }, hashPublicKeys)
 }
 
 
@@ -153,8 +155,9 @@ export function queryOptionsObject (schema, queryFormatSection, graphNode) {
  * @param { Schema } schema 
  * @param { td.QueryRequestFormat } queryFormatSection 
  * @param { { array?: any[], graphNode?: any } } request
+ * @param { td.HashPublicKeys | null } hashPublicKeys 
  */
-function applyOptionsToRelationships (schema, queryFormatSection, request) {
+function applyOptionsToRelationships (schema, queryFormatSection, request, hashPublicKeys) {
   const map = /** @type { Map<string, { classInfoName: enums.classInfoNames, qfs: td.QueryRequestFormat }> } */ (new Map())
 
   for (const property in queryFormatSection) {
@@ -180,14 +183,14 @@ function applyOptionsToRelationships (schema, queryFormatSection, request) {
   /**
    * @param { any } graphNode 
    */
-  function apply (graphNode) {
-    map.forEach((value, property) => {
+  async function apply (graphNode) {
+    for (const [ property, value ] of map.entries()) {
       const key = getAlias(value.qfs) || property
 
       if (graphNode[key]) {
-        if (value.classInfoName === enums.classInfoNames.One) queryOptionsObject(schema, value.qfs, graphNode[key])
-        else queryOptionsArray(schema, value.qfs, graphNode[key], false)
+        if (value.classInfoName === enums.classInfoNames.One) queryOptionsObject(schema, value.qfs, graphNode[key], hashPublicKeys)
+        else await queryOptionsArray(schema, value.qfs, hashPublicKeys, false, graphNode[key])
       }
-    })
+    }
   }
 }

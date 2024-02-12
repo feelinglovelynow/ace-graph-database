@@ -1,4 +1,5 @@
 export const classInfoNames = new Set([
+  'MutateHash',
   'QuerySort',
   'QueryAliasProperty',
   'QueryDerivedGroup',
