@@ -1,4 +1,5 @@
 export const endpoints = new Map([
+  ['start', '/start'],
   ['setSchema', '/set-schema'],
   ['getSchema', '/get-schema'],
   ['mutate', '/mutate'],

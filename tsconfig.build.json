@@ -1,9 +1,11 @@
 {
   "files": [
+    "src/createJWKs.js",
     "src/delete.js",
     "src/getAlgorithmOptions.js",
     "src/getAlias.js",
     "src/getDerivedValue.js",
+    "src/getGeneratedQueryFormatSection.js",
     "src/getRelationshipNode.js",
     "src/getRelationshipOptionsDetails.js",
     "src/hash.js",
@@ -14,6 +16,7 @@
     "src/queryOptions.js",
     "src/queryWhere.js",
     "src/schema.js",
+    "src/start.js",
     "src/throw.js",
     "src/variables.js",
   ], // all src files (including index.js) (not including .test.js)

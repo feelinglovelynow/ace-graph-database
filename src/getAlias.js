@@ -1,10 +1,10 @@
-import { enums, QueryAliasProperty } from '#manifest'
+import { td, enums } from '#manifest'
 
 
 /**
- * @param { any } [ queryFormatSection ]
+ * @param { any[] } [ $options ]
  * @returns { string | undefined}
  */
-export function getAlias (queryFormatSection) {
-  return /** @type { QueryAliasProperty } */ (queryFormatSection?.$options?.find((/** @type { QueryAliasProperty } */ $option) => $option.info.name === enums.classInfoNames.QueryAliasProperty))?.alias
+export function getAlias ($options) {
+  return $options?.find((/** @type { td.QueryAliasProperty } */ $option) => $option.id === enums.idsQuery.Alias)?.x?.alias
 }

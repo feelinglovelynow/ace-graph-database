@@ -1,196 +1,188 @@
-import { getAlias } from './getAlias.js'
+import { td, enums } from '#manifest'
 import { queryWhere } from './queryWhere.js'
 import { getDerivedValue } from './getDerivedValue.js'
-import { td, enums, Schema, QueryWhere, QueryWhereGroup, QueryLimit, QuerySort, QueryDerivedProperty, QueryWhereDefined, QueryWhereUndefined, QuerySumAsProperty, QueryAverageAsProperty, QueryCountAsProperty, QueryMaxAmountAsProperty, QueryMinAmountAsProperty } from '#manifest'
+import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { Schema } schema 
- * @param { td.QueryRequestFormat } queryFormatSection 
- * @param { td.HashPublicKeys | null } hashPublicKeys 
+ * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryResponse } response 
  * @param { boolean } isUsingSortIndexNodes 
- * @param { any[] } array 
- * @returns { Promise<any[]> }
+ * @param { td.PublicJWKs | null } publicJWKs 
+ * @param { td.Schema } schema 
+ * @returns { Promise<void> }
  */
-export async function queryOptionsArray (schema, queryFormatSection, hashPublicKeys, isUsingSortIndexNodes, array) {
-  if (queryFormatSection.$options) {
-    for (let option of queryFormatSection.$options) {
+export async function implementQueryOptions (generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, schema) {
+  if (generatedQueryFormatSection.x.$options) {
+    for (let option of generatedQueryFormatSection.x.$options) {
       let sum = 0
       let amount = 0
 
-      switch (option.info.name) {
-        case enums.classInfoNames.QueryWhere:
-        case enums.classInfoNames.QueryWhereDefined:
-        case enums.classInfoNames.QueryWhereUndefined:
-        case enums.classInfoNames.QueryWhereGroup:
-          await queryWhere(schema, queryFormatSection, array, hashPublicKeys, /** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } */(option))
+      switch (option.id) {
+        case enums.idsQuery.Find:
+        case enums.idsQuery.Filter:
+        case enums.idsQuery.WhereDefined:
+        case enums.idsQuery.WhereUndefined:
+        case enums.idsQuery.WhereGroup:
+          await queryWhere(generatedQueryFormatSection, response, /** @type { td.QueryFilter | td.QueryWhereDefined | td.QueryWhereUndefined | td.QueryWhereGroup } */(option), publicJWKs, schema)
           break
 
 
-        case enums.classInfoNames.QueryLimit:
-          const queryLimit = /** @type { QueryLimit } */ (option)
+        case enums.idsQuery.Limit:
+          const queryLimit = /** @type { td.QueryLimit } */ (option)
 
-          if (queryLimit.skip && queryLimit.count) array = array.slice(queryLimit.skip, queryLimit.skip + queryLimit.count)
-          else if (queryLimit.skip) array = array.slice(queryLimit.skip)
-          else if (queryLimit.count) array = array.slice(0, queryLimit.count)
+          if (queryLimit.x.skip && queryLimit.x.count) {
+            response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(queryLimit.x.skip, queryLimit.x.skip + queryLimit.x.count)
+            response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(queryLimit.x.skip, queryLimit.x.skip + queryLimit.x.count)
+          } else if (queryLimit.x.skip) {
+            response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(queryLimit.x.skip)
+            response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(queryLimit.x.skip)
+          } else if (queryLimit.x.count) {
+            response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(0, queryLimit.x.count)
+            response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(0, queryLimit.x.count)
+          }
           break
 
 
-        case enums.classInfoNames.QuerySort:
-          const querySort = /** @type { QuerySort } */ (option)
+        case enums.idsQuery.Sort:
+          const querySort = /** @type { td.QuerySort } */ (option)
 
           if (!isUsingSortIndexNodes) { // IF not using a sorted index array => sort items
-            const property = querySort.property
-            array = array.sort((a, b) => Number(a[property] > b[property]) - Number(a[property] < b[property])) // order ascending
-          }
+            const property = querySort.x.property
 
-          if (querySort.direction === enums.sortOptions.dsc) array.reverse() // order descending
-          break
+            const combined = []
 
+            for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+              combined.push({
+                current: response.current[generatedQueryFormatSection.property][i],
+                original: response.original[generatedQueryFormatSection.property][i],
+              })
+            }
 
-        case enums.classInfoNames.QueryDerivedProperty:
-          const queryDerivedProperty = /** @type { QueryDerivedProperty } */ (option)
+            combined.sort((a, b) => {
+              let rSort = 0
+              let x = a.original[property]
+              let y = b.original[property]
 
-          for (let arrayItem of array) {
-            arrayItem[queryDerivedProperty.property] = getDerivedValue(schema, queryDerivedProperty.items, queryDerivedProperty.symbol, queryFormatSection, queryFormatSection.$info.nodeName, arrayItem)
-          }
+              if (x < y) rSort = (querySort.x.direction === enums.sortOptions.dsc) ? 1 : -1
+              if (x > y) rSort = (querySort.x.direction === enums.sortOptions.dsc) ? -1 : 1
 
-          break
+              return rSort
+            })
 
-
-        case enums.classInfoNames.QuerySumAsProperty:
-          const querySumAsProperty = /** @type { QuerySumAsProperty } */ (option)
-
-          for (let arrayItem of array) {
-            sum += arrayItem[querySumAsProperty.computeProperty]
-          }
-
-          for (let arrayItem of array) {
-            arrayItem[querySumAsProperty.newProperty] = sum
-          }
-
-          break
-
-
-        case enums.classInfoNames.QueryAverageAsProperty:
-          const queryAverageAsProperty = /** @type { QueryAverageAsProperty } */ (option)
-
-          for (let arrayItem of array) {
-            sum += arrayItem[queryAverageAsProperty.computeProperty]
-          }
-
-          const average = array.length ? sum / array.length : 0
-
-          for (let arrayItem of array) {
-            arrayItem[queryAverageAsProperty.newProperty] = average
+            response.current = combined.map((value) => value.current)
+            response.original = combined.map((value) => value.original)
           }
           break
 
 
-        case enums.classInfoNames.QueryMinAmountAsProperty:
-          const queryMinAmountAsProperty = /** @type { QueryMinAmountAsProperty } */ (option)
+        case enums.idsQuery.DerivedProperty:
+          const queryDerivedProperty = /** @type { td.QueryDerivedProperty } */ (option)
 
-          for (let arrayItem of array) {
-            if (!amount || arrayItem[queryMinAmountAsProperty.computeProperty] < amount) amount = arrayItem[queryMinAmountAsProperty.computeProperty]
+          for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+            const derivedValue = getDerivedValue(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][i], queryDerivedProperty.x.symbol, queryDerivedProperty.x.items, schema)
+
+            response.original[generatedQueryFormatSection.property][i][queryDerivedProperty.x.newProperty] = derivedValue
+            if (!queryDerivedProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryDerivedProperty.x.newProperty] = derivedValue
           }
 
-          for (let arrayItem of array) {
-            arrayItem[queryMinAmountAsProperty.newProperty] = amount
+          break
+
+
+        case enums.idsQuery.SumAsProperty:
+          const querySumAsProperty = /** @type { td.QuerySumAsProperty } */ (option)
+
+          for (let arrayItem of response.original[generatedQueryFormatSection.property]) {
+            sum += arrayItem[querySumAsProperty.x.computeProperty]
+          }
+
+          for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+            response.original[generatedQueryFormatSection.property][i][querySumAsProperty.x.newProperty] = sum
+            if (!querySumAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][querySumAsProperty.x.newProperty] = sum
+          }
+
+          break
+
+
+        case enums.idsQuery.AverageAsProperty:
+          const originalAvg = response.original[generatedQueryFormatSection.property]
+          const queryAverageAsProperty = /** @type { td.QueryAverageAsProperty } */ (option)
+
+          for (let arrayItem of originalAvg) {
+            sum += arrayItem[queryAverageAsProperty.x.computeProperty]
+          }
+
+          const average = originalAvg.length ? sum / originalAvg.length : 0
+
+          for (let i = 0; i < originalAvg.length; i++) {
+            originalAvg[i][queryAverageAsProperty.x.newProperty] = average
+            if (!queryAverageAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryAverageAsProperty.x.newProperty] = average
           }
           break
 
 
-        case enums.classInfoNames.QueryMaxAmountAsProperty:
-          const queryMaxAmountAsProperty = /** @type { QueryMaxAmountAsProperty } */ (option)
+        case enums.idsQuery.MinAmountAsProperty:
+          const originalMin = response.original[generatedQueryFormatSection.property]
+          const queryMinAmountAsProperty = /** @type { td.QueryMinAmountAsProperty } */ (option)
 
-          for (let arrayItem of array) {
-            if (!amount || arrayItem[queryMaxAmountAsProperty.computeProperty] > amount) amount = arrayItem[queryMaxAmountAsProperty.computeProperty]
+          for (let arrayItem of originalMin) {
+            if (!amount || arrayItem[queryMinAmountAsProperty.x.computeProperty] < amount) amount = arrayItem[queryMinAmountAsProperty.x.computeProperty]
           }
 
-          for (let arrayItem of array) {
-            arrayItem[queryMaxAmountAsProperty.newProperty] = amount
+          for (let i = 0; i < originalMin.length; i++) {
+            originalMin[i][queryMinAmountAsProperty.x.newProperty] = amount
+            if (!queryMinAmountAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryMinAmountAsProperty.x.newProperty] = amount
           }
           break
 
 
-        case enums.classInfoNames.QueryCountAsProperty:
-          const queryCountAsProperty = /** @type { QueryCountAsProperty } */ (option)
+        case enums.idsQuery.MaxAmountAsProperty:
+          const originalMax = response.original[generatedQueryFormatSection.property]
+          const queryMaxAmountAsProperty = /** @type { td.QueryMaxAmountAsProperty } */ (option)
 
-          for (let arrayItem of array) {
-            arrayItem[queryCountAsProperty.newProperty] = array.length
+          for (let arrayItem of originalMax) {
+            if (!amount || arrayItem[queryMaxAmountAsProperty.x.computeProperty] > amount) amount = arrayItem[queryMaxAmountAsProperty.x.computeProperty]
+          }
+
+          for (let i = 0; i < originalMax.length; i++) {
+            originalMax[i][queryMaxAmountAsProperty.x.newProperty] = amount
+            if (!queryMaxAmountAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryMaxAmountAsProperty.x.newProperty] = amount
+          }
+          break
+
+
+        case enums.idsQuery.CountAsProperty:
+          const count = response.original[generatedQueryFormatSection.property].length
+          const queryCountAsProperty = /** @type { td.QueryCountAsProperty } */ (option)
+
+          for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+            response.current[generatedQueryFormatSection.property][i][queryCountAsProperty.x.newProperty] = count
+            if (!queryCountAsProperty.x.isResponseHidden) response.original[generatedQueryFormatSection.property][i][queryCountAsProperty.x.newProperty] = count
+          }
+          break
+
+
+        case enums.idsQuery.PropertyAsResponse:
+          let value
+          const propertyAsResponse = /** @type { td.QueryPropertyAsResponse } */ (option)
+
+          if (!propertyAsResponse.x.relationships?.length) value = response.original[generatedQueryFormatSection.property][0][propertyAsResponse.x.property]
+          else {
+            const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][0], null, schema, propertyAsResponse.x.relationships)
+            value = rRelationshipNode?.node?.[propertyAsResponse.x.property]
+          }
+
+          if (value) {
+            response.current[generatedQueryFormatSection.property] = [value]
+            response.original[generatedQueryFormatSection.property] = [value]
           }
           break        
-        }
-    }
-  }
-
-  applyOptionsToRelationships(schema, queryFormatSection, { array }, hashPublicKeys)
-  return array
-}
-
-
-/**
- * @param { Schema } schema 
- * @param { td.QueryRequestFormat } queryFormatSection 
- * @param { any } graphNode 
- * @param { td.HashPublicKeys | null } hashPublicKeys 
- */
-export function queryOptionsObject (schema, queryFormatSection, graphNode, hashPublicKeys) {
-  if (queryFormatSection.$options) {
-    for (let option of queryFormatSection.$options) {
-      switch (option.info.name) {
-        case enums.classInfoNames.QueryDerivedProperty:
-          const queryDerivedProperty = /** @type { QueryDerivedProperty } */ (option)
-          graphNode[queryDerivedProperty.property] = getDerivedValue(schema, queryDerivedProperty.items, queryDerivedProperty.symbol, queryFormatSection, queryFormatSection.$info.nodeName, graphNode)
-          break
       }
     }
   }
 
-  applyOptionsToRelationships(schema, queryFormatSection, { graphNode }, hashPublicKeys)
-}
-
-
-/**
- * @param { Schema } schema 
- * @param { td.QueryRequestFormat } queryFormatSection 
- * @param { { array?: any[], graphNode?: any } } request
- * @param { td.HashPublicKeys | null } hashPublicKeys 
- */
-function applyOptionsToRelationships (schema, queryFormatSection, request, hashPublicKeys) {
-  const map = /** @type { Map<string, { classInfoName: enums.classInfoNames, qfs: td.QueryRequestFormat }> } */ (new Map())
-
-  for (const property in queryFormatSection) {
-    const qfs = queryFormatSection[property]
-    const classInfoName = qfs?.$info?.name 
-
-    if (classInfoName === enums.classInfoNames.One || classInfoName === enums.classInfoNames.Many) {
-      const optionsCount = Object.keys(qfs?.$options || {}).length
-      if (optionsCount) map.set(property, { classInfoName, qfs: queryFormatSection[property] })
-    }
-  }
-
-  if (map.size) {
-    if (request.graphNode) apply(request.graphNode)
-    else if (request.array) {
-      for (const arrayItem of request.array) {
-        apply(arrayItem)
-      }
-    }
-  }
-
-
-  /**
-   * @param { any } graphNode 
-   */
-  async function apply (graphNode) {
-    for (const [ property, value ] of map.entries()) {
-      const key = getAlias(value.qfs) || property
-
-      if (graphNode[key]) {
-        if (value.classInfoName === enums.classInfoNames.One) queryOptionsObject(schema, value.qfs, graphNode[key], hashPublicKeys)
-        else await queryOptionsArray(schema, value.qfs, hashPublicKeys, false, graphNode[key])
-      }
-    }
+  if (generatedQueryFormatSection.has === enums.has.one || generatedQueryFormatSection.hasOptionsFind || generatedQueryFormatSection.hasPropAsResponse || generatedQueryFormatSection.hasCountOne) {
+    response.current[generatedQueryFormatSection.property] = typeof response.current[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.current[generatedQueryFormatSection.property]?.[0]
+    response.original[generatedQueryFormatSection.property] = typeof response.original[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.original[generatedQueryFormatSection.property]?.[0]
   }
 }

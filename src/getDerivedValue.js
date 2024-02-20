@@ -1,37 +1,36 @@
+import { td, enums } from '#manifest'
 import { getRelationshipNode } from './getRelationshipNode.js'
-import { td, enums, Schema, QueryValue, QueryProperty, QueryDerivedGroup } from '#manifest'
 
 
 /**
- * @param { Schema } schema 
- * @param { (QueryDerivedGroup | QueryProperty | QueryValue)[] } items 
- * @param { enums.queryDerivedSymbol } symbol 
- * @param { td.QueryRequestFormat } queryFormatSection
- * @param { string } nodeName
+ * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
  * @param { { [k: string]: any } } graphNode 
+ * @param { enums.queryDerivedSymbol } symbol 
+ * @param { (td.QueryDerivedGroup | td.QueryProperty | td.QueryValue)[] } items 
+ * @param { td.Schema } schema 
  * @returns { number | string | undefined }
  */
-export function getDerivedValue (schema, items, symbol, queryFormatSection, nodeName, graphNode) {
+export function getDerivedValue (generatedQueryFormatSection, graphNode, symbol, items, schema) {
   const request = /** @type { any } */ ({ value: undefined, using: undefined })
 
   for (const item of items) {
-    switch (item.info.name) {
-      case enums.classInfoNames.QueryDerivedGroup:
-        const queryDerivedGroup = /** @type { QueryDerivedGroup } */ (item)
-        const v = getDerivedValue(schema, queryDerivedGroup.items, queryDerivedGroup.symbol, queryFormatSection, nodeName, graphNode)
-        setDerivedValueAndUsing(request, queryDerivedGroup.symbol, v)
+    switch (item.id) {
+      case enums.idsQuery.DerivedGroup:
+        const queryDerivedGroup = /** @type { td.QueryDerivedGroup } */ (item)
+        const v = getDerivedValue(generatedQueryFormatSection, graphNode, queryDerivedGroup.x.symbol, queryDerivedGroup.x.items, schema)
+        setDerivedValueAndUsing(request, queryDerivedGroup.x.symbol, v)
         break
-      case enums.classInfoNames.QueryValue:
-        const queryValue = /** @type { QueryValue } */ (item)
-        setDerivedValueAndUsing(request, symbol, queryValue.value)
+      case enums.idsQuery.Value:
+        const queryValue = /** @type { td.QueryValue } */ (item)
+        setDerivedValueAndUsing(request, symbol, queryValue.x.value)
         break
-      case enums.classInfoNames.QueryProperty:
-        const queryProperty = /** @type { QueryProperty } */ (item)
+      case enums.idsQuery.Property:
+        const queryProperty = /** @type { td.QueryProperty } */ (item)
 
-        if (!queryProperty.relationships?.length) setDerivedValueAndUsing(request, symbol, graphNode[queryProperty.property])
+        if (!queryProperty.x.relationships?.length) setDerivedValueAndUsing(request, symbol, graphNode[queryProperty.x.property])
         else {
-          const rRelationshipNode = getRelationshipNode(schema, queryProperty.relationships, queryFormatSection, graphNode)
-          if (rRelationshipNode.node?.[queryProperty.property]) setDerivedValueAndUsing(request, symbol, rRelationshipNode.node[queryProperty.property])
+          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, null, schema, queryProperty.x.relationships)
+          if (rRelationshipNode.node?.[queryProperty.x.property]) setDerivedValueAndUsing(request, symbol, rRelationshipNode.node[queryProperty.x.property])
         }
 
         break

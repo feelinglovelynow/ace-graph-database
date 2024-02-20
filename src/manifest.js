@@ -3,17 +3,18 @@
 import util from 'node:util'
 import fs from 'node:fs/promises'
 import { exec } from 'node:child_process'
-import { classInfoNames } from './enums/classInfoNames.js'
 import { dataTypes } from './enums/dataTypes.js'
 import { endpoints } from './enums/endpoints.js'
 import { has } from './enums/has.js'
+import { idsQuery } from './enums/idsQuery.js'
+import { idsSchema } from './enums/idsSchema.js'
 import { indices } from './enums/indices.js'
 import { queryDerivedSymbol } from './enums/queryDerivedSymbol.js'
 import { queryWhereGroupSymbol } from './enums/queryWhereGroupSymbol.js'
+import { queryWhereSymbol } from './enums/queryWhereSymbol.js'
+import { settings } from './enums/settings.js'
 import { schemaPropOptions } from './enums/schemaPropOptions.js'
 import { schemaRelationshipPropOptions } from './enums/schemaRelationshipPropOptions.js'
-import { queryWhereSymbol } from './enums/queryWhereSymbol.js'
-import { reservedQueryFormatKeys } from './enums/reservedQueryFormatKeys.js'
 import { sortOptions } from './enums/sortOptions.js'
 
 
@@ -25,18 +26,18 @@ import { sortOptions } from './enums/sortOptions.js'
  */
 (async function manifest () {
   try {
-    let schema = /** @type { { nodes: { [k: string]: any }, relationships?: { [k: string]: any } } | undefined } */ (undefined)
+    let schema = /** @type { { nodes: { [propName: string]: any }, relationships?: { [k: string]: any } } | undefined } */ (undefined)
     const enumsMap = /** @type { Map<string, Map<string, string> | Set<string>> } */ (new Map())
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
+    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryWhere | QueryFind | QueryFilter | QueryWhereGroup | QueryWhereDefined | QueryWhereUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
 
     const files = {
       dir: '.manifest',
       src: 'src',
       dist: 'dist',
       enums: 'enums.js',
-      classes: 'classes.js',
       tsIndex: 'index.d.ts',
       jsIndex: 'index.js',
       tsconfig: 'tsconfig.json',
@@ -84,11 +85,12 @@ import { sortOptions } from './enums/sortOptions.js'
      * @returns { void }
      */
     function setEnumsMap() {
-      enumsMap.set('classInfoNames', classInfoNames)
       enumsMap.set('dataTypes', dataTypes)
       enumsMap.set('endpoints', endpoints)
       enumsMap.set('has', has)
       enumsMap.set('indices', indices)
+      enumsMap.set('idsSchema', idsSchema)
+      enumsMap.set('idsQuery', idsQuery)
       enumsMap.set('queryDerivedSymbol', queryDerivedSymbol)
       enumsMap.set('queryWhereGroupSymbol', queryWhereGroupSymbol)
       enumsMap.set('schemaPropOptions', schemaPropOptions)
@@ -96,7 +98,7 @@ import { sortOptions } from './enums/sortOptions.js'
       enumsMap.set('queryWhereSymbol', queryWhereSymbol)
       enumsMap.set('nodeNames', new Set(Object.keys(schema?.nodes || {})))
       enumsMap.set('relationshipNames', new Set(Object.keys(schema?.relationships || {})))
-      enumsMap.set('reservedQueryFormatKeys', reservedQueryFormatKeys)
+      enumsMap.set('settings', settings)
       enumsMap.set('sortOptions', sortOptions)
     }
 
@@ -112,783 +114,152 @@ import { sortOptions } from './enums/sortOptions.js'
     }
 
 
-    function getClassesCode () {
-      let code = `import * as enums from './enums.js'
-
-
-/**
- * @param { any } self 
- * @param { any } options 
- * @param { string[] } props 
- */
-function construct (self, options, props) {
-  for (const prop of props) {
-    self[prop] = options[prop]
-  }
-}
-
-
-export class MutateHash {
-  info = { name: enums.classInfoNames.MutateHash, MutateHash: true }
-  /** @type { string } */
-  key
-  /** @type { string } */
-  value
-
-  /**
-   * @typedef { object } MutateHashOptions
-   * @property { string } key
-   * @property { string } value
-   *
-   * @param { MutateHashOptions } options
-   */
-  constructor (options) {
-    this.key = options.key
-    this.value = options.value
-  }
-}
-
-
-class QueryMathAsProperty {
-  /** @type { string } */
-  computeProperty
-  /** @type { string } */
-  newProperty
-
-  /**
-   * @typedef { object } QueryMathAsPropertyOptions
-   * @property { string } computeProperty - The property to apply computations to
-   * @property { string } newProperty The new property to add the computation results to
-   *
-   * @param { QueryMathAsPropertyOptions } options
-   */
-  constructor(options) {
-    this.computeProperty = options.computeProperty
-    this.newProperty = options.newProperty
-  }
-}
-export class QueryAverageAsProperty extends QueryMathAsProperty {
-  info = { name: enums.classInfoNames.QueryAverageAsProperty, QueryAverageAsProperty: true }
-}
-export class QuerySumAsProperty extends QueryMathAsProperty {
-  info = { name: enums.classInfoNames.QuerySumAsProperty, QuerySumAsProperty: true }
-}
-export class QueryMinAmountAsProperty extends QueryMathAsProperty {
-  info = { name: enums.classInfoNames.QueryMinAmountAsProperty, QueryMinAmountAsProperty: true }
-}
-export class QueryMaxAmountAsProperty extends QueryMathAsProperty {
-  info = { name: enums.classInfoNames.QueryMaxAmountAsProperty, QueryMaxAmountAsProperty: true }
-}
-
-
-export class QueryCountAsProperty {
-  info = { name: enums.classInfoNames.QueryCountAsProperty, QueryCountAsProperty: true }
-  /** @type { string } */
-  newProperty
-
-  /** @param { string } newProperty */
-  constructor (newProperty) {
-    this.newProperty = newProperty
-  }
-}
-
-
-export class QuerySort {
-  info = { name: enums.classInfoNames.QuerySort, QuerySort: true }
-  /** @type { 'asc' | 'dsc' } */
-  direction
-  /** @type { string } */
-  property
-
-  /**
-   * @typedef { object } QuerySortOptions
-   * @property { 'asc' | 'dsc' } direction
-   * @property { string } property
-   *
-   * @param { QuerySortOptions } options
-   */
-  constructor (options) {
-    this.direction = options.direction
-    this.property = options.property
-  }
-}
-
-
-export class QueryAliasProperty {
-  info = { name: enums.classInfoNames.QueryAliasProperty, QueryAliasProperty: true }
-  /** @type { string } */
-  alias
-
-  /**
-   * @param { string } alias
-   */
-  constructor (alias) {
-    this.alias = alias
-  }
-}
-
-
-export class QueryLimit {
-  info = { name: enums.classInfoNames.QueryLimit, QueryLimit: true }
-  skip = /** @type { number | undefined } */ (undefined)
-  count = /** @type { number | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } QueryLimitOptions
-   * @property { number } [ skip ]
-   * @property { number } [ count ]
-   *
-   * @param { QueryLimitOptions } options
-   */
-  constructor (options) {
-    construct(this, options, [ 'skip', 'count' ])
-  }
-}
-
-
-export class QueryDerivedProperty {
-  info = { name: enums.classInfoNames.QueryDerivedProperty, QueryDerivedProperty: true }
-  /** @type { string } */
-  property
-  /** @type { enums.queryDerivedSymbol } */
-  symbol
-  /** @type { (QueryProperty | QueryValue | QueryDerivedGroup)[] } */
-  items
-
-  /**
-   * @typedef { object } QueryDerivedPropertyOptions
-   * @property { string } property
-   * @property { enums.queryDerivedSymbol } symbol
-   * @property { (QueryProperty | QueryValue | QueryDerivedGroup)[] } items
-   *
-   * @param { QueryDerivedPropertyOptions } options
-   */
-  constructor (options) {
-    this.property = options.property
-    this.symbol = options.symbol
-    this.items = options.items
-  }
-}
-
-
-export class QueryDerivedGroup {
-  info = { name: enums.classInfoNames.QueryDerivedGroup, QueryDerivedGroup: true }
-  /** @type { enums.queryDerivedSymbol } */
-  symbol
-  /** @type { (QueryProperty | QueryValue | QueryDerivedGroup)[] } */
-  items
-
-  /**
-   * @typedef { object } QueryDerivedGroupOptions
-   * @property { string } property
-   * @property { enums.queryDerivedSymbol } symbol
-   * @property { (QueryProperty | QueryValue | QueryDerivedGroup)[] } items
-   *
-   * @param { QueryDerivedGroupOptions } options
-   */
-  constructor (options) {
-    this.symbol = options.symbol
-    this.items = options.items
-  }
-}
-
-
-export class QueryValue {
-  info = { name: enums.classInfoNames.QueryValue, QueryValue: true }
-  /** @type { any } */
-  value
-
-  /**
-   * @param { any } value
-   */
-  constructor (value) {
-    this.value = value
-  }
-}
-
-
-export class QueryProperty {
-  info = { name: enums.classInfoNames.QueryProperty, QueryProperty: true }
-  relationships = /** @type { string[] | undefined } */ (undefined)
-  /** @type { string } */
-  property
-
-  /**
-   * @typedef { object } QueryPropertyOptions
-   * @property { string[] } [ relationships ]
-   * @property { string } property
-   *
-   * @param { QueryPropertyOptions } options
-   */
-  constructor (options) {
-    this.relationships = options.relationships
-    this.property = options.property
-  }
-}
-
-
-export class QueryWhere {
-  info = { name: enums.classInfoNames.QueryWhere, QueryWhere: true }
-  /** @type { enums.queryWhereSymbol } */
-  symbol
-  /** @type { [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } */
-  items
-  hashPublicKey = /** @type { string | undefined } } */ (undefined)
-
-  /**
-   * @typedef { object } QueryWhereOptions
-   * @property { enums.queryWhereSymbol } symbol
-   * @property { string } [ hashPublicKey ]
-   * @property { [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } items
-   *
-   * @param { QueryWhereOptions } options
-   */
-  constructor (options) {
-    this.symbol = options.symbol
-    this.items = options.items
-    this.hashPublicKey = options.hashPublicKey
-  }
-}
-
-
-export class QueryWhereDefined {
-  info = { name: enums.classInfoNames.QueryWhereDefined, QueryWhereDefined: true }
-  /** @type { QueryProperty } */
-  property
-
-  /**
-   * @param { QueryProperty } property
-   */
-  constructor (property) {
-    this.property = property
-  }
-}
-
-
-export class QueryWhereUndefined {
-  info = { name: enums.classInfoNames.QueryWhereUndefined, QueryWhereUndefined: true }
-  /** @type { QueryProperty } */
-  property
-
-  /**
-   * @param { QueryProperty } property
-   */
-  constructor (property) {
-    this.property = property
-  }
-}
-
-
-export class QueryWhereGroup {
-  info = { name: enums.classInfoNames.QueryWhereGroup, QueryWhereGroup: true }
-  /** @type { enums.queryWhereGroupSymbol } */
-  symbol
-  /** @type { (QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup)[] } */
-  items
-
-  /**
-   * @typedef { object } QueryWhereGroupOptions
-   * @property { enums.queryWhereGroupSymbol } symbol
-   * @property { (QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup)[] } items
-   *
-   * @param { QueryWhereGroupOptions } options
-   */
-  constructor (options) {
-    this.symbol = options.symbol
-    this.items = options.items
-  }
-}
-
-
-export class Schema {
-  nodes = /** @type { { [nodeName: string]: { [propName: string]: SchemaProp | SchemaRelationshipProp } } | undefined } */ (undefined)
-  relationships = /** @type { { [relationshipName: string]: SchemaOneToOne | SchemaOneToMany | SchemaManyToMany } | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } SchemaOptions
-   * @property { { [nodeName: string]: { [propName: string]: SchemaProp | SchemaRelationshipProp } } } [ nodes ]
-   * @property { { [relationshipName: string]: SchemaOneToOne | SchemaOneToMany | SchemaManyToMany } } [ relationships ]
-   *
-   * @param { SchemaOptions } options
-   */
-  constructor (options) {
-    construct(this, options, [ 'nodes', 'relationships' ])
-  }
-}
-
-
-export class SchemaProp {
-  info = { name: enums.classInfoNames.SchemaProp, SchemaProp: true }
-  /** @type { enums.dataTypes } */
-  dataType
-  indices = /** @type { enums.indices[] | undefined } */ (undefined)
-  options = /** @type { enums.schemaPropOptions[] | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } SchemaPropOptions
-   * @property { enums.dataTypes } dataType
-   * @property { enums.indices[] } [ indices ]
-   * @property { enums.schemaPropOptions[] } [ options ]
-   *
-   * @param { SchemaPropOptions } options
-   */
-  constructor (options) {
-    this.dataType = options.dataType
-    this.indices = options.indices
-    this.options = options.options
-  }
-}
-
-
-export class SchemaRelationshipProp {
-  info = { name: enums.classInfoNames.SchemaRelationshipProp, SchemaRelationshipProp: true }
-  /** @type { enums.has } */
-  has
-  /** @type { string } */
-  nodeName
-  /** @type { string } */
-  relationshipName
-  options = /** @type { enums.schemaRelationshipPropOptions[] | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } SchemaRelationshipPropOptions
-   * @property { enums.has } has
-   * @property { string } nodeName
-   * @property { string } relationshipName
-   * @property { enums.schemaRelationshipPropOptions[] } [ options ]
-   *
-   * @param { SchemaRelationshipPropOptions } options
-   */
-  constructor (options) {
-    this.has = options.has
-    this.nodeName = options.nodeName
-    this.relationshipName = options.relationshipName
-\    this.options = options.options
-  }
-}
-
-
-class SchemaXToY {
-  props = /** @type { { [propName: string]: SchemaProp } | undefined } */ (undefined)
-
-  /** @param { { [propName: string]: SchemaProp } } [ props ] */
-  constructor(props) {
-    this.props = props
-  }
-}
-export class SchemaOneToOne extends SchemaXToY {
-  info = { name: enums.classInfoNames.SchemaOneToOne, SchemaOneToOne: true }
-}
-export class SchemaOneToMany extends SchemaXToY {
-  info = { name: enums.classInfoNames.SchemaOneToMany, SchemaOneToMany: true }
-}
-export class SchemaManyToMany extends SchemaXToY {
-  info = { name: enums.classInfoNames.SchemaManyToMany, SchemaManyToMany: true }
-}\n\n\n`
-
-
-      /**
-       * @param { string } prop 
-       * @returns { string }
-       */
-      function getPropDescription (prop) {
-        return `Set to true if you would love to see the property \`${ prop }\` in the response.`
-      }
-
-
-      if (schema?.nodes) {
-        let relationshipClasses = ''
-
-        for (const nodeName in schema.nodes) {
-          const relationshipClassMap = /** Map<formatClassName, {}> @type { Map<string, { propValue: any, capHas: string, relationship: any }> } */ (new Map())
-          const exactTypedefs = /** Common exact typedef code @type { string[] } */ ([])
-          const schemaProps = /** <propName, { }> @type { Map<string, { propValue: any, mustBeDefined: boolean, dataType: string | boolean | number }> } */ (new Map())
-
-          for (const propName in schema.nodes[nodeName]) {
-            const propValue = schema.nodes[nodeName][propName]
-            const dataType = getDataType(propValue.dataType)
-            const mustBeDefined = propValue.options?.includes('defined') || false
-
-            if (propValue.info.name === 'SchemaRelationshipProp') {
-              const capHas = propValue.has === 'one' ? 'One' : 'Many'
-              const formatClassName = `${ propValue.relationshipName }${ propValue.nodeName }Format${ capHas }`
-
-              if (!relationshipClassMap.has(formatClassName)) relationshipClassMap.set(formatClassName, { capHas, propValue, relationship: schema.relationships?.[ propValue.relationshipName ] })
-            }
-
-            schemaProps.set(propName, { propValue, mustBeDefined, dataType })
-            if (propValue.indices?.includes('exact')) exactTypedefs.push(`{ property: '${ propName }', value: ${ dataType } }`)
-          }
-
-          relationshipClassMap.forEach(({ capHas, propValue, relationship }, formatClassName) => {
-            let commaProps = "'_uid', "
-            let fields = '  _uid = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n'
-            let constructorProps = `   * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getPropDescription('_uid') }\n`
-
-            if (relationship.props) {
-              for (const propName in relationship.props) {
-                commaProps += `'${ propName }', `
-                fields += `  ${ propName } = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n`
-                constructorProps += `   * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
-              }
-            }
-
-            fields = fields.slice(0, -1) // remove trailing \n
-            commaProps = commaProps.slice(0, -2) // remove trailing comma
-            constructorProps = constructorProps.slice(0, -1) // remove trailing \n
-
-            relationshipClasses += `export class ${ formatClassName } extends ${ propValue.nodeName }Format${ capHas } {
-  $info = { name: enums.classInfoNames.${ capHas }, ${ capHas }: true, nodeName: '${ propValue.nodeName }', relationshipName: '${ propValue.relationshipName }', ${ formatClassName }: true }
-${ fields }
-
-  /**
-   * @typedef { object } ${ formatClassName }Options
-${ constructorProps }
-   *
-   * @param { ${ propValue.nodeName }Format${ capHas }Options & ${ formatClassName }Options } options
-   */
-  constructor (options) {
-    super(options)
-    construct(this, options, [ ${ commaProps } ])
-  }
-}\n\n\n`
-          })
-
-          const exactTypedef = exactTypedefs.join(' | ')
-
-          const exactString = !exactTypedefs.length ? '' : `\n\nexport class ${ nodeName }QueryExact {
-  info = { name: enums.classInfoNames.Exact, Exact: true, nodeName: '${ nodeName }' }
-  url = /** @type { string | undefined } */ (undefined)
-  property = /** @type { string | undefined } */ (undefined)
-  exact = /** @type { ${ exactTypedef } | undefined } */ (undefined)
-  format = /** @type { ${ nodeName }FormatOne | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } ${ nodeName }QueryExactOptions
-   * @property { string } url - This is the URL to your Ace Graph Database
-   * @property { ${ exactTypedef } } exact - There is an exact index aplied to this node, using this property allows you to find a node using this index
-   * @property { string } property - The response will be an object, the object's property that will hold this data is defined here
-   * @property { ${ nodeName }FormatOne } format - Format the response exactly how you love
-   *
-   * @param { ${ nodeName }QueryExactOptions } options
-   */
-  constructor (options) { construct(this, options, [ 'url', 'exact', 'property', 'format' ]) }
-}`
-
-          const formatOneType = '(QueryDerivedProperty | QueryAliasProperty)[]'
-          const formatManyType = '(QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMaxAmountAsProperty | QueryCountAsProperty | QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup | QueryDerivedProperty | QueryAliasProperty)[]'
-
-          let fieldsNode = ''
-          let fieldsInsert = ''
-          let bindPropsNode = ''
-          let constuctorNode = ''
-          let pipeQueryProps = ''
-          let bindPropsInsert = ''
-          let fieldsQueryFormat = ''
-          let constructorInsert = ''
-          let constructorQueryFormat = ''
-          let commaQueryPropsAndRelationships = ''
-
-          schemaProps.forEach(({ propValue, mustBeDefined, dataType }, propName) => {
-            pipeQueryProps += `'${ propName }' | `
-            commaQueryPropsAndRelationships += `'${ propName }', `
-            bindPropsNode += `    this.${ propName } = options.${ propName }\n` 
-
-            const bracketPropName = mustBeDefined ? propName : `[ ${ propName } ]`
-            const relationshipDataType = `${ propValue.nodeName }${ propValue.has === 'many' ? '[]' : '' }`
-            const relationshipFormatDataType = `${ propValue.relationshipName }${ propValue.nodeName }Format${ propValue.has === 'many' ? 'Many' : 'One' }`
-
-            fieldsInsert += propValue.info.name === 'SchemaProp' ?
-              mustBeDefined ?
-                `  /** @type { ${dataType} } */\n  ${propName}\n` :
-                `  ${propName} = /** @type { ${dataType} | undefined } */ (undefined)\n` :
-              ''
-
-            constructorQueryFormat += propValue.info.name === 'SchemaProp' ?
-              `   * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n` :
-              `   * @property { ${ relationshipFormatDataType } } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
-            
-            fieldsQueryFormat += propValue.info.name === 'SchemaProp' ?
-              `  ${ propName } = /** @type { boolean | QueryAliasProperty | undefined  } */ (undefined)\n` :
-              `  ${ propName } = /** @type { ${ relationshipFormatDataType } | undefined } */ (undefined)\n`
-
-            fieldsNode += propValue.info.name === 'SchemaProp' ?
-              mustBeDefined ?
-                `  /** @type { ${ dataType === 'MutateHash' ? 'string' : dataType } } */\n  ${ propName }\n` :
-                `  ${ propName } = /** @type { ${ dataType === 'MutateHash' ? 'string' : dataType } | undefined } */ (undefined)\n` :
-              mustBeDefined ?
-                `  /** @type { ${ relationshipDataType } } */\n  ${ propName }\n` :
-                `  ${ propName } = /** @type { ${ relationshipDataType } | undefined } */ (undefined)\n` 
-
-            constuctorNode += propValue.info.name === 'SchemaProp' ?
-              `   * @property { ${ dataType === 'MutateHash' ? 'string' : dataType } } ${ bracketPropName }\n` :
-              `   * @property { ${ relationshipDataType } } ${ bracketPropName }\n`
-
-            if (propValue.info.name === 'SchemaProp') {
-              bindPropsInsert += `    this.${ propName } = options.${ propName }\n`
-              constructorInsert += `   * @property { ${ dataType } } ${ bracketPropName }\n`
-            }
-          })
-
-          bindPropsNode = bindPropsNode.slice(0, -1) // remove trailing \n
-          bindPropsInsert = bindPropsInsert.slice(0, -1) // remove trailing \n
-          pipeQueryProps = pipeQueryProps.slice(0, -2) // remove trailing pipe
-          constuctorNode = constuctorNode.slice(0, -1) // remove trailing \n
-          constructorInsert = constructorInsert.slice(0, -1) // remove trailing \n
-          commaQueryPropsAndRelationships = commaQueryPropsAndRelationships.slice(0, -2) // remove trailing comma
-          constructorQueryFormat = constructorQueryFormat.slice(0, -1) // remove trailing \n
-          fieldsQueryFormat = fieldsQueryFormat.slice(0, -1) // remove trailing \n
-
-          code += `/** NODE: ${ nodeName } */
-export class ${ nodeName } {
-  /** @type { string } */
-  uid
-${ fieldsNode }
-  /**
-   * @typedef { object } ${ nodeName }Options
-   * @property { string } uid
-${ constuctorNode }
-   *
-   * @param { ${ nodeName }Options } options
-   */
-  constructor (options) {
-    this.uid = options.uid
-${ bindPropsNode }
-  }
-}
-
-
-export class ${ nodeName }Insert {
-  $nodeName = '${ nodeName }'
-  /** @type { string } */
-  uid
-${ fieldsInsert }
-  /**
-   * @typedef { object } ${ nodeName }InsertOptions
-   * @property { string } uid
-${ constructorInsert }
-   *
-   * @param { ${ nodeName }InsertOptions } options
-   */
-  constructor (options) {
-    this.uid = options.uid
-${ bindPropsInsert }
-  }
-}
-
-
-export class ${ nodeName }QueryMany {
-  info = { name: enums.classInfoNames.Many, Many: true, nodeName: '${ nodeName }' }
-  /** @type { string } */
-  url
-  /** @type { string } */
-  property
-  /** @type { ${ nodeName }FormatMany } */
-  format
-  hashPublicKeys = /** @type { { [key: string]: string } | undefined } */ (undefined)
-
-  /**
-   * @typedef { object } ${ nodeName }QueryManyOptions
-   * @property { string } url - This is the URL to your Ace Graph Database
-   * @property { string } property - The response will be an object, the object's property that will hold this data is defined here
-   * @property { ${ nodeName}FormatMany } format - Format the response exactly how you love
-   * @property { { [key: string]: string } } [ hashPublicKeys ] - Set these if you'd love to do a QueryWhere equals 
-   *
-   * @param { ${ nodeName }QueryManyOptions } options
-   */
-  constructor (options) {
-    this.url = options.url
-    this.format = options.format
-    this.property = options.property
-    this.hashPublicKeys = options.hashPublicKeys
-  }
-}
-
-
-export class ${ nodeName }QueryUid {
-  info = { name: enums.classInfoNames.Uid, Uid: true, nodeName: '${ nodeName }' }
-  /** @type { string } */
-  url
-  /** @type { string } */
-  property
-  /** @type { ${ nodeName }FormatOne } */
-  format
-  /** @type { string } */
-  uid
-
-  /**
-   * @typedef { object } ${ nodeName }QueryUidOptions
-   * @property { string } url - This is the URL to your Ace Graph Database
-   * @property { string } uid - This is the uid you would love to find
-   * @property { string } property - The response will be an object, the object's property that will hold this data is defined here
-   * @property { ${ nodeName }FormatOne } format - Format the response exactly how you love
-   *
-   * @param { ${ nodeName }QueryUidOptions } options
-   */
-  constructor (options) {
-    this.url = options.url
-    this.property = options.property
-    this.format = options.format
-    this.uid = options.uid
-  }
-}${ exactString }
-
-
-export class ${ nodeName }FormatOne {
-  $info = { name: enums.classInfoNames.One, One: true, nodeName: '${ nodeName }' }
-  $options = /** @type { ${ formatOneType } | undefined } */ (undefined)
-  uid = /** @type { boolean | QueryAliasProperty | undefined } */ (undefined)
-${ fieldsQueryFormat }
-
-  /**
-   * @typedef { object } ${ nodeName }FormatOneOptions
-   * @property { ${ formatOneType } } [ $options ]
-   * @property { boolean | QueryAliasProperty } [ uid ] - ${ getPropDescription('uid') }
-${ constructorQueryFormat }
-   *
-   * @param { ${ nodeName }FormatOneOptions } options
-   */
-  constructor (options) {
-    construct(this, options, [ '$options', 'uid', ${ commaQueryPropsAndRelationships } ])
-  }
-}
-
-
-export class ${ nodeName }FormatMany {
-  $info = { name: enums.classInfoNames.Many, Many: true, nodeName: '${ nodeName }' }
-  $options = /** @type { ${ formatManyType } | undefined } */ (undefined)
-  uid = /** @type { boolean | QueryAliasProperty | undefined } */ (undefined)
-${ fieldsQueryFormat }
-
-  /**
-   * @typedef { object } ${ nodeName }FormatManyOptions
-   * @property { ${ formatManyType } } [ $options ]
-   * @property { boolean | QueryAliasProperty } [ uid ] - ${ getPropDescription('uid') }
-${ constructorQueryFormat }
-   *
-   * @param { ${ nodeName }FormatManyOptions } options
-   */
-  constructor (options) {
-    construct(this, options, [ '$options', 'uid', ${ commaQueryPropsAndRelationships } ])
-  }
-}\n\n\n`
-        }
-
-        code += relationshipClasses
-      }
-
-      if (schema?.relationships) {
-        for (const relationshipName in schema.relationships) {
-          const options = schema.relationships[relationshipName]
-
-          let bindProps = `    this.a = options.a\n    this.b = options.b\n`
-          let constructorRelationship = ''
-          let fieldsRelationship = ''
-          
-          if (options.props) {
-            for (const propName in options.props) {
-              const schemaPropOptions = options.props[propName]
-              const dataType = getDataType(schemaPropOptions.dataType)
-              const mustBeDefined = schemaPropOptions.options?.includes('defined') || false
-
-              bindProps += `    this.${ propName } = options.${ propName }\n`
-              constructorRelationship += mustBeDefined ? `\n   * @property { ${ dataType } } ${ propName }` : `\n   * @property { ${ dataType } } [ ${ propName } ]`
-              fieldsRelationship += mustBeDefined ? `\n  /** @type { ${ dataType } } */\n  ${ propName }` : `\n  ${ propName } = /** @type { ${ dataType } | undefined } */ (undefined)`
-            }
-          }
-
-          bindProps = bindProps.slice(0, -1) // remove trailing \n
-
-          code += `/** RELATIONSHIP: ${ relationshipName } */
-export class ${ relationshipName }Insert {
-  $relationshipName = '${ relationshipName }'
-  /** @type { string } */
-  a
-  /** @type { string } */
-  b${ fieldsRelationship }
-
-  /**
-   * @typedef { object } ${ relationshipName }InsertOptions
-   * @property { string } a
-   * @property { string } b${ constructorRelationship }
-   *
-   * @param { ${ relationshipName }InsertOptions } options
-   */
-  constructor (options) {
-${ bindProps }
-  }
-}\n\n\n`
-        }
-      }
-
-      return code.trim()
-    }
-
-
     /**
-     * Manifest classes.js
      * Manifet typedefs.js
      * Manifest enums.js
      * Manifest tsconfig.json
      */
     async function manifestTypedefsEnumsAndTsconfig () {
+
+
       return Promise.all([
-        fs.writeFile(`${ files.dir }/${ files.src }/${ files.classes }`, getClassesCode()),
-
-
-
         fs.writeFile(`${ files.dir }/${ files.src }/${ files.jsTypedefs }`, `import * as enums from './${ files.enums }'
-import * as classes from './${ files.classes }'
 
 
-/** QUERY
- * @typedef { { [key: string]: CryptoKey } } HashPublicKeys
+/** SCHEMA
  *
- * @typedef { object } QueryRequestUid
- * @property { { name: typeof enums.classInfoNames.Uid, Uid: true, nodeName: string } } info
- * @property { string } property
- * @property { string } url
- * @property { enums.nodeNames } node
- * @property { string } [ uid ]
- * @property { never } [ exact ]
- * @property { QueryRequestFormatOne } format
- * 
- * @typedef { object } QueryRequestExact
- * @property { { name: typeof enums.classInfoNames.Exact, Exact: true, nodeName: string } } info
- * @property { string } property
- * @property { string } url
- * @property { enums.nodeNames } node
- * @property { never } [ uid ]
- * @property { { property: string, value: string | boolean | number } } [ exact ]
- * @property { QueryRequestFormatOne } format
+ * @typedef { { nodes: { [nodeName: string]: SchemaNodeValue }, relationships: { [relationshipName: string]: SchemaRelationshipValue } } } Schema
+ * @typedef { { [nodePropName: string]: SchemaProp | SchemaRelationshipProp } } SchemaNodeValue
+ * @typedef { { id: typeof enums.idsSchema.OneToOne | typeof enums.idsSchema.OneToMany | typeof enums.idsSchema.ManyToMany, x?: SchemaRelationshipValueX } } SchemaRelationshipValue
  *
- * @typedef { object } QueryRequestMany
- * @property { { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string } } info
- * @property { string } property
- * @property { string } url
- * @property { enums.nodeNames } node
- * @property { never } [ uid ]
- * @property { never } [ exact ]
- * @property { QueryRequestFormatMany } format
- * @property { { [key: string]: string }  } [ hashPublicKeys ]
+ * @typedef { object } SchemaProp
+ * @property { typeof enums.idsSchema.Prop  } id
+ * @property { SchemaPropX } x
  *
- * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.One, One: true, nodeName: string, relationshipName?: string },      uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatOne
- * @typedef { { [propertyName: string]: any,    $info: { name: typeof enums.classInfoNames.Many, Many: true, nodeName: string, relationshipName?: string },    uid?: boolean | classes.QueryAliasProperty,   $options?: (classes.QueryLimit | classes.QuerySort | classes.QuerySumAsProperty | classes.QueryAverageAsProperty | classes.QueryMinAmountAsProperty | classes.QueryMaxAmountAsProperty | classes.QueryCountAsProperty |  classes.QueryWhere | classes.QueryWhereGroup | classes.QueryWhereDefined | classes.QueryWhereUndefined | classes.QueryDerivedProperty | classes.QueryAliasProperty)[] } } QueryRequestFormatMany
+ * @typedef { object } SchemaRelationshipProp
+ * @property { typeof enums.idsSchema.RelationshipProp } id
+ * @property { SchemaRelationshipPropX } x
  *
- * @typedef { QueryRequestFormatOne | QueryRequestFormatMany } QueryRequestFormat
- * 
- * @typedef { object } QueryResponse
- * @property { any } object
- * @property { any[] } array
+ * @typedef { object } SchemaPropX
+ * @property { enums.dataTypes } dataType
+ * @property { enums.schemaPropOptions[] } [ options ]
+ * @property { enums.indices } [ indices ]
+ *
+ * @typedef { object } SchemaRelationshipPropX
+ * @property { enums.has } has
+ * @property { string } nodeName
+ * @property { string } relationshipName
+ * @property { enums.schemaRelationshipPropOptions[] } [ options ]
+ *
+ * @typedef { object } SchemaRelationshipValueX
+ * @property { { [propName: string]: SchemaProp } } props
  */
 
 
 /** MUTATE
  *
- * @typedef { { put: string[], identity: { [k: string]: string } } } MutateResponse
+ * @typedef { object } MutateRequest
+ * @property { {[jwkName: string]: string } } [ privateJWKs ]
+ * @property { MutateRequestInsertItem[] } [ insert ]
  *
- * @typedef { { $nodeName: string, uid: string, [nodePropName: string]: any } } MutateSertNode
- * @typedef { { $relationshipName: string, [propName: string]: any } } MutateSertRelationship
+ * @typedef { object } MutateRequestInsertNodeDefaultItem
+ * @property { string } id
+ * @property { { [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
+ *
+ * @typedef { object } MutateRequestInsertRelationshipDefaultItem
+ * @property { string } id
+ * @property { { a: string, b: string, [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
+ *
+ * @typedef { object } MutateRequestPrivateJWKOption
+ * @property { 'PrivateJWK' } id
+ * @property { { name: string} } x
+ *
+ * @typedef { { put: string[], identity: { [k: string]: string } } } MutateResponse
+ */
+
+
+/** QUERY
+ *
+ * @typedef { { id: typeof enums.idsQuery.Value, x: { value: any } } } QueryValue
+ * @typedef { { id: typeof enums.idsQuery.Alias, x: { alias: string } } } QueryAliasProperty
+ * @typedef { { id: typeof enums.idsQuery.Limit, x: { skip?: number, count?: number } } } QueryLimit
+ * @typedef { { id: typeof enums.idsQuery.WhereDefined, x: { property: QueryProperty } } } QueryWhereDefined
+ * @typedef { { id: typeof enums.idsQuery.WhereUndefined, x: { property: QueryProperty } } } QueryWhereUndefined
+ * @typedef { { id: typeof enums.idsQuery.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
+ * @typedef { { id: typeof enums.idsQuery.Property, x: { property: string, relationships?: string[] } } } QueryProperty
+ * 
+ * @typedef { object } QueryCountAsProperty
+ * @property { typeof enums.idsQuery.CountAsProperty } id - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { QueryCountAsPropertyX } x
+ * @typedef { object } QueryCountAsPropertyX
+ * @property { string } newProperty - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * 
+ * @typedef { object } QuerySumAsProperty
+ * @property { typeof enums.idsQuery.SumAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
+ * @property { QuerySumAsPropertyX } x
+ * @typedef { object } QuerySumAsPropertyX
+ * @property { string } computeProperty - Add the sum of the \`computeProperty\` of each node in the response
+ * @property { string } newProperty - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ *
+ * @typedef { object } QueryPropertyAsResponse
+ * @property { typeof enums.idsQuery.PropertyAsResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
+ * @property { QueryPropertyAsResponseX } x
+ * @typedef { object } QueryPropertyAsResponseX
+ * @property { string } property - String that is the prop name that you would love to show as the response
+ * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ format: { role: { uid: true } } }\`
+ *
+ * @typedef { object } QueryAverageAsProperty
+ * @property { typeof enums.idsQuery.AverageAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
+ * @property { QueryAverageAsPropertyX } x
+ * @typedef { object } QueryAverageAsPropertyX
+ * @property { string } computeProperty - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response
+ * @property { string } newProperty - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ *
+ * @typedef { object } QueryMinAmountAsProperty
+ * @property { typeof enums.idsQuery.MinAmountAsProperty } id - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { QueryMinAmountAsPropertyX } x
+ * @typedef { object } QueryMinAmountAsPropertyX
+ * @property { string } computeProperty - Find the smallest numerical value of each node's \`computeProperty\` in the response
+ * @property { string } newProperty - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ *
+ * @typedef { object } QueryMaxAmountAsProperty
+ * @property { typeof enums.idsQuery.MaxAmountAsProperty } id - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { QueryMaxAmountAsPropertyX } x
+ * @typedef { object } QueryMaxAmountAsPropertyX
+ * @property { string } computeProperty - Find the largest numerical value of each node's \`computeProperty\` in the response
+ * @property { string } newProperty - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * 
+ * @typedef { { id: typeof enums.idsQuery.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
+ * @typedef { { id: typeof enums.idsQuery.WhereGroup, x: { symbol: enums.queryWhereGroupSymbol, items: (QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup)[] } } } QueryWhereGroup
+ *
+ * @typedef { object } QueryDerivedProperty
+ * @property { typeof enums.idsQuery.DerivedProperty } id - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
+ * @property { QueryDerivedPropertyX } x
+ * @typedef { object } QueryDerivedPropertyX
+ * @property { string } newProperty - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
+ * @property { enums.queryDerivedSymbol } symbol - Derive a value based on the provided \`symbol\` which include basic math symbols found at \`enums.queryDerivedSymbol\`
+ * @property { (QueryProperty | QueryValue | QueryDerivedGroup)[] } items - Collection of items (Value, Property and/or a Derived Group) that will combine based on the \`symbol\`
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ *
+ * @typedef { { id: typeof enums.idsQuery.Where, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryWhere
+ * @typedef { { id: typeof enums.idsQuery.Find, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFind
+ * @typedef { { id: typeof enums.idsQuery.Filter, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFilter
+ *
+ * @typedef { { [key: string]: CryptoKey } } PublicJWKs
+ *
+ * @typedef { { nodeName: string, type: string } } ParsedQueryId
+ * 
+ * @typedef { { current: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
+ *
+ * @typedef { { id: string,   x: QueryRequestFormatX } } QueryRequestFormat
+ * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty,   $options?: QueryRequestFormatOptions } } QueryRequestFormatX
+ * @typedef ${ queryRequestFormatOptions } QueryRequestFormatOptions
+ * @typedef { { property: string,   schemaProperty: string,   aliasProperty?: string,   has: enums.has,   nodeName: string,   relationshipName?: string,   x: QueryRequestFormatX, hasOptionsFind: boolean, hasPropAsResponse: boolean, hasCountOne: boolean } } QueryRequestFormatGenerated
  */
 
 
@@ -934,16 +305,14 @@ import * as classes from './${ files.classes }'
  */
 
 
-${ manifestNodeTypedefs() }
-`),
+${ getSchemaTypedefs() }`),
 
         fs.writeFile(`${ files.dir }/${ files.src }/${ files.enums }`, getEnumsCode()),
 
         fs.writeFile(`${ files.dir }/${ files.src }/${ files.tsconfig }`, `{
   "files": [
     "${ files.jsTypedefs }",
-    "${ files.enums }",
-    "${ files.classes }"
+    "${ files.enums }"
   ],
   "compilerOptions": {
     "allowJs": true,
@@ -970,8 +339,8 @@ ${ manifestNodeTypedefs() }
      */
     async function manifestIndex () {
       return Promise.all([
-        fs.writeFile(`${files.dir}/${files.dist}/${files.tsIndex}`, `export * as enums from './enums.d.ts'\nexport * as td from './typedefs.d.ts'\nexport *  from './classes.d.ts'`),
-        fs.writeFile(`${ files.dir }/${ files.dist }/${ files.jsIndex }`, `export * as enums from './enums.js'\nexport * as td from './typedefs.js'\nexport *  from './classes.js'`)
+        fs.writeFile(`${ files.dir }/${ files.dist }/${ files.tsIndex }`, `export * as enums from './enums.d.ts'\nexport * as td from './typedefs.d.ts'`),
+        fs.writeFile(`${ files.dir }/${ files.dist }/${ files.jsIndex }`, `export * as enums from './enums.js'\nexport * as td from './typedefs.js'`)
       ])
     }
 
@@ -1026,49 +395,149 @@ export const ${ enumStr } =  ''\n\n\n`
      * Manifest the typedefs for all nodes in schema
      * @returns { string }
      */
-    function manifestNodeTypedefs () {
+    function getSchemaTypedefs () {
       let typedefs = ''
-      let mutateRequest = ''
-      let queryRequestArray = []
+      let queryResultDefault = ''
       let nodeNames = /** @type { string[] } */ ([])
-      let queryRequestTypedef = ' * @typedef { QueryRequestUid | QueryRequestExact | QueryRequestMany } QueryRequest'
 
-      if (schema?.nodes) {
-        for (const nodeName in schema.nodes) {
-          let hasExactIndex = false
-
-          nodeNames.push(nodeName)
-          mutateRequest += `classes.${ nodeName }Insert | `
-
-          for (const schemaNodePropName in schema.nodes[nodeName]) {
-            const options = schema.nodes[nodeName][schemaNodePropName]
-            if (options.indices?.includes('exact')) hasExactIndex = true
-          }
-
-          if (schema?.relationships) {
-            for (const relationshipName in schema.relationships) {
-              mutateRequest += `classes.${ relationshipName }Insert | `
+      if (schema?.relationships) {
+        for (const relationshipName in schema.relationships) {
+          let mutateRelationship = `/** MUTATE: ${ relationshipName }
+ * 
+ * @typedef { object } ${ relationshipName }MutateRequestInsertItem
+ * @property { '${ relationshipName }' } id
+ * @property { { _uid: string, a: string, b: string, `
+        
+          if (schema.relationships[relationshipName]?.x) {
+            for (const propName in schema.relationships[relationshipName].x) {
+              mutateRelationship += `${ propName }: ${ getDataType(schema.relationships[relationshipName][propName]?.x.dataType) }, `
             }
           }
 
-          if (hasExactIndex) queryRequestArray.push(`classes.${ nodeName }QueryUid | classes.${ nodeName }QueryExact | classes.${ nodeName }QueryMany`)
-          else queryRequestArray.push(`classes.${ nodeName }QueryUid | classes.${ nodeName }QueryMany`)
+          mutateRelationship = mutateRelationship.slice(0, -2) // remove trailing comma
+
+          mutateRelationship += ` } } x\n */\n\n\n`
+
+          typedefs += mutateRelationship
+        }
+      }
+
+      if (schema?.nodes) {
+        let formatPipes = ''
+        let queryFormatNodes = ''
+        let nodeQueryFormatPropsMap = new Map()
+
+        for (const nodeName in schema.nodes) {
+          let nodeRelationshipProps = ''
+          formatPipes += `${ nodeName }Format | `
+          queryFormatNodes += `${ nodeName }Format | `
+
+          let mutateNode = `/** MUTATE: ${ nodeName }
+ * 
+ * @typedef { object } ${ nodeName }MutateRequestInsertItem
+ * @property { '${ nodeName }' } id
+ * @property { { uid: string, `
+
+          nodeNames.push(nodeName)
+          let nodeQueryFormatProps = ` * @property { boolean | QueryAliasProperty } [ uid ] - ${ getPropDescription('uid') }\n`
+
+          for (const propName in schema.nodes[nodeName]) {
+            const schemaProp = schema.nodes[nodeName][propName]
+
+            switch (schemaProp.id) {
+              case 'Prop':
+                mutateNode += `${ propName }${ schemaProp.x.options?.includes('defined') ? '' : '?' }: ${ getDataType(schemaProp.x.dataType) }, `
+                nodeQueryFormatProps += ` * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
+                break
+              case 'RelationshipProp':
+                const relationshipPropName = getRelationshipQueryFormatProp(nodeName, propName)
+
+                let queryProps = ''
+
+                nodeQueryFormatProps += ` * @property { ${ relationshipPropName }X } [ ${ propName } ] - ${ getPropDescription(propName) }\n`
+
+                for (const relationshipNodePropName in schema.nodes[schemaProp.x.nodeName]) {
+                  const rSchemaProp = schema.nodes[schemaProp.x.nodeName][relationshipNodePropName]
+
+                  queryProps += rSchemaProp.id === 'Prop' ?
+                    `\n * @property { boolean | QueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getPropDescription(relationshipNodePropName) }` :
+                    `\n * @property { ${ getRelationshipQueryFormatProp(schemaProp.x.nodeName, relationshipNodePropName) }X } [ ${ relationshipNodePropName } ] - Return object to see ${ relationshipNodePropName } properties`
+                }
+
+                nodeRelationshipProps += `/** QUERY: ${ relationshipPropName }
+ * 
+ * @typedef { object } ${ relationshipPropName }
+ * @property { '${ relationshipPropName }' } id
+ * @property { ${ relationshipPropName }X } x
+ * 
+ * @typedef { object } ${ relationshipPropName }X
+ * @property ${ queryRequestFormatOptions } [ $options ]
+ * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getPropDescription('_uid')}${ queryProps }
+ */\n\n\n`
+                break
+            }
+          }
+
+          mutateNode += `$options?: MutateRequestPrivateJWKOption[] } } x
+ */\n\n\n`
+
+          nodeQueryFormatProps = nodeQueryFormatProps.slice(0, -2) // remove trailing \n
+
+          nodeQueryFormatPropsMap.set(nodeName, nodeQueryFormatProps)
+
+          typedefs += `/** QUERY: ${ nodeName }Format
+ * 
+ * @typedef { object } ${ nodeName }Format
+ * @property { '${ nodeName }' } id
+ * @property { ${ nodeName }FormatX } x
+ * 
+ * @typedef { object } ${ nodeName }FormatX
+ * @property ${ queryRequestFormatOptions } [ $options ]
+${ nodeQueryFormatProps }
+ */
+
+
+${ mutateNode }${ nodeRelationshipProps }`
         }
 
-        if (nodeNames.length) queryRequestTypedef = ' * @typedef { ' + queryRequestArray.join(' | ') + ' } QueryRequest'
-        if (mutateRequest.length) mutateRequest = mutateRequest.slice(0, -3) // remove trailing pipe
+        if (queryFormatNodes) queryFormatNodes = queryFormatNodes.slice(0, -2) // remove trailing |
+        if (formatPipes) formatPipes = formatPipes.slice(0, -2) // remove trailing pipe
+
+        queryResultDefault = `
+ * @typedef { object } QueryRequestDefault
+ * @property { string } property
+ * @property { string } url
+ * @property { ${ queryFormatNodes } } format
+ * @property { { [key: string]: string }  } [ publicJWKs ]
+ * `
+      } else {
+        queryResultDefault = `
+ * @typedef { object } QueryRequestDefault
+ * @property { string } property
+ * @property { string } url
+ * @property { QueryRequestFormat } format
+ * @property { { [key: string]: string }  } [ publicJWKs ]
+ * `
       }
 
       typedefs += `/** MULTIPLE NODES
  *
-${ queryRequestTypedef }
- *
- * @typedef { object } MutateRequest
- * @property { {[key: string]: string } } [ hashPrivateKeys ]
- * @property { ${ mutateRequest ? `(${ mutateRequest })[]` : 'any[]'} } [ insert ]
+ * @typedef { QueryRequestDefault } QueryRequest
+ * ${ queryResultDefault }
+ * @typedef { (MutateRequestInsertNodeDefaultItem | MutateRequestInsertRelationshipDefaultItem) } MutateRequestInsertItem
  */`
 
       return typedefs
+    }
+
+
+    /**
+     * @param { string } nodeName
+     * @param { string } propName
+     * @returns { string }
+     */
+    function getRelationshipQueryFormatProp (nodeName, propName) {
+      return `${ nodeName }__${ propName }__Format`
     }
 
 
@@ -1079,12 +548,19 @@ ${ queryRequestTypedef }
     function getDataType (dataType) {
       switch (dataType) {
         case 'hash':
-          return 'MutateHash'
         case 'isoString':
           return 'string'
         default:
           return dataType
       }
+    }
+
+    /**
+     * @param { string } prop 
+     * @returns { string }
+     */
+    function getPropDescription (prop) {
+      return `Set to true if you would love to see the property \`${ prop }\` in the response.`
     }
 
     console.log(`🌟 Manifested enums, typedefs (js) and types (ts)!`)

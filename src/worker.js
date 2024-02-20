@@ -6,6 +6,7 @@ import { _mutate } from './mutate.js'
 import { endpoints } from './enums/endpoints.js'
 import { _deleteDataAndSchema } from './delete.js'
 import { _setSchema, _getSchema } from './schema.js'
+import { _start } from './start.js'
 
 
 /**
@@ -18,6 +19,11 @@ async function getResponse (storage, request) {
   const url = new URL(request.url)
 
   switch (url.pathname) {
+    // start
+    case enums.endpoints.start:
+      return new Response(JSON.stringify(await _start(storage)), { headers: getHeaders('json') })
+
+
     // schema
     case enums.endpoints.setSchema:
       return new Response(JSON.stringify(await _setSchema(storage, await request.json())), { headers: getHeaders('json') })

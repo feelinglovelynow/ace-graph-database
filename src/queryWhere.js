@@ -1,38 +1,55 @@
 import { verify } from './hash.js'
 import { error } from './throw.js'
+import { td, enums } from '#manifest'
 import { getRelationshipNode } from './getRelationshipNode.js'
-import { td, enums, Schema, QueryWhere, QueryWhereDefined, QueryWhereUndefined, QueryWhereGroup, QueryProperty, QueryValue, SchemaProp } from '#manifest'
-import { getAlgorithmOptions } from './getAlgorithmOptions.js'
 
 
 /**
- * @param { Schema } schema 
- * @param { td.QueryRequestFormat } queryFormatSection
- * @param { any[] } array 
- * @param { td.HashPublicKeys | null } hashPublicKeys 
- * @param { QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup } $where 
+ * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryResponse } response 
+ * @param { td.QueryFind | td.QueryFilter | td.QueryWhereDefined | td.QueryWhereUndefined | td.QueryWhereGroup } $where 
+ * @param { td.PublicJWKs | null } publicJWKs 
+ * @param { td.Schema } schema 
  */
-export async function queryWhere (schema, queryFormatSection, array, hashPublicKeys, $where) {
-  for (let iArray = array.length - 1; iArray >= 0; iArray--) {
-    if ($where.info.name === enums.classInfoNames.QueryWhere) await splice(/** @type { QueryWhere } */($where), iArray, array[iArray], true)
-    else if ($where.info.name === enums.classInfoNames.QueryWhereDefined) await splice(/** @type { QueryWhereDefined } */($where), iArray, array[iArray], true)
-    else if ($where.info.name === enums.classInfoNames.QueryWhereUndefined) await splice(/** @type { QueryWhereUndefined } */($where), iArray, array[iArray], true)
-    else if ($where.info.name === enums.classInfoNames.QueryWhereGroup) await loopGroupQueries(/** @type { QueryWhereGroup } */($where), iArray, true)
+export async function queryWhere (generatedQueryFormatSection, response, $where, publicJWKs, schema) {
+  const original = response.original[generatedQueryFormatSection.property]
+
+  if (Array.isArray(original)) {
+    for (let iArray = original.length - 1; iArray >= 0; iArray--) {
+      let spliced = false
+
+      if ($where.id === enums.idsQuery.WhereGroup) {
+        spliced = await loopGroupQueries(($where), iArray, true)
+      } else if ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.Filter || $where.id === enums.idsQuery.WhereDefined || $where.id === enums.idsQuery.WhereUndefined) {
+        spliced = await verifySplice($where, iArray, original[iArray], true)
+      }
+
+      if (!spliced && $where.id === enums.idsQuery.Find) {
+        response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iArray] ]
+        response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iArray] ]
+        break
+      }
+    }
+
+    if (Array.isArray(original) && !original.length) {
+      response.current[generatedQueryFormatSection.property] = null
+      response.original[generatedQueryFormatSection.property] = null
+    }
   }
     
   /**
-   * @param { QueryWhereGroup } queryWhereGroup 
+   * @param { td.QueryWhereGroup } queryWhereGroup 
    * @param { number } iArray 
    * @param { boolean } doSplice 
    */
   async function loopGroupQueries (queryWhereGroup, iArray, doSplice) {
     let spliced = false
 
-    switch (queryWhereGroup.symbol) {
+    switch (queryWhereGroup.x.symbol) {
       case enums.queryWhereGroupSymbol.or:
         let keepArrayItem = false
 
-        for (const query of queryWhereGroup.items) {
+        for (const query of queryWhereGroup.x.items) {
           if ((await innerLoopGroupQueries(query)) === false) { // on first splice false => keepArrayItem <- true
             keepArrayItem = true
             break
@@ -41,13 +58,15 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
 
         if (!keepArrayItem) {
           spliced = true
-          if (doSplice) array.splice(iArray, 1)			
+          if (doSplice) {
+            splice(iArray)		
+          }	
         }
         break
       case enums.queryWhereGroupSymbol.and:
         let removeArrayItem = false
 
-        for (const query of queryWhereGroup.items) {
+        for (const query of queryWhereGroup.x.items) {
           if ((await innerLoopGroupQueries(query)) === true) { // on first splice true => removeArrayItem <- true
             removeArrayItem = true
             break
@@ -56,27 +75,27 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
 
         if (removeArrayItem) {
           spliced = true
-          if (doSplice) array.splice(iArray, 1)
+          if (doSplice) splice(iArray)
         }
         break
     }
 
 
     /**
-     * @param { QueryWhereGroup | QueryWhere | QueryWhereDefined | QueryWhereUndefined } query 
+     * @param { td.QueryWhereGroup | td.QueryWhere | td.QueryWhereDefined | td.QueryWhereUndefined } query 
      * @returns { Promise<boolean | undefined> }
      */
     async function innerLoopGroupQueries (query) {
       let r
 
-      switch (query.info.name) {
-        case enums.classInfoNames.QueryWhere:
-        case enums.classInfoNames.QueryWhereDefined:
-        case enums.classInfoNames.QueryWhereUndefined:
-          r = await splice(/** @type { QueryWhere | QueryWhereDefined | QueryWhereUndefined } */(query), iArray, array[iArray], false)
+      switch (query.id) {
+        case enums.idsQuery.Where:
+        case enums.idsQuery.WhereDefined:
+        case enums.idsQuery.WhereUndefined:
+          r = await verifySplice(query, iArray, original[iArray], false)
           break
-        case enums.classInfoNames.QueryWhereGroup:
-          r = loopGroupQueries(/** @type { QueryWhereGroup } */(query), iArray, false)
+        case enums.idsQuery.WhereGroup:
+          r = loopGroupQueries(query, iArray, false)
           break
       }
 
@@ -88,31 +107,41 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
 
 
   /**
-   * @param { QueryWhere | QueryWhereDefined | QueryWhereUndefined } $where 
+   * @param { number } index 
+   */
+  function splice (index) {
+    response.current[generatedQueryFormatSection.property].splice(index, 1)
+    response.original[generatedQueryFormatSection.property].splice(index, 1)
+  }
+
+
+  /**
+   * @param { any } $where 
    * @param { number } arrayIndex 
    * @param { any } graphNode 
    * @param { boolean } doSplice 
    * @returns { Promise<boolean> }
    */
-  async function splice ($where, arrayIndex, graphNode, doSplice) {
+  async function verifySplice ($where, arrayIndex, graphNode, doSplice) {
     let spliced = false
 
     const bye = () => {
-      if (doSplice) array.splice(arrayIndex, 1)
+      if (doSplice) splice(arrayIndex)
       spliced = true
     }
 
-    if ($where.info.name === enums.classInfoNames.QueryWhereDefined) {
-      if (typeof getValue(/** @type { QueryWhereDefined } */($where).property, graphNode).value === 'undefined') bye()
-    } else if ($where.info.name === enums.classInfoNames.QueryWhereUndefined) {
-      if (typeof getValue(/** @type { QueryWhereDefined } */($where).property, graphNode).value !== 'undefined') bye()
+    if ($where.id === enums.idsQuery.WhereDefined) {
+      if (typeof getValue(/** @type { td.QueryWhereDefined } */($where).x.property, graphNode).value === 'undefined') bye()
+    } else if ($where.id === enums.idsQuery.WhereUndefined) {
+      if (typeof getValue(/** @type { td.QueryWhereDefined } */($where).x.property, graphNode).value !== 'undefined') bye()
     } else {
-      const qw = /** @type { QueryWhere } */ ($where)
-      const left = getValue(qw.items[0], graphNode)
-      const right = getValue(qw.items[1], graphNode)
+      const qw = /** @type { td.QueryWhere } */ ($where)
+
+      const left = getValue(qw.x.items[0], graphNode)
+      const right = getValue(qw.x.items[1], graphNode)
       const isUndefined = typeof left.value === 'undefined' || typeof right.value === 'undefined'
 
-      switch (qw.symbol) {
+      switch (qw.x.symbol) {
         case enums.queryWhereSymbol.equals:
           if (isUndefined) bye()
           else if (isLeftOrRightHash(qw, left, right, 0)) { if (!(await isHashValid(qw, left, right, 0))) bye() }
@@ -154,9 +183,9 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
 
 
   /**
-   * @typedef { { type: null | 'QueryValue' | 'QueryProperty', value: any, qfs: null | td.QueryRequestFormat } } GetValueResponse
+   * @typedef { { type: null | 'QueryValue' | 'QueryProperty', value: any, generatedQueryFormatSection: null | td.QueryRequestFormatGenerated } } GetValueResponse
    * 
-   * @param { QueryProperty | QueryValue } propertyOrValue 
+   * @param { td.QueryProperty | td.QueryValue } propertyOrValue 
    * @param { any } graphNode
    * @returns { GetValueResponse }
    */
@@ -164,29 +193,29 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
     let response = /** @type { GetValueResponse } */ ({
       type: null,
       value: null,
-      qfs: null
+      generatedQueryFormatSection: null
     })
 
-    switch (propertyOrValue.info.name) {
-      case enums.classInfoNames.QueryValue:
-        const queryValue = /** @type { QueryValue } */ (propertyOrValue)
+    switch (propertyOrValue.id) {
+      case enums.idsQuery.Value:
+        const queryValue = /** @type { td.QueryValue } */ (propertyOrValue)
 
-        response.value = queryValue.value
+        response.value = queryValue.x.value
         response.type = 'QueryValue'
-        response.qfs = queryFormatSection
+        response.generatedQueryFormatSection = generatedQueryFormatSection
         break
-      case enums.classInfoNames.QueryProperty:
-        const queryProperty = /** @type { QueryProperty } */ (propertyOrValue)
+      case enums.idsQuery.Property:
+        const queryProperty = /** @type { td.QueryProperty } */ (propertyOrValue)
 
-        if (!queryProperty.relationships?.length) {
-          response.value = graphNode[queryProperty.property]
-          response.qfs = queryFormatSection
+        if (!queryProperty.x.relationships?.length) {
+          response.value = graphNode[queryProperty.x.property]
+          response.generatedQueryFormatSection = generatedQueryFormatSection
         } else {
-          const rRelationshipNode = getRelationshipNode(schema, queryProperty.relationships, queryFormatSection, graphNode)
+          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, null, schema, queryProperty.x.relationships)
 
-          if (rRelationshipNode?.node?.[queryProperty.property]) {
-            response.qfs = rRelationshipNode.qfs
-            response.value = rRelationshipNode.node[queryProperty.property]
+          if (rRelationshipNode?.node?.[queryProperty.x.property]) {
+            response.generatedQueryFormatSection = rRelationshipNode.generatedQueryFormatSection
+            response.value = rRelationshipNode.node[queryProperty.x.property]
           }
         }
 
@@ -199,7 +228,7 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
 
 
   /**
-   * @param { QueryWhere } qw 
+   * @param { td.QueryWhere } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } sideIndex 
@@ -207,22 +236,23 @@ export async function queryWhere (schema, queryFormatSection, array, hashPublicK
    */
   function isLeftOrRightHash (qw, left, right, sideIndex) {
     const side = sideIndex === 0 ? left : right
-    return Boolean(side.type === 'QueryProperty' && side.qfs && /** @type { SchemaProp } */ (schema.nodes?.[side.qfs.$info.nodeName]?.[/** @type { QueryProperty } */(qw.items[sideIndex]).property])?.dataType === enums.dataTypes.hash)
+    return Boolean(side.type === 'QueryProperty' && side.generatedQueryFormatSection && /** @type { td.SchemaProp } */ (schema.nodes?.[side.generatedQueryFormatSection.nodeName]?.[/** @type { td.QueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
   }
 
+
   /**
-   * @param { QueryWhere } qw 
+   * @param { td.QueryWhere } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } base64Index
    * @returns { Promise<boolean> }
    */
   async function isHashValid (qw, left, right, base64Index) {
-    if (!qw.hashPublicKey) throw error('query__falsy-hash-public-key', 'The request is invalid because qw.hashPublicKey is falsy', { qw })
-    if (!hashPublicKeys?.[qw.hashPublicKey]) throw error('query__invalid-hash-public-key', 'The request is invalid because qw.hashPublicKey does not match request.hashPublicKeys', { qw })
+    if (!qw.x.publicJWK) throw error('query__falsy-hash-public-key', 'The request is invalid because qw.x.hashPublicKey is falsy', { qw })
+    if (!publicJWKs?.[qw.x.publicJWK]) throw error('query__invalid-hash-public-key', 'The request is invalid because qw.x.hashPublicKey does not match request.publicJWKs', { qw })
 
     return base64Index ?
-      await verify(hashPublicKeys[qw.hashPublicKey], left.value, right.value) :
-      await verify(hashPublicKeys[qw.hashPublicKey], right.value, left.value)
+      await verify(publicJWKs[qw.x.publicJWK], left.value, right.value) :
+      await verify(publicJWKs[qw.x.publicJWK], right.value, left.value)
   }
 }
