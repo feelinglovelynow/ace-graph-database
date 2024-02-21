@@ -4,7 +4,7 @@ import { getAlias } from './getAlias.js'
 
 
 /**
- * @typedef { { hasOptionsFind: boolean, hasPropAsResponse: boolean, hasCountOne: boolean } } OptionsBooleans
+ * @typedef { { hasOptionsFind: boolean, hasValueAsResponse: boolean, hasCountOne: boolean } } OptionsBooleans
  * 
  * @param { td.QueryRequestFormatX } x
  * @param { string } schemaPropName
@@ -62,7 +62,7 @@ export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaPr
  * @returns { OptionsBooleans }
  */ 
 function getOptionsBoolean (x) {
-  const booleans = { hasOptionsFind: false, hasPropAsResponse: false, hasCountOne: false }
+  const booleans = { hasOptionsFind: false, hasValueAsResponse: false, hasCountOne: false }
 
   if (x?.$options?.length) {
     for (const $o of x.$options) {
@@ -70,12 +70,18 @@ function getOptionsBoolean (x) {
         case enums.idsQuery.Find:
           booleans.hasOptionsFind = true
           break
-        case enums.idsQuery.PropertyAsResponse:
-          booleans.hasPropAsResponse = true
-          break
         case enums.idsQuery.Limit:
           if ($o.x.count === 1) booleans.hasCountOne = true
           break
+        case enums.idsQuery.SumAsResponse:
+        case enums.idsQuery.CountAsResponse:
+        case enums.idsQuery.AverageAsResponse:
+        case enums.idsQuery.MinNodeAsResponse:
+        case enums.idsQuery.MaxNodeAsResponse:
+        case enums.idsQuery.PropertyAsResponse:
+        case enums.idsQuery.MinAmountAsResponse:
+        case enums.idsQuery.MaxAmountAsResponse:
+          booleans.hasValueAsResponse = true
       }
     }
   }

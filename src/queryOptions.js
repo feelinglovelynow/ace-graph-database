@@ -15,9 +15,6 @@ import { getRelationshipNode } from './getRelationshipNode.js'
 export async function implementQueryOptions (generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, schema) {
   if (generatedQueryFormatSection.x.$options) {
     for (let option of generatedQueryFormatSection.x.$options) {
-      let sum = 0
-      let amount = 0
-
       switch (option.id) {
         case enums.idsQuery.Find:
         case enums.idsQuery.Filter:
@@ -27,162 +24,334 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
           await queryWhere(generatedQueryFormatSection, response, /** @type { td.QueryFilter | td.QueryWhereDefined | td.QueryWhereUndefined | td.QueryWhereGroup } */(option), publicJWKs, schema)
           break
 
-
         case enums.idsQuery.Limit:
-          const queryLimit = /** @type { td.QueryLimit } */ (option)
-
-          if (queryLimit.x.skip && queryLimit.x.count) {
-            response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(queryLimit.x.skip, queryLimit.x.skip + queryLimit.x.count)
-            response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(queryLimit.x.skip, queryLimit.x.skip + queryLimit.x.count)
-          } else if (queryLimit.x.skip) {
-            response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(queryLimit.x.skip)
-            response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(queryLimit.x.skip)
-          } else if (queryLimit.x.count) {
-            response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(0, queryLimit.x.count)
-            response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(0, queryLimit.x.count)
-          }
+          doLimit(option)
           break
-
 
         case enums.idsQuery.Sort:
-          const querySort = /** @type { td.QuerySort } */ (option)
-
-          if (!isUsingSortIndexNodes) { // IF not using a sorted index array => sort items
-            const property = querySort.x.property
-
-            const combined = []
-
-            for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-              combined.push({
-                current: response.current[generatedQueryFormatSection.property][i],
-                original: response.original[generatedQueryFormatSection.property][i],
-              })
-            }
-
-            combined.sort((a, b) => {
-              let rSort = 0
-              let x = a.original[property]
-              let y = b.original[property]
-
-              if (x < y) rSort = (querySort.x.direction === enums.sortOptions.dsc) ? 1 : -1
-              if (x > y) rSort = (querySort.x.direction === enums.sortOptions.dsc) ? -1 : 1
-
-              return rSort
-            })
-
-            response.current = combined.map((value) => value.current)
-            response.original = combined.map((value) => value.original)
-          }
+          doSort(option)
           break
-
 
         case enums.idsQuery.DerivedProperty:
-          const queryDerivedProperty = /** @type { td.QueryDerivedProperty } */ (option)
-
-          for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-            const derivedValue = getDerivedValue(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][i], queryDerivedProperty.x.symbol, queryDerivedProperty.x.items, schema)
-
-            response.original[generatedQueryFormatSection.property][i][queryDerivedProperty.x.newProperty] = derivedValue
-            if (!queryDerivedProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryDerivedProperty.x.newProperty] = derivedValue
-          }
-
+          doDerivedProperty(option)
           break
-
 
         case enums.idsQuery.SumAsProperty:
-          const querySumAsProperty = /** @type { td.QuerySumAsProperty } */ (option)
-
-          for (let arrayItem of response.original[generatedQueryFormatSection.property]) {
-            sum += arrayItem[querySumAsProperty.x.computeProperty]
-          }
-
-          for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-            response.original[generatedQueryFormatSection.property][i][querySumAsProperty.x.newProperty] = sum
-            if (!querySumAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][querySumAsProperty.x.newProperty] = sum
-          }
-
+          doSumAsProperty(option) 
           break
-
 
         case enums.idsQuery.AverageAsProperty:
-          const originalAvg = response.original[generatedQueryFormatSection.property]
-          const queryAverageAsProperty = /** @type { td.QueryAverageAsProperty } */ (option)
-
-          for (let arrayItem of originalAvg) {
-            sum += arrayItem[queryAverageAsProperty.x.computeProperty]
-          }
-
-          const average = originalAvg.length ? sum / originalAvg.length : 0
-
-          for (let i = 0; i < originalAvg.length; i++) {
-            originalAvg[i][queryAverageAsProperty.x.newProperty] = average
-            if (!queryAverageAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryAverageAsProperty.x.newProperty] = average
-          }
+          doAverageAsProperty(option)
           break
 
+        case enums.idsQuery.AverageAsResponse:
+          doAverageAsResponse(option)
+          break
 
         case enums.idsQuery.MinAmountAsProperty:
-          const originalMin = response.original[generatedQueryFormatSection.property]
-          const queryMinAmountAsProperty = /** @type { td.QueryMinAmountAsProperty } */ (option)
-
-          for (let arrayItem of originalMin) {
-            if (!amount || arrayItem[queryMinAmountAsProperty.x.computeProperty] < amount) amount = arrayItem[queryMinAmountAsProperty.x.computeProperty]
-          }
-
-          for (let i = 0; i < originalMin.length; i++) {
-            originalMin[i][queryMinAmountAsProperty.x.newProperty] = amount
-            if (!queryMinAmountAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryMinAmountAsProperty.x.newProperty] = amount
-          }
+          doMinAmountAsProperty(option)
           break
 
+        case enums.idsQuery.MinAmountAsResponse:
+          doMinAmountAsResponse(option)
+          break
+
+        case enums.idsQuery.MinNodeAsResponse:
+          doMinNodeAsResponse(option)
+          break
 
         case enums.idsQuery.MaxAmountAsProperty:
-          const originalMax = response.original[generatedQueryFormatSection.property]
-          const queryMaxAmountAsProperty = /** @type { td.QueryMaxAmountAsProperty } */ (option)
-
-          for (let arrayItem of originalMax) {
-            if (!amount || arrayItem[queryMaxAmountAsProperty.x.computeProperty] > amount) amount = arrayItem[queryMaxAmountAsProperty.x.computeProperty]
-          }
-
-          for (let i = 0; i < originalMax.length; i++) {
-            originalMax[i][queryMaxAmountAsProperty.x.newProperty] = amount
-            if (!queryMaxAmountAsProperty.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][queryMaxAmountAsProperty.x.newProperty] = amount
-          }
+          doMaxAmountAsProperty(option)
           break
 
+        case enums.idsQuery.MaxAmountAsResponse:
+          doMaxAmountAsResponse(option)
+          break
+
+        case enums.idsQuery.MaxNodeAsResponse:
+          doMaxNodeAsResponse(option)
+          break
 
         case enums.idsQuery.CountAsProperty:
-          const count = response.original[generatedQueryFormatSection.property].length
-          const queryCountAsProperty = /** @type { td.QueryCountAsProperty } */ (option)
-
-          for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-            response.current[generatedQueryFormatSection.property][i][queryCountAsProperty.x.newProperty] = count
-            if (!queryCountAsProperty.x.isResponseHidden) response.original[generatedQueryFormatSection.property][i][queryCountAsProperty.x.newProperty] = count
-          }
+          doCountAsProperty(option)
           break
 
+        case enums.idsQuery.CountAsResponse:
+          doCountAsResponse()
+          break
 
         case enums.idsQuery.PropertyAsResponse:
-          let value
-          const propertyAsResponse = /** @type { td.QueryPropertyAsResponse } */ (option)
+          doPropertyAsResponse(option)
+          break
 
-          if (!propertyAsResponse.x.relationships?.length) value = response.original[generatedQueryFormatSection.property][0][propertyAsResponse.x.property]
-          else {
-            const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][0], null, schema, propertyAsResponse.x.relationships)
-            value = rRelationshipNode?.node?.[propertyAsResponse.x.property]
-          }
-
-          if (value) {
-            response.current[generatedQueryFormatSection.property] = [value]
-            response.original[generatedQueryFormatSection.property] = [value]
-          }
+        case enums.idsQuery.SumAsResponse:
+          doSumAsResponse(option)
           break        
       }
     }
   }
 
-  if (generatedQueryFormatSection.has === enums.has.one || generatedQueryFormatSection.hasOptionsFind || generatedQueryFormatSection.hasPropAsResponse || generatedQueryFormatSection.hasCountOne) {
+  if (generatedQueryFormatSection.has === enums.has.one || generatedQueryFormatSection.hasOptionsFind || generatedQueryFormatSection.hasValueAsResponse || generatedQueryFormatSection.hasCountOne) {
     response.current[generatedQueryFormatSection.property] = typeof response.current[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.current[generatedQueryFormatSection.property]?.[0]
     response.original[generatedQueryFormatSection.property] = typeof response.original[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.original[generatedQueryFormatSection.property]?.[0]
+  }
+
+
+  /**  @param { td.QueryLimit } option */
+  function doLimit (option) {
+    if (option.x.skip && option.x.count) {
+      response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(option.x.skip, option.x.skip + option.x.count)
+      response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(option.x.skip, option.x.skip + option.x.count)
+    } else if (option.x.skip) {
+      response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(option.x.skip)
+      response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(option.x.skip)
+    } else if (option.x.count) {
+      response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(0, option.x.count)
+      response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(0, option.x.count)
+    }
+  }
+
+
+  /**  @param { td.QuerySort } option */
+  function doSort (option) {
+    if (!isUsingSortIndexNodes) { // IF not using a sorted index array => sort items
+      const property = option.x.property
+
+      const combined = []
+
+      for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+        combined.push({
+          current: response.current[generatedQueryFormatSection.property][i],
+          original: response.original[generatedQueryFormatSection.property][i],
+        })
+      }
+
+      combined.sort((a, b) => {
+        let rSort = 0
+        let x = a.original[property]
+        let y = b.original[property]
+
+        if (x < y) rSort = (option.x.direction === enums.sortOptions.dsc) ? 1 : -1
+        if (x > y) rSort = (option.x.direction === enums.sortOptions.dsc) ? -1 : 1
+
+        return rSort
+      })
+
+      response.current = combined.map((value) => value.current)
+      response.original = combined.map((value) => value.original)
+    }
+  }
+
+
+  /**  @param { td.QueryDerivedProperty } option */
+  function doDerivedProperty (option) {
+    for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+      const derivedValue = getDerivedValue(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][i], option.x.symbol, option.x.items, schema)
+
+      response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = derivedValue
+      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = derivedValue
+    }
+  }
+
+
+  /**  @param { td.QuerySumAsProperty } option */
+  function doSumAsProperty (option) {
+    let sum = 0
+
+    for (let arrayItem of response.original[generatedQueryFormatSection.property]) {
+      sum += arrayItem[option.x.computeProperty]
+    }
+
+    for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+      response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = sum
+      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = sum
+    }
+  }
+
+
+  /**  @param { td.QuerySumAsResponse } option */
+  function doSumAsResponse (option) {
+    let sum = 0
+
+    for (let arrayItem of response.original[generatedQueryFormatSection.property]) {
+      sum += arrayItem[option.x.property]
+    }
+
+    response.current[generatedQueryFormatSection.property] = [sum]
+    response.original[generatedQueryFormatSection.property] = [sum]
+  }
+
+
+  /**  @param { td.QueryAverageAsProperty } option */
+  function doAverageAsProperty (option) {
+    let sum = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let arrayItem of original) {
+      sum += arrayItem[option.x.computeProperty]
+    }
+
+    const average = original.length ? sum / original.length : 0
+
+    for (let i = 0; i < original.length; i++) {
+      original[i][option.x.newProperty] = average
+      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = average
+    }
+  }
+
+
+  /**  @param { td.QueryAverageAsResponse } option */
+  function doAverageAsResponse (option) {
+    let sum = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let arrayItem of original) {
+      sum += arrayItem[option.x.property]
+    }
+
+    const average = original.length ? sum / original.length : 0
+
+    response.current[generatedQueryFormatSection.property] = [average]
+    response.original[generatedQueryFormatSection.property] = [average]
+  }
+
+
+  /**  @param { td.QueryMinAmountAsProperty } option */
+  function doMinAmountAsProperty (option) {
+    let amount = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let arrayItem of original) {
+      if (!amount || arrayItem[option.x.computeProperty] < amount) amount = arrayItem[option.x.computeProperty]
+    }
+
+    for (let i = 0; i < original.length; i++) {
+      original[i][option.x.newProperty] = amount
+      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = amount
+    }
+  }
+
+
+  /**  @param { td.QueryMinAmountAsResponse } option */
+  function doMinAmountAsResponse (option) {
+    let amount = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let arrayItem of original) {
+      if (!amount || arrayItem[option.x.property] < amount) amount = arrayItem[option.x.property]
+    }
+
+    response.current[generatedQueryFormatSection.property] = [amount]
+    response.original[generatedQueryFormatSection.property] = [amount]
+  }
+
+
+  /**  @param { td.QueryMinNodeAsResponse } option */
+  function doMinNodeAsResponse (option) {
+    let node = null
+    let amount = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let i = 0; i < original.length; i++) {
+      if (!node || original[i][option.x.property] < amount) {
+        amount = original[i][option.x.property]
+        node = response.current[generatedQueryFormatSection.property][i]
+      }
+    }
+
+    response.current[generatedQueryFormatSection.property] = [node]
+    response.original[generatedQueryFormatSection.property] = [node]
+  }
+
+
+  /**  @param { td.QueryMaxNodeAsResponse } option */
+  function doMaxNodeAsResponse (option) {
+    let node = null
+    let amount = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let i = 0; i < original.length; i++) {
+      if (!node || original[i][option.x.property] > amount) {
+        amount = original[i][option.x.property]
+        node = response.current[generatedQueryFormatSection.property][i]
+      }
+    }
+
+    response.current[generatedQueryFormatSection.property] = [node]
+    response.original[generatedQueryFormatSection.property] = [node]
+  }
+
+
+  /**  @param { td.QueryMaxAmountAsProperty } option */
+  function doMaxAmountAsProperty (option) {
+    let amount = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let arrayItem of original) {
+      if (!amount || arrayItem[option.x.computeProperty] > amount) amount = arrayItem[option.x.computeProperty]
+    }
+
+    for (let i = 0; i < original.length; i++) {
+      original[i][option.x.newProperty] = amount
+      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = amount
+    }
+  }
+
+
+  /**  @param { td.QueryMaxAmountAsResponse } option */
+  function doMaxAmountAsResponse (option) {
+    let amount = 0
+
+    const original = response.original[generatedQueryFormatSection.property]
+
+    for (let arrayItem of original) {
+      if (!amount || arrayItem[option.x.property] > amount) amount = arrayItem[option.x.property]
+    }
+
+    response.current[generatedQueryFormatSection.property] = [amount]
+    response.original[generatedQueryFormatSection.property] = [amount]
+  }
+
+
+  /**  @param { td.QueryCountAsProperty } option */
+  function doCountAsProperty (option) {
+    const count = response.original[generatedQueryFormatSection.property].length
+
+    for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+      response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = count
+      if (!option.x.isResponseHidden) response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = count
+    }
+  }
+
+
+  function doCountAsResponse () {
+    if (response.original[generatedQueryFormatSection.property].length) {
+      response.current[generatedQueryFormatSection.property] = [response.original[generatedQueryFormatSection.property].length]
+      response.original[generatedQueryFormatSection.property] = [response.original[generatedQueryFormatSection.property].length]
+    }
+  }
+
+
+  /**  @param { td.QueryPropertyAsResponse } option */
+  function doPropertyAsResponse (option) {
+    let value
+
+    if (!option.x.relationships?.length) value = response.original[generatedQueryFormatSection.property][0][option.x.property]
+    else {
+      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][0], null, schema, option.x.relationships)
+      value = rRelationshipNode?.node?.[option.x.property]
+    }
+
+    if (value) {
+      response.current[generatedQueryFormatSection.property] = [value]
+      response.original[generatedQueryFormatSection.property] = [value]
+    }
   }
 }

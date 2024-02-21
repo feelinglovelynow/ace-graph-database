@@ -31,7 +31,7 @@ import { sortOptions } from './enums/sortOptions.js'
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
-    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryWhere | QueryFind | QueryFilter | QueryWhereGroup | QueryWhereDefined | QueryWhereUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
+    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryWhereGroup | QueryWhereDefined | QueryWhereUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
 
     const files = {
       dir: '.manifest',
@@ -188,6 +188,33 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { { id: typeof enums.idsQuery.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
  * @typedef { { id: typeof enums.idsQuery.Property, x: { property: string, relationships?: string[] } } } QueryProperty
  * 
+ * @typedef { object } QueryCountAsResponse
+ * @property { typeof enums.idsQuery.CountAsResponse } id - Set the count for the number of items in the response as the response
+ * 
+ * @typedef { object } QueryMinAmountAsResponse
+ * @property { typeof enums.idsQuery.MinAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
+ * @property { QueryMinAmountAsResponseX } x
+ * @typedef { object } QueryMinAmountAsResponseX
+ * @property { string } property - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
+ * 
+ * @typedef { object } QueryMaxAmountAsResponse
+ * @property { typeof enums.idsQuery.MaxAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
+ * @property { QueryMaxAmountAsResponseX } x
+ * @typedef { object } QueryMaxAmountAsResponseX
+ * @property { string } property - Loop the items in the response, find the max amount of this property, amongst all response items and set it as the response
+ *
+ * @typedef { object } QuerySumAsResponse
+ * @property { typeof enums.idsQuery.SumAsResponse } id - Loop the items in the response, calculate the sum of the provided property and set it as the response
+ * @property { QuerySumAsResponseX } x
+ * @typedef { object } QuerySumAsResponseX
+ * @property { string } property - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
+ *
+ * @typedef { object } QueryAverageAsResponse
+ * @property { typeof enums.idsQuery.AverageAsResponse } id - Loop the items in the response, calculate the average of the provided property and set it as the response
+ * @property { QueryAverageAsResponseX } x
+ * @typedef { object } QueryAverageAsResponseX
+ * @property { string } property - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
+ *
  * @typedef { object } QueryCountAsProperty
  * @property { typeof enums.idsQuery.CountAsProperty } id - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { QueryCountAsPropertyX } x
@@ -234,6 +261,18 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { string } newProperty - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  * 
+ * @typedef { object } QueryMinNodeAsResponse
+ * @property { typeof enums.idsQuery.MinNodeAsResponse } id - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * @property { QueryMinNodeAsResponseX } x
+ * @typedef { object } QueryMinNodeAsResponseX
+ * @property { string } property - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * 
+ * @typedef { object } QueryMaxNodeAsResponse
+ * @property { typeof enums.idsQuery.MaxNodeAsResponse } id - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * @property { QueryMaxNodeAsResponseX } x
+ * @typedef { object } QueryMaxNodeAsResponseX
+ * @property { string } property - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ *
  * @typedef { { id: typeof enums.idsQuery.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
  * @typedef { { id: typeof enums.idsQuery.WhereGroup, x: { symbol: enums.queryWhereGroupSymbol, items: (QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup)[] } } } QueryWhereGroup
  *
@@ -259,7 +298,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { { id: string,   x: QueryRequestFormatX } } QueryRequestFormat
  * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty,   $options?: QueryRequestFormatOptions } } QueryRequestFormatX
  * @typedef ${ queryRequestFormatOptions } QueryRequestFormatOptions
- * @typedef { { property: string,   schemaProperty: string,   aliasProperty?: string,   has: enums.has,   nodeName: string,   relationshipName?: string,   x: QueryRequestFormatX, hasOptionsFind: boolean, hasPropAsResponse: boolean, hasCountOne: boolean } } QueryRequestFormatGenerated
+ * @typedef { { property: string,   schemaProperty: string,   aliasProperty?: string,   has: enums.has,   nodeName: string,   relationshipName?: string,   x: QueryRequestFormatX, hasOptionsFind: boolean, hasValueAsResponse: boolean, hasCountOne: boolean } } QueryRequestFormatGenerated
  */
 
 
