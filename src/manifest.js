@@ -28,7 +28,7 @@ import { sortOptions } from './enums/sortOptions.js'
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
-    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryWhereGroup | QueryWhereDefined | QueryWhereUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
+    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
 
     const files = {
       dir: '.manifest',
@@ -190,10 +190,49 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { { id: typeof enums.idsQuery.Value, x: { value: any } } } QueryValue
  * @typedef { { id: typeof enums.idsQuery.Alias, x: { alias: string } } } QueryAliasProperty
  * @typedef { { id: typeof enums.idsQuery.Limit, x: { skip?: number, count?: number } } } QueryLimit
- * @typedef { { id: typeof enums.idsQuery.WhereDefined, x: { property: QueryProperty } } } QueryWhereDefined
- * @typedef { { id: typeof enums.idsQuery.WhereUndefined, x: { property: QueryProperty } } } QueryWhereUndefined
  * @typedef { { id: typeof enums.idsQuery.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
  * @typedef { { id: typeof enums.idsQuery.Property, x: { property: string, relationships?: string[] } } } QueryProperty
+ * @typedef { { id: typeof enums.idsQuery.Find, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFind
+ * @typedef { { id: typeof enums.idsQuery.Filter, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFilter
+ * @typedef { { id: typeof enums.idsQuery.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
+ * 
+ * @typedef { object } QueryFilterGroup
+ * @property { typeof enums.idsQuery.FilterGroup } id - Do an (and / or) operand on a group of filters
+ * @property { QueryFilterGroupX } x
+ * @typedef { object } QueryFilterGroupX
+ * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
+ * @property { (QueryFilter | QueryFilterDefined | QueryFilterUndefined | QueryFilterGroup)[] } items - The items you'd love to do an (and / or) operand on
+ * 
+ * @typedef { object } QueryFindGroup
+ * @property { typeof enums.idsQuery.FindGroup } id - Do an (and / or) operand on a group of filters
+ * @property { QueryFindGroupX } x
+ * @typedef { object } QueryFindGroupX
+ * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
+ * @property { (QueryFind | QueryFindDefined | QueryFindUndefined | QueryFindGroup)[] } items - The items you'd love to do an (and / or) operand on
+ *
+ * @typedef { object } QueryFindUndefined
+ * @property { typeof enums.idsQuery.FindUndefined } id - Loop the items and return the first item that is undefined at a specific property
+ * @property { QueryFindUndefinedX } x
+ * @typedef { object } QueryFindUndefinedX
+ * @property { QueryProperty } property - Loop the items and return the first item that is undefined at this property
+ *
+ * @typedef { object } QueryFindDefined
+ * @property { typeof enums.idsQuery.FindDefined } id - Loop the items and return the first item that is defined at a specific property
+ * @property { QueryFindDefinedX } x
+ * @typedef { object } QueryFindDefinedX
+ * @property { QueryProperty } property - Loop the items and return the first item that is defined at this property
+ *
+ * @typedef { object } QueryFilterUndefined
+ * @property { typeof enums.idsQuery.FilterUndefined } id - Loop the items and only return the items that are undefined at a specific property
+ * @property { QueryFilterUndefinedX } x
+ * @typedef { object } QueryFilterUndefinedX
+ * @property { QueryProperty } property - Loop the items and only return the items that are undefined at this property
+ * 
+ * @typedef { object } QueryFilterDefined
+ * @property { typeof enums.idsQuery.FilterDefined } id - Loop the items and only return the items that are defined at a specific property
+ * @property { QueryFilterDefinedX } x
+ * @typedef { object } QueryFilterDefinedX
+ * @property { QueryProperty } property - Loop the items and only return the items that are defined at this property
  * 
  * @typedef { object } QueryCountAsResponse
  * @property { typeof enums.idsQuery.CountAsResponse } id - Set the count for the number of items in the response as the response
@@ -280,9 +319,6 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } QueryMaxNodeAsResponseX
  * @property { string } property - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  *
- * @typedef { { id: typeof enums.idsQuery.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
- * @typedef { { id: typeof enums.idsQuery.WhereGroup, x: { symbol: enums.queryWhereGroupSymbol, items: (QueryWhere | QueryWhereDefined | QueryWhereUndefined | QueryWhereGroup)[] } } } QueryWhereGroup
- *
  * @typedef { object } QueryDerivedProperty
  * @property { typeof enums.idsQuery.DerivedProperty } id - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
  * @property { QueryDerivedPropertyX } x
@@ -291,10 +327,6 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { enums.queryDerivedSymbol } symbol - Derive a value based on the provided \`symbol\` which include basic math symbols found at \`enums.queryDerivedSymbol\`
  * @property { (QueryProperty | QueryValue | QueryDerivedGroup)[] } items - Collection of items (Value, Property and/or a Derived Group) that will combine based on the \`symbol\`
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
- *
- * @typedef { { id: typeof enums.idsQuery.Where, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryWhere
- * @typedef { { id: typeof enums.idsQuery.Find, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFind
- * @typedef { { id: typeof enums.idsQuery.Filter, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFilter
  *
  * @typedef { { [key: string]: CryptoKey } } PublicJWKs
  *

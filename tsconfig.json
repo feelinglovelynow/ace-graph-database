@@ -2,7 +2,6 @@
   "files": [
     "src/enums/dataTypes.js",
     "src/enums/endpoints.js",
-    "src/enums/indices.js",
     "src/createJWKs.js",
     "src/delete.js",
     "src/getAlias.js",

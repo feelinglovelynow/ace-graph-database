@@ -3,53 +3,60 @@ import { error } from './throw.js'
 import { td, enums } from '#manifest'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
+/**
+ * clone <- original
+ * FOR clone
+  * IF splice
+    * splice from original AND 
+ */
+
 
 /**
  * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
  * @param { td.QueryResponse } response 
- * @param { td.QueryFind | td.QueryFilter | td.QueryWhereDefined | td.QueryWhereUndefined | td.QueryWhereGroup } $where 
+ * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } $where 
  * @param { td.PublicJWKs | null } publicJWKs 
  * @param { td.Schema } schema 
  */
 export async function queryWhere (generatedQueryFormatSection, response, $where, publicJWKs, schema) {
-  const original = response.original[generatedQueryFormatSection.property]
+  if (Array.isArray(response.original[generatedQueryFormatSection.property])) {
+    let iOrignal = 0
+    const clone = [...(response.original[generatedQueryFormatSection.property]) ]
 
-  if (Array.isArray(original)) {
-    for (let iArray = original.length - 1; iArray >= 0; iArray--) {
+    for (let iClone = 0; iClone < clone.length; iClone++) {
       let spliced = false
 
-      if ($where.id === enums.idsQuery.WhereGroup) {
-        spliced = await loopGroupQueries(($where), iArray, true)
-      } else if ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.Filter || $where.id === enums.idsQuery.WhereDefined || $where.id === enums.idsQuery.WhereUndefined) {
-        spliced = await verifySplice($where, iArray, original[iArray], true)
-      }
+      if ($where.id === enums.idsQuery.FindGroup || $where.id === enums.idsQuery.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
+      else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
 
-      if (!spliced && $where.id === enums.idsQuery.Find) {
-        response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iArray] ]
-        response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iArray] ]
+      if (!spliced && ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.FindDefined || $where.id === enums.idsQuery.FindUndefined)) {
+        response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iOrignal] ]
+        response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iOrignal] ]
         break
       }
+
+      if (!spliced) iOrignal++
     }
 
-    if (Array.isArray(original) && !original.length) {
+    if (Array.isArray(response.original[generatedQueryFormatSection.property]) && !response.original[generatedQueryFormatSection.property].length) {
       response.current[generatedQueryFormatSection.property] = null
       response.original[generatedQueryFormatSection.property] = null
     }
   }
     
   /**
-   * @param { td.QueryWhereGroup } queryWhereGroup 
-   * @param { number } iArray 
+   * @param { td.QueryFindGroup | td.QueryFilterGroup } group 
+   * @param { number } i 
    * @param { boolean } doSplice 
    */
-  async function loopGroupQueries (queryWhereGroup, iArray, doSplice) {
+  async function loopGroupQueries (group, i, doSplice) {
     let spliced = false
 
-    switch (queryWhereGroup.x.symbol) {
+    switch (group.x.symbol) {
       case enums.queryWhereGroupSymbol.or:
         let keepArrayItem = false
 
-        for (const query of queryWhereGroup.x.items) {
+        for (const query of group.x.items) {
           if ((await innerLoopGroupQueries(query)) === false) { // on first splice false => keepArrayItem <- true
             keepArrayItem = true
             break
@@ -59,14 +66,14 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
         if (!keepArrayItem) {
           spliced = true
           if (doSplice) {
-            splice(iArray)		
+            splice(i)		
           }	
         }
         break
       case enums.queryWhereGroupSymbol.and:
         let removeArrayItem = false
 
-        for (const query of queryWhereGroup.x.items) {
+        for (const query of group.x.items) {
           if ((await innerLoopGroupQueries(query)) === true) { // on first splice true => removeArrayItem <- true
             removeArrayItem = true
             break
@@ -75,27 +82,31 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
 
         if (removeArrayItem) {
           spliced = true
-          if (doSplice) splice(iArray)
+          if (doSplice) splice(i)
         }
         break
     }
 
 
     /**
-     * @param { td.QueryWhereGroup | td.QueryWhere | td.QueryWhereDefined | td.QueryWhereUndefined } query 
+     * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } query 
      * @returns { Promise<boolean | undefined> }
      */
     async function innerLoopGroupQueries (query) {
       let r
 
       switch (query.id) {
-        case enums.idsQuery.Where:
-        case enums.idsQuery.WhereDefined:
-        case enums.idsQuery.WhereUndefined:
-          r = await verifySplice(query, iArray, original[iArray], false)
+        case enums.idsQuery.Find:
+        case enums.idsQuery.Filter:
+        case enums.idsQuery.FindDefined:
+        case enums.idsQuery.FindUndefined:
+        case enums.idsQuery.FilterDefined:
+        case enums.idsQuery.FilterUndefined:
+          r = await verifySplice(query, i, response.original[generatedQueryFormatSection.property][i], false)
           break
-        case enums.idsQuery.WhereGroup:
-          r = loopGroupQueries(query, iArray, false)
+        case enums.idsQuery.FindGroup:
+        case enums.idsQuery.FilterGroup:
+          r = loopGroupQueries(query, i, false)
           break
       }
 
@@ -107,11 +118,11 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
 
 
   /**
-   * @param { number } index 
+   * @param { number } i 
    */
-  function splice (index) {
-    response.current[generatedQueryFormatSection.property].splice(index, 1)
-    response.original[generatedQueryFormatSection.property].splice(index, 1)
+  function splice (i) {
+    response.current[generatedQueryFormatSection.property].splice(i, 1)
+    response.original[generatedQueryFormatSection.property].splice(i, 1)
   }
 
 
@@ -130,15 +141,15 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
       spliced = true
     }
 
-    if ($where.id === enums.idsQuery.WhereDefined) {
-      if (typeof getValue(/** @type { td.QueryWhereDefined } */($where).x.property, graphNode).value === 'undefined') bye()
-    } else if ($where.id === enums.idsQuery.WhereUndefined) {
-      if (typeof getValue(/** @type { td.QueryWhereDefined } */($where).x.property, graphNode).value !== 'undefined') bye()
+    if ($where.id === enums.idsQuery.FilterDefined || $where.id === enums.idsQuery.FindDefined) {
+      if (typeof getValue($where.x.property, graphNode).value === 'undefined') bye()
+    } else if ($where.id === enums.idsQuery.FilterUndefined || $where.id === enums.idsQuery.FindUndefined) {
+      if (typeof getValue($where.x.property, graphNode).value !== 'undefined') bye()
     } else {
-      const qw = /** @type { td.QueryWhere } */ ($where)
+      const qw = /** @type { td.QueryFilter | td.QueryFind } */ ($where)
 
       const left = getValue(qw.x.items[0], graphNode)
-      const right = getValue(qw.x.items[1], graphNode)
+      const right = getValue(qw.x. items[1], graphNode)
       const isUndefined = typeof left.value === 'undefined' || typeof right.value === 'undefined'
 
       switch (qw.x.symbol) {
@@ -228,7 +239,7 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
 
 
   /**
-   * @param { td.QueryWhere } qw 
+   * @param { td.QueryFind | td.QueryFilter } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } sideIndex 
@@ -241,7 +252,7 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
 
 
   /**
-   * @param { td.QueryWhere } qw 
+   * @param { td.QueryFind | td.QueryFilter } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } base64Index

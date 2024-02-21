@@ -18,10 +18,13 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
       switch (option.id) {
         case enums.idsQuery.Find:
         case enums.idsQuery.Filter:
-        case enums.idsQuery.WhereDefined:
-        case enums.idsQuery.WhereUndefined:
-        case enums.idsQuery.WhereGroup:
-          await queryWhere(generatedQueryFormatSection, response, /** @type { td.QueryFilter | td.QueryWhereDefined | td.QueryWhereUndefined | td.QueryWhereGroup } */(option), publicJWKs, schema)
+        case enums.idsQuery.FindGroup:
+        case enums.idsQuery.FilterGroup:
+        case enums.idsQuery.FindDefined:
+        case enums.idsQuery.FindUndefined:
+        case enums.idsQuery.FilterDefined:
+        case enums.idsQuery.FilterUndefined:
+          await queryWhere(generatedQueryFormatSection, response, option, publicJWKs, schema)
           break
 
         case enums.idsQuery.Limit:

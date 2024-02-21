@@ -103,7 +103,9 @@ export async function _start (storage) {
         insert: [
           { id: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', slug: 'enforcePermissions', isOn: false } },
           { id: 'AceUser', x: { uid: '_:userAdmin', username, age: 18 } },
-          { id: 'AceUser', x: { uid: '_:jenny', username: 'jenny', age: 21 } },
+          { id: 'AceUser', x: { uid: '_:jenny', username: 'jenny' } },
+          { id: 'AceUser', x: { uid: '_:roy', username: 'roy' } },
+          { id: 'AceUser', x: { uid: '_:donna', username: 'donna', age: 32 } },
           { id: 'AceToken',  x: { uid: '_:tokenAdmin', name: 'Admin', value: token,  createdAt: 'now' } },
           { id: 'AceRole', x: { uid: '_:roleAdmin', name: 'Admin', slug: 'admin' } },
           { id: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', slug: 'architect' } },

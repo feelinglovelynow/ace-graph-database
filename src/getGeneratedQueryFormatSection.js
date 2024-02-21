@@ -72,6 +72,9 @@ function getOptionsBoolean (x) {
     for (const $o of x.$options) {
       switch ($o.id) {
         case enums.idsQuery.Find:
+        case enums.idsQuery.FindGroup:
+        case enums.idsQuery.FindDefined:
+        case enums.idsQuery.FindUndefined:
           booleans.hasOptionsFind = true
           break
         case enums.idsQuery.Limit:
