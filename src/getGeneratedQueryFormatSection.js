@@ -13,10 +13,14 @@ import { getAlias } from './getAlias.js'
  * @returns { td.QueryRequestFormatGenerated }
  */
 export function getGeneratedQueryFormatSectionByParent (x, schemaPropName, schema, generatedParent) {
-  const schemaPropValue = /** @type { td.SchemaRelationshipProp } */ (schema.nodes?.[generatedParent?.nodeName || '']?.[schemaPropName])
+  const schemaPropValue = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (schema.nodes?.[generatedParent?.nodeName || '']?.[schemaPropName])
 
   if (!schemaPropValue) throw error('query__falsy-query-format-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is not defined in your schema`, { queryFormatKey: schemaPropName, nodeName: generatedParent?.nodeName })
-  if (schemaPropValue.id !== 'RelationshipProp') throw error('query__invalid-query-format-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is defined in your schema but not as a "RelationshipProp" but as a "${ schemaPropValue.id }"`, { queryFormatKey: schemaPropName, nodeName: generatedParent?.nodeName })
+  
+  const id = schemaPropValue.id // var out to help w/ ts
+  if (id !== enums.idsSchema.ForwardRelationshipProp && id !== enums.idsSchema.ReverseRelationshipProp && id !== enums.idsSchema.BidirectionalRelationshipProp) {
+    throw error('query__invalid-query-format-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is defined in your schema but not as a "ForwardRelationshipProp", "ReverseRelationshipProp" or "BidirectionalRelationshipProp" but as a "${ id }"`, { queryFormatKey: schemaPropName, nodeName: generatedParent?.nodeName })
+  }
 
   const aliasProperty = getAlias(x?.$options)
 

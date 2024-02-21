@@ -1,7 +1,6 @@
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
 import { SCHEMA_KEY } from './variables.js'
-import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
 
 
 /**
@@ -70,9 +69,9 @@ function validateSchema (schema) {
   const relationshipNameSet = new Set()
   const relationshipPropNodeNameSet = new Set()
   const relationshipNames = Object.keys(schema.relationships || {})
-  const directionsMap = /** Map<relationshipName, [{ nodeName, nodePropName, isBidirectional, isInverse }]> @type { Map<string, { nodeName: String, nodePropName: string, isBidirectional: boolean, isInverse: boolean }[]> } */ (new Map())
   const uniqueNodePropsMap = /** Map<nodeName, Set<nodePropName>> @type { Map<string, Set<string>> } */ (new Map()) // each nodePropName is unique for the nodeName
   const uniqueRelationshipPropsMap = /** Map<relationshipName, Set<propName>> @type { Map<string, Set<string>> } */ (new Map()) // each relationshipPropName is unique for the relationshipName
+  const directionsMap = /** Map<relationshipName, [{ nodeName, nodePropName, id }]> @type { Map<string, { nodeName: String, nodePropName: string, id: (typeof enums.idsSchema.ForwardRelationshipProp | typeof enums.idsSchema.ReverseRelationshipProp | typeof enums.idsSchema.BidirectionalRelationshipProp) }[]> } */ (new Map())
 
   for (const nodeName in schema.nodes) {
     if (nodeNameSet.has(nodeName)) throw error('schema__not-unique-node-name', `The node name ${ nodeName } is not unique, please ensure each nodeName is unique`, { nodeName, schema })
@@ -97,10 +96,9 @@ function validateSchema (schema) {
           else mapValue.add(nodePropName)
         }
       } else {
-        const schemaRelationshipProp = /** @type { td.SchemaRelationshipProp } */ (prop)
+        const schemaRelationshipProp = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (prop)
         const mapValue = directionsMap.get(schemaRelationshipProp.x.relationshipName)
-        const { isInverse, isBidirectional } = getRelationshipOptionsDetails(schemaRelationshipProp.x.options)
-        const arrayValue = { nodeName, nodePropName, isBidirectional, isInverse }
+        const arrayValue = { nodeName, nodePropName, id: schemaRelationshipProp.id }
 
         if (!mapValue) directionsMap.set(schemaRelationshipProp.x.relationshipName, [arrayValue])
         else mapValue.push(arrayValue)
@@ -153,12 +151,12 @@ function validateSchema (schema) {
       if (!directions) throw notify()
       if (directions.length !== 1 && directions.length !== 2) throw notify()
       if (directions.length === 1) {
-        if (directions[0].isInverse) throw notify()
-        if (!directions[0].isBidirectional) throw notify()
+        if (directions[0].id === enums.idsSchema.ReverseRelationshipProp) throw notify()
+        if (directions[0].id !== enums.idsSchema.BidirectionalRelationshipProp) throw notify()
       }
       if (directions.length === 2) {
-        if ((directions[0].isInverse && !directions[1].isInverse) && (!directions[0].isInverse && directions[1].isInverse)) throw notify()
-        if (directions[0].isBidirectional || directions[1].isBidirectional) throw notify()
+        if ((directions[0].id === enums.idsSchema.ReverseRelationshipProp && directions[1].id !== enums.idsSchema.ReverseRelationshipProp) && (directions[0].id !== enums.idsSchema.ReverseRelationshipProp && directions[1].id === enums.idsSchema.ReverseRelationshipProp)) throw notify()
+        if (directions[0].id === enums.idsSchema.BidirectionalRelationshipProp || directions[1].id === enums.idsSchema.BidirectionalRelationshipProp) throw notify()
       }
     }
   }
@@ -170,7 +168,7 @@ function validateSchema (schema) {
 /**
  * Validate Schema Property
  * @param { string } propName
- * @param { td.SchemaProp | td.SchemaRelationshipProp } propValue
+ * @param { td.SchemaProp | td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp | td.SchemaRelationshipProp } propValue
  * @param { boolean } isRelationshipProp
  */
 function validateSchemaProp (propName, propValue, isRelationshipProp) {
@@ -178,46 +176,21 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
 
   switch (propValue.id) {
     case enums.idsSchema.Prop:
+    case enums.idsSchema.RelationshipProp:
       const schemaProp = /** @type { td.SchemaProp } */ (propValue)
 
       if (!schemaProp.x.dataType) throw error('schema__falsy-data-type', `The schema prop ${ propName } is because its dataType is falsy, Please ensure every data type is valid`, { propName, propValue })
       if (!enums.dataTypes[schemaProp.x.dataType]) throw error('schema__invalid-data-type', `The schema prop ${ propName } is invalid because its dataType is not a valid option, please add a dataType that is a valid enums.dataTypes. Valid options include ${ enums.dataTypes }`, { propName, propValue })
-
-      if (schemaProp.x.options) {
-        if (!Array.isArray(schemaProp.x.options)) throw error('schema__invalid-options', `The schema prop ${ propName } is invalid because the options are invalid, if you would love to include options please define them as an array`, { propName, propValue })
-
-        for (const option of schemaProp.x.options) {
-          if (!enums.schemaPropOptions[/** @type { enums.schemaPropOptions } */ (option)]) throw error('schema__invalid-option', `The schema prop ${ propName } and the option ${ option } is invalid because the schema prop option is invalid, please include valid options from enums.schemaPropOptions, valid options include ${ enums.schemaPropOptions }`, { propName, propValue, option, validOptions: enums.schemaPropOptions })
-        }
-      }
-
-      if (schemaProp.x.indices) {
-        for (const index of schemaProp.x.indices) {
-          if (!enums.indices[/** @type { enums.indices } */ (index)]) throw error('schema__invalid-index', `The schema prop ${ propName } is invalid because the index ${ index } is invalid, please only include valid indices, the valid indices are ${ enums.indices }`, { propName, propValue, index, validIndices: enums.indices })
-        }
-      }
       break
-    case enums.idsSchema.RelationshipProp:
-      const schemaRelationshipProp = /** @type { td.SchemaRelationshipProp } */ (propValue)
+    case enums.idsSchema.ForwardRelationshipProp:
+    case enums.idsSchema.ReverseRelationshipProp:
+    case enums.idsSchema.BidirectionalRelationshipProp:
+      const schemaRelationshipProp = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (propValue)
 
       if (isRelationshipProp) throw error('schema__invalid-id', `The schema prop ${ propName } is invalid because prop's must have an id of "SchemaProp" and not "SchemaRelationshipProp"`, { propName, propValue })
       if (schemaRelationshipProp.x.has !== enums.has.one && schemaRelationshipProp.x.has !== enums.has.many) throw error('schema__invalid-has', `The schema prop ${ propName } is invalid because has is not "one" or "many", please ensure "has" is "one" or "many"`, { propName, propValue })
       if (typeof schemaRelationshipProp.x.nodeName !== 'string' || !schemaRelationshipProp.x.nodeName) throw error('schema__invalid-node-name', `The schema prop ${ propName } is invalid because the nodeName is not a truthy string, please ensure each schema prop that has a truthy string nodeName`, { propName, propValue })
       if (typeof schemaRelationshipProp.x.relationshipName !== 'string' || !schemaRelationshipProp.x.relationshipName) throw error('schema__invalid-relationship-name', `The schema prop ${ propName } is invalid because the relationshipName is not a truthy string, please ensure each schema prop that has a truthy string relationshipName`, { propName, propValue })
-
-      if (schemaRelationshipProp.x.options) {
-        if (!Array.isArray(schemaRelationshipProp.x.options)) throw error('schema__options-not-array', `The schema prop ${ propName } is invalid because options is defined but it is not an array, if you'd love to include options, please include options that are an array`, { propName, propValue })
-
-        let includesBidirectional, includesInverse
-
-        for (const option of schemaRelationshipProp.x.options) {
-          if (!enums.schemaRelationshipPropOptions[option]) throw error('schema__invalid-option', `The schema prop ${ propName } and the option ${ option } is invalid because the schema prop option is invalid, please include valid options from enums.schemaPropOptions, valid options include ${ enums.schemaPropOptions }`, { propName, propValue, option, validOptions: enums.schemaPropOptions })
-          if (option === enums.schemaRelationshipPropOptions.inverse) includesInverse = true
-          if (option === enums.schemaRelationshipPropOptions.bidirectional) includesBidirectional = true
-        }
-
-        if (includesBidirectional && includesInverse) throw error('schema__inverse-and-bidirectional', `The schema prop ${ propName } is invalid because a prop may not have an option of inverse and bidirectional at the same time`, { options: schemaRelationshipProp.x.options })
-      }
       break
     default:
       if (isRelationshipProp) throw error('schema__invalid-id', `The schema prop ${ propName } is invalid because prop's must include an id of "SchemaProp"`, { propName, propValue })

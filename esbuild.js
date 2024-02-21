@@ -14,7 +14,6 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/getDerivedValue.js',
     './tsc/src/getGeneratedQueryFormatSection.js',
     './tsc/src/getRelationshipNode.js',
-    './tsc/src/getRelationshipOptionsDetails.js',
     './tsc/src/hash.js',
     './tsc/src/index.js',
     './tsc/src/list.js',

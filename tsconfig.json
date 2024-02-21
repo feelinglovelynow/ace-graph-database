@@ -9,7 +9,6 @@
     "src/getDerivedValue.js",
     "src/getGeneratedQueryFormatSection.js",
     "src/getRelationshipNode.js",
-    "src/getRelationshipOptionsDetails.js",
     "src/index.js",
     "src/list.js",
     "src/mutate.js",

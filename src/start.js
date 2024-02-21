@@ -58,36 +58,36 @@ export async function _start (storage) {
       return _setSchema(storage, {
         nodes: {
           AceSetting: {
-            name: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
-            slug: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
-            isOn: { id: 'Prop', x: { dataType: 'boolean', options: ['defined'] } },
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            slug: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            isOn: { id: 'Prop', x: { dataType: 'boolean', mustBeDefined: true } },
           },
           AceUser: {
             age: { id: 'Prop', x: { dataType: 'number' } },
             username: { id: 'Prop', x: { dataType: 'string' } },
             password: { id: 'Prop', x: { dataType: 'hash' } },
-            token: { id: 'RelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
-            role: { id: 'RelationshipProp', x: { has: 'one', nodeName: 'AceRole', relationshipName: 'isTheAceRole' } },
+            token: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
+            role: { id: 'ForwardRelationshipProp', x: { has: 'one', nodeName: 'AceRole', relationshipName: 'isTheAceRole' } },
           },
           AceToken: {
-            name: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
-            value: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
-            createdAt: { id: 'Prop', x: { dataType: 'isoString', options: ['defined'] } },
-            user: { id: 'RelationshipProp', x: { has: 'one', nodeName: 'AceUser', relationshipName: 'hasTheAceToken', options: ['inverse'] } },
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            value: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            createdAt: { id: 'Prop', x: { dataType: 'isoString', mustBeDefined: true } },
+            user: { id: 'ReverseRelationshipProp', x: { has: 'one', nodeName: 'AceUser', relationshipName: 'hasTheAceToken' } },
           },
           AceRole: {
-            name: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
-            slug: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
-            users: { id: 'RelationshipProp', x: { has: 'many', nodeName: 'AceUser', relationshipName: 'isTheAceRole', options: ['inverse'] } },
-            revokesAcePermissions: { id: 'RelationshipProp', x: { has: 'many', nodeName: 'AcePermission', relationshipName: 'revokesAcePermission' } },
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            slug: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            users: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceUser', relationshipName: 'isTheAceRole' } },
+            revokesAcePermissions: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AcePermission', relationshipName: 'revokesAcePermission' } },
           },
           AcePermission: {
-            action: { id: 'Prop', x: { dataType: 'string', options: ['defined'] } },
+            action: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
             schema: { id: 'Prop', x: { dataType: 'string' } },
             nodeName: { id: 'Prop', x: { dataType: 'string' } },
             relationshipName: { id: 'Prop', x: { dataType: 'string' } },
             propName: { id: 'Prop', x: { dataType: 'string' } },
-            roles: { id: 'RelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission', options: ['inverse'] } },
+            roles: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission' } },
           }
         },
         relationships: {

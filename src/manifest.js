@@ -8,13 +8,10 @@ import { endpoints } from './enums/endpoints.js'
 import { has } from './enums/has.js'
 import { idsQuery } from './enums/idsQuery.js'
 import { idsSchema } from './enums/idsSchema.js'
-import { indices } from './enums/indices.js'
 import { queryDerivedSymbol } from './enums/queryDerivedSymbol.js'
 import { queryWhereGroupSymbol } from './enums/queryWhereGroupSymbol.js'
 import { queryWhereSymbol } from './enums/queryWhereSymbol.js'
 import { settings } from './enums/settings.js'
-import { schemaPropOptions } from './enums/schemaPropOptions.js'
-import { schemaRelationshipPropOptions } from './enums/schemaRelationshipPropOptions.js'
 import { sortOptions } from './enums/sortOptions.js'
 
 
@@ -88,13 +85,10 @@ import { sortOptions } from './enums/sortOptions.js'
       enumsMap.set('dataTypes', dataTypes)
       enumsMap.set('endpoints', endpoints)
       enumsMap.set('has', has)
-      enumsMap.set('indices', indices)
       enumsMap.set('idsSchema', idsSchema)
       enumsMap.set('idsQuery', idsQuery)
       enumsMap.set('queryDerivedSymbol', queryDerivedSymbol)
       enumsMap.set('queryWhereGroupSymbol', queryWhereGroupSymbol)
-      enumsMap.set('schemaPropOptions', schemaPropOptions)
-      enumsMap.set('schemaRelationshipPropOptions', schemaRelationshipPropOptions)
       enumsMap.set('queryWhereSymbol', queryWhereSymbol)
       enumsMap.set('nodeNames', new Set(Object.keys(schema?.nodes || {})))
       enumsMap.set('relationshipNames', new Set(Object.keys(schema?.relationships || {})))
@@ -129,7 +123,7 @@ import { sortOptions } from './enums/sortOptions.js'
 /** SCHEMA
  *
  * @typedef { { nodes: { [nodeName: string]: SchemaNodeValue }, relationships: { [relationshipName: string]: SchemaRelationshipValue } } } Schema
- * @typedef { { [nodePropName: string]: SchemaProp | SchemaRelationshipProp } } SchemaNodeValue
+ * @typedef { { [nodePropName: string]: SchemaProp | SchemaForwardRelationshipProp | SchemaReverseRelationshipProp | SchemaBidirectionalRelationshipProp } } SchemaNodeValue
  * @typedef { { id: typeof enums.idsSchema.OneToOne | typeof enums.idsSchema.OneToMany | typeof enums.idsSchema.ManyToMany, x?: SchemaRelationshipValueX } } SchemaRelationshipValue
  *
  * @typedef { object } SchemaProp
@@ -138,21 +132,34 @@ import { sortOptions } from './enums/sortOptions.js'
  *
  * @typedef { object } SchemaRelationshipProp
  * @property { typeof enums.idsSchema.RelationshipProp } id
- * @property { SchemaRelationshipPropX } x
+ * @property { SchemaPropX } x
+ *
+ * @typedef { object } SchemaForwardRelationshipProp
+ * @property { typeof enums.idsSchema.ForwardRelationshipProp } id
+ * @property { NodeRelationshipX } x
+ *
+ * @typedef { object } SchemaReverseRelationshipProp
+ * @property { typeof enums.idsSchema.ReverseRelationshipProp } id
+ * @property { NodeRelationshipX } x
+ *
+ * @typedef { object } SchemaBidirectionalRelationshipProp
+ * @property { typeof enums.idsSchema.BidirectionalRelationshipProp } id
+ * @property { NodeRelationshipX } x
  *
  * @typedef { object } SchemaPropX
  * @property { enums.dataTypes } dataType
- * @property { enums.schemaPropOptions[] } [ options ]
- * @property { enums.indices } [ indices ]
+ * @property { boolean } [ mustBeDefined ]
+ * @property { boolean } [ sortIndex ]
+ * @property { boolean } [ uniqueIndex ]
  *
- * @typedef { object } SchemaRelationshipPropX
+ * @typedef { object } NodeRelationshipX
  * @property { enums.has } has
  * @property { string } nodeName
  * @property { string } relationshipName
- * @property { enums.schemaRelationshipPropOptions[] } [ options ]
+ * @property { boolean } [ mustBeDefined ]
  *
  * @typedef { object } SchemaRelationshipValueX
- * @property { { [propName: string]: SchemaProp } } props
+ * @property { { [propName: string]: SchemaRelationshipProp } } props
  */
 
 

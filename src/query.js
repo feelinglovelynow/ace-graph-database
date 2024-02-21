@@ -1,10 +1,8 @@
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
-import { getAlias } from './getAlias.js'
 import { _getSchema } from './schema.js'
 import { implementQueryOptions } from './queryOptions.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
 import { NODE_UIDS_KEY, getRelationshipProp, getSortIndexKey } from './variables.js'
 import { getGeneratedQueryFormatSectionByParent, getGeneratedQueryFormatSectionById } from './getGeneratedQueryFormatSection.js'
 
@@ -145,36 +143,38 @@ async function addToResponse (generatedQueryFormatSection, response, item, graph
       } else if (schemaNodeProp?.id === enums.idsSchema.Prop) { // this prop is defined @ schema.nodes and is a SchemaProp        
         if (isTruthy) responseCurrentNode[queryFormatPropertyKey] = graphNode.x[queryFormatPropertyKey]
         else if (alias) responseCurrentNode[alias] = graphNode.x[queryFormatPropertyKey]      
-      } else if (schemaNodeProp?.id === enums.idsSchema.RelationshipProp) { // this prop is defined @ schema.nodes and is a SchemaRelationshipProp
-        const schemaRelationshipProp = /** @type { td.SchemaRelationshipProp } */ (schemaNodeProp)
-        const relationshipUids = graphNode[getRelationshipProp(schemaRelationshipProp.x.relationshipName)]
+      } else if (schemaNodeProp?.id === enums.idsSchema.ForwardRelationshipProp || schemaNodeProp?.id === enums.idsSchema.ReverseRelationshipProp || schemaNodeProp?.id === enums.idsSchema.BidirectionalRelationshipProp) { // this prop is defined @ schema.nodes and is a SchemaRelationshipProp
+        const relationshipUids = graphNode[getRelationshipProp(schemaNodeProp.x.relationshipName)]
         const relationshipGeneratedQueryFormatSection = getGeneratedQueryFormatSectionByParent(queryFormatPropertyValue, queryFormatPropertyKey, schema, generatedQueryFormatSection)        
 
         if (relationshipUids?.length) {
           const nodeUids = /** @type { string[] } */ ([])
           const graphRelationships = /** @type { any[] } */ ([])
           const rGetPutCache = await getPutCache(storage, cache, relationshipUids)
-          const { isBidirectional, isInverse } = getRelationshipOptionsDetails(schemaRelationshipProp.x.options)
 
-          if (isBidirectional) {
-            rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
-              graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
-              nodeUids.push(uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a)
-            })
-          } else if (isInverse) {
-            rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
-              if (uid === graphRelationship?.x.b) {
+          switch (schemaNodeProp.id) {
+            case enums.idsSchema.ForwardRelationshipProp:
+              rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
+                if (uid === graphRelationship?.x.a) {
+                  graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
+                  nodeUids.push(graphRelationship.x.b)
+                }
+              })
+              break
+            case enums.idsSchema.ReverseRelationshipProp:
+              rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
+                if (uid === graphRelationship?.x.b) {
+                  graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
+                  nodeUids.push(graphRelationship?.x.a)
+                }
+              })
+              break
+            case enums.idsSchema.BidirectionalRelationshipProp:
+              rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
                 graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
-                nodeUids.push(graphRelationship?.x.a)
-              }
-            })
-          } else {
-            rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
-              if (uid === graphRelationship?.x.a) {
-                graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
-                nodeUids.push(graphRelationship.x.b)
-              }
-            })
+                nodeUids.push(uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a)
+              })
+              break
           }
 
           await runFnThenFormatArray(

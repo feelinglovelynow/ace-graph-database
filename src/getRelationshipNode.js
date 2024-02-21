@@ -20,7 +20,7 @@ export function getRelationshipNode (generatedQueryFormatSection, startingNode1,
   for (let iRelationships = 0; iRelationships < relationships.length; iRelationships++) {
     const relationshipPropName = relationships[iRelationships]
 
-    schemaRelationshipProp = /** @type { td.SchemaRelationshipProp } */ (schema.nodes?.[relationshipNodeName]?.[relationshipPropName])
+    schemaRelationshipProp = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (schema.nodes?.[relationshipNodeName]?.[relationshipPropName])
 
     if (!schemaRelationshipProp) throw error('get-relationship-node__falsy-relationship', `The relationships array is invalid because one of it's items: ${ relationshipPropName } is not a valid relationship prop according to your schema, please align each item in the relationships array with valid schema props`, { relationships })
     else {

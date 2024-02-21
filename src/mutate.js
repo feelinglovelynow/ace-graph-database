@@ -2,7 +2,6 @@ import { sign } from './hash.js'
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { getRelationshipOptionsDetails } from './getRelationshipOptionsDetails.js'
 import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, getExactIndexKey, getSortIndexKey, ADD_NOW_DATE, getRelationshipProp, getNow } from './variables.js'
 
 
@@ -136,17 +135,14 @@ async function sertNodes (request, action, schema, setNodeNames, $nodeUids, mapU
             requestItem.x[nodePropName] = await sign(privateJWKs[jwkName], requestItem.x[nodePropName]?.value)
           }
 
-          const indices = schemaProp?.x.indices
+          if (schemaProp.x.uniqueIndex) putEntries.set(getExactIndexKey(requestItem.id, nodePropName, nodePropValue), graphUid)
 
-          if (indices) {
-            if (indices.includes(enums.indices.exact)) putEntries.set(getExactIndexKey(requestItem.id, nodePropName, nodePropValue), graphUid)
-            if (indices.includes(enums.indices.sort)) {
-              const key =`${ requestItem.id }__${ nodePropName }`
-              const value = sortIndexMap.get(key) || { nodeName: requestItem.id, nodePropName, uids: /** @type { string[] } */ ([]) }
+          if (schemaProp.x.sortIndex) {
+            const key =`${ requestItem.id }__${ nodePropName }`
+            const value = sortIndexMap.get(key) || { nodeName: requestItem.id, nodePropName, uids: /** @type { string[] } */ ([]) }
 
-              value.uids.push(graphUid)
-              sortIndexMap.set(key, value)
-            }
+            value.uids.push(graphUid)
+            sortIndexMap.set(key, value)
           }
 
           if (schemaProp.x.dataType === enums.dataTypes.isoString && nodePropValue === ADD_NOW_DATE) requestItem.x[nodePropName] = getNow()
@@ -319,7 +315,7 @@ function getMustPropMap (schema) {
   if (schema) {
     for (const nodeName in schema.nodes) {
       for (const nodePropName in schema.nodes[nodeName]) {
-        if (schema.nodes[nodeName][nodePropName]?.x?.options?.includes('defined')) {
+        if (schema.nodes[nodeName][nodePropName]?.x?.mustBeDefined) {
           const map = mustPropsMap.get(nodeName) || new Map()
           map.set(nodePropName, schema.nodes[nodeName][nodePropName])
           mustPropsMap.set(nodeName, map)
@@ -332,7 +328,7 @@ function getMustPropMap (schema) {
 
       if (props) {
         for (const propName in props) {
-          if (props[propName].x?.options?.includes('defined')) {
+          if (props[propName].x?.mustBeDefined) {
             const map = mustPropsMap.get(relationshipName) || new Map()
             map.set(propName, props[propName])
             mustPropsMap.set(relationshipName, map)
@@ -354,12 +350,13 @@ function getMustPropMap (schema) {
 function throwIfMissingMustProps (request, mustPropsMap, putEntries) {
   if (request.insert) {
     for (const requestItem of request.insert) {
-      const mustProps = mustPropsMap.get(requestItem.id)
+      const mustProps = mustPropsMap.get(requestItem.id) // the must props for a specific node or relationship
 
       if (mustProps) {
         mustProps.forEach((prop, propName) => {
           switch (prop.id) {
             case enums.idsSchema.Prop:
+            case enums.idsSchema.RelationshipProp:
               const schemaProp = /** @type { td.SchemaProp } */ (prop)
               const letEmKnow = () => error('mutate__invalid-property-value', `Please ensure all required props are included and align with the data type in the schema, an example of where this is not happening yet is: Node: "${ requestItem.id }", Prop: "${ propName }", Data Type: "${ schemaProp.x.dataType }"`, { nodeName: requestItem.id, requestItem, propName, dataType: schemaProp.x.dataType })
 
@@ -372,15 +369,15 @@ function throwIfMissingMustProps (request, mustPropsMap, putEntries) {
                   break
               }
               break
-            case enums.idsSchema.RelationshipProp:
-              const schemaRelationshipProp = /** @type { td.SchemaRelationshipProp } */ (prop)
-              const { isInverse, isBidirectional } = getRelationshipOptionsDetails(schemaRelationshipProp.x.options)
+            case enums.idsSchema.ForwardRelationshipProp:
+            case enums.idsSchema.ReverseRelationshipProp:
+              validateNotBidirectionalMustProps(/** @type { td.MutateRequestInsertRelationshipDefaultItem } */(requestItem), prop, putEntries, propName)
+              break
+            case enums.idsSchema.BidirectionalRelationshipProp:
+              const bidirectionalRelationshipProp = /** @type { td.SchemaBidirectionalRelationshipProp } */ (prop)
 
-              if (!isBidirectional) validateNotBidirectionalMustProps(isInverse, /** @type { td.MutateRequestInsertRelationshipDefaultItem } */ (requestItem), schemaRelationshipProp, putEntries, propName)
-              else { // isBidirectional
-                if (!requestItem.x[getRelationshipProp(schemaRelationshipProp.x.relationshipName)]?.length) {
-                  throw error('mutate__missing-must-defined-relationship', 'Please ensure relationships that must be defined, are defined.', { requiredPropName: propName, schemaRelationshipProp, requestItem })
-                }
+              if (!requestItem.x[getRelationshipProp(bidirectionalRelationshipProp.x.relationshipName)]?.length) {
+                throw error('mutate__missing-must-defined-relationship', 'Please ensure relationships that must be defined, are defined.', { requiredPropName: propName, bidirectionalRelationshipProp, requestItem })
               }
               break
           }
@@ -392,16 +389,16 @@ function throwIfMissingMustProps (request, mustPropsMap, putEntries) {
 
 
 /**
- * @param { boolean } isInverse 
  * @param { td.MutateRequestInsertRelationshipDefaultItem } rSchemaRelationshipProp 
- * @param { td.SchemaRelationshipProp } schemaRelationshipProp 
+ * @param { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp } schemaRelationshipProp 
  * @param { PutEntries } putEntries 
  * @param { string } propName 
  */
-function validateNotBidirectionalMustProps (isInverse, rSchemaRelationshipProp, schemaRelationshipProp, putEntries, propName) {
+function validateNotBidirectionalMustProps (rSchemaRelationshipProp, schemaRelationshipProp, putEntries, propName) {
   let isValid = false
   const storageUids = []
   const relationshipNodes = []
+  const isInverse = schemaRelationshipProp.id === 'ReverseRelationshipProp'
   const relationshipUids = rSchemaRelationshipProp.x[getRelationshipProp(schemaRelationshipProp.x.relationshipName)]
 
   if (relationshipUids) {
@@ -452,6 +449,6 @@ function validateNotBidirectionalMustProps (isInverse, rSchemaRelationshipProp, 
  * As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace Graph Database uid as the value.
  * @typedef { Map<string, string> } MapUids
  * 
- * @typedef { Map<string, Map<string, (td.SchemaProp | td.SchemaRelationshipProp)>> } MustPropsMap 
+ * @typedef { Map<string, Map<string, (td.SchemaProp | td.SchemaRelationshipProp | td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp)>> } MustPropsMap 
  * @typedef { { [key: string]: CryptoKey } } HashPrivateKeys 
  */
