@@ -1,41 +1,33 @@
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
-import { SCHEMA_KEY } from './variables.js'
+import { stamp } from './passport.js'
+import { fetchJSON } from './fetchJSON.js'
+import { SCHEMA_KEY, getRevokesKey } from './variables.js'
 
 
 /**
- * Get Ace Graph Database schema.
- * @param { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Graph Database)
- * @returns { Promise<td.Schema> }
- */
-export async function _getSchema (storage) {
-  return await storage.get(SCHEMA_KEY)
-}
-
-
-/**
- * Get Ace Graph Database schema.
+ * Get Ace Graph Database Schema
  * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @param { string | null } token
  * @returns { Promise<td.Schema> }
  */
-export async function getSchema (url) {
-  /** @type { RequestInit } */
-  const requestInit = { method: 'GET', headers: { 'content-type': 'application/json' } }
-  const rFetch = await fetch(`${ url }${ enums.endpoints.getSchema }`, requestInit)
-  return await rFetch.json()
+export async function getSchema (url, token) {
+  return fetchJSON(url + enums.endpoints.getSchema, token, { method: 'GET' })
 }
 
 
 /**
- * Set Ace Graph Database schema. This function overwrites any existing schema values.
- * @param { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Database)
- * @param { td.Schema } schema - Ace Graph Database schema
- * @returns { Promise<td.Schema> }
+ * Get Ace Graph Database Schema
+ * @param { td.AcePassport } passport
+ * @returns { Promise<td.Schema | undefined> }
  */
-export async function _setSchema (storage, schema) {
+export async function _getSchema (passport) {
   try {
-    storage.put(SCHEMA_KEY, validateSchema(schema))
-    return schema
+    await stamp(passport)
+
+    if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw error('auth__read-schema', 'Because the read schema permission is revoked from your AcePermission\'s, you cannot do this', { token: passport.token, source: passport.source })
+
+    return passport.schema
   } catch (e) {
     console.log('error', e)
     throw e
@@ -44,16 +36,35 @@ export async function _setSchema (storage, schema) {
 
 
 /**
- * Set Ace Graph Database schema. This function overwrites any existing schema values. Example:
+ * Set Ace Graph Database Schema. This function overwrites any existing schema values. Example:
  * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @param { string | null } token
  * @param { td.Schema } schema - Ace Graph Database schema
  * @returns { Promise<td.Schema> }
  */
-export async function setSchema (url, schema) {
-  /** @type { RequestInit } */
-  const requestInit = { body: JSON.stringify(schema), method: 'POST', headers: { 'content-type': 'application/json' } }
-  const rFetch = await fetch(`${ url }${ enums.endpoints.setSchema }`, requestInit)
-  return await rFetch.json()
+export async function setSchema (url, token, schema) {
+  return fetchJSON(url + enums.endpoints.setSchema, token, { body: JSON.stringify(schema) })
+}
+
+
+/**
+ * Set Ace Graph Database Schema. This function overwrites any existing schema values.
+ * @param { td.AcePassport } passport
+ * @param { td.Schema } schema - Ace Graph Database schema
+ * @returns { Promise<td.Schema> }
+ */
+export async function _setSchema (passport, schema) {
+  try {
+    await stamp(passport)
+
+    if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', schema: true }))) throw error('auth__write-schema', 'Because the permission write schema is revoked from your AcePermission\'s, you cannot do this', { token: passport.token, source: passport.source } )
+
+    passport.storage.put(SCHEMA_KEY, validateSchema(schema))
+    return schema
+  } catch (e) {
+    console.log('error', e)
+    throw e
+  }
 }
 
 
@@ -65,13 +76,26 @@ function validateSchema (schema) {
   if (!schema.nodes || typeof schema.nodes !== 'object' || Array.isArray(schema.nodes)) throw error('schema__invalid-nodes', 'The provided schema requires a nodes object please', { schema })
   if (schema.relationships && (typeof schema.relationships !== 'object' || Array.isArray(schema.relationships))) throw error('schema__invalid-relationships', 'If you would love to provide relationships with your schema, please pass it as an object', { schema })
 
+  /** @type { Set<string> } - Helps ensure each node in `schema.nodes` is unique */
   const nodeNameSet = new Set()
+
+  /** @type { Set<string> } - Add relationships to this set as we loop `relationshipNameArray` - Ensures `relationshipName` is unique */
   const relationshipNameSet = new Set()
+
+  /** @type { Set<string> } - Add relationships to this set as we loop `schema.nodes[nodeName]` - Ensures each nodeName in a prop points to a node defined in the schema */
   const relationshipPropNodeNameSet = new Set()
-  const relationshipNames = Object.keys(schema.relationships || {})
-  const uniqueNodePropsMap = /** Map<nodeName, Set<nodePropName>> @type { Map<string, Set<string>> } */ (new Map()) // each nodePropName is unique for the nodeName
-  const uniqueRelationshipPropsMap = /** Map<relationshipName, Set<propName>> @type { Map<string, Set<string>> } */ (new Map()) // each relationshipPropName is unique for the relationshipName
-  const directionsMap = /** Map<relationshipName, [{ nodeName, nodePropName, id }]> @type { Map<string, { nodeName: String, nodePropName: string, id: (typeof enums.idsSchema.ForwardRelationshipProp | typeof enums.idsSchema.ReverseRelationshipProp | typeof enums.idsSchema.BidirectionalRelationshipProp) }[]> } */ (new Map())
+
+  /** @type { string[] } - Helpful so we may loop the relationships in the schema */
+  const relationshipNameArray = Object.keys(schema.relationships || {})
+
+  /** @type { Map<string, Set<string>> } - `Map<nodeName, Set<nodePropName>>` - Ensures each `nodePropName` is a unique `nodeName` */
+  const uniqueNodePropsMap = new Map()
+
+  /** @type { Map<string, Set<string>> } - `Map<relationshipName, Set<propName>>` - Ensures each `relationshipPropName` at a `relationshipName` is unique */
+  const uniqueRelationshipPropsMap = new Map()
+
+  /** @type { Map<string, { nodeName: String, nodePropName: string, id: (typeof enums.idsSchema.ForwardRelationshipProp | typeof enums.idsSchema.ReverseRelationshipProp | typeof enums.idsSchema.BidirectionalRelationshipProp) }[]> } - `Map<relationshipName, [{ nodeName, nodePropName, id }]>` - Helps ensure relationships defined in `schema.relationships` have required and properfly formatted nodes props in `schema.nodes` */
+  const directionsMap = new Map()
 
   for (const nodeName in schema.nodes) {
     if (nodeNameSet.has(nodeName)) throw error('schema__not-unique-node-name', `The node name ${ nodeName } is not unique, please ensure each nodeName is unique`, { nodeName, schema })
@@ -109,20 +133,20 @@ function validateSchema (schema) {
   }
 
   relationshipPropNodeNameSet.forEach(relationshipPropNodeName => {
-    if (!nodeNameSet.has(relationshipPropNodeName)) throw error('schema__invalid-relationship-prop-node-name', `The node name ${ relationshipPropNodeName } that is defined as a prop nodeName is not defined @ schema.nodes, please add relationship prop node names that are valid (a node in the schema)`, { nodeName: relationshipPropNodeName, schema})
+    if (!nodeNameSet.has(relationshipPropNodeName)) throw error('schema__invalid-relationship-prop-node-name', `The node name \`${ relationshipPropNodeName }\` that is defined as a prop nodeName is not defined @ schema.nodes, please add relationship prop node names that are valid (a node in the schema)`, { nodeName: relationshipPropNodeName, schema})
   })
 
-  for (const relationshipName of relationshipNames) {
-    if (relationshipNameSet.has(relationshipName)) throw error('schema__not-unique-relationship-name', `The relationship name ${ relationshipName } is not unique, please ensure each relationshipName is unique`, { relationshipName, schema })
+  for (const relationshipName of relationshipNameArray) {
+    if (relationshipNameSet.has(relationshipName)) throw error('schema__not-unique-relationship-name', `The relationship name \`${ relationshipName }\` is not unique, please ensure each relationshipName is unique`, { relationshipName, schema })
 
     relationshipNameSet.add(relationshipName)
 
     const relationship = schema.relationships?.[relationshipName]
     const _errorData = { relationshipName, relationship }
 
-    if (typeof relationshipName !== 'string') throw error('schema__invalid-relationship-type', `The relationship name ${ relationshipName } is not a type of string, please add relationships that are a type of string`, _errorData)
-    if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw error('schema__invalid-relationship-characters', `The relationship name ${ relationshipName } has invalid characters, please add relationships include characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, _errorData)
-    if (relationship?.id !== enums.idsSchema.OneToOne && relationship?.id !== enums.idsSchema.ManyToMany && relationship?.id !== enums.idsSchema.OneToMany) throw error('schema__invalid-relationship-id', `The relationship name ${ relationshipName } is invalid b/c relationship?.id is invalid, please ensure relationships have a valid relationship id of OneToOne, OneToMany or ManyToMany`, _errorData)
+    if (typeof relationshipName !== 'string') throw error('schema__invalid-relationship-type', `The relationship name \`${ relationshipName }\` is not a type of string, please add relationships that are a type of string`, _errorData)
+    if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw error('schema__invalid-relationship-characters', `The relationship name \`${ relationshipName }\` has invalid characters, please add relationships include characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, _errorData)
+    if (relationship?.id !== enums.idsSchema.OneToOne && relationship?.id !== enums.idsSchema.ManyToMany && relationship?.id !== enums.idsSchema.OneToMany) throw error('schema__invalid-relationship-id', `The relationship name \`${ relationshipName }\` is invalid b/c relationship?.id is invalid, please ensure relationships have a valid relationship id of OneToOne, OneToMany or ManyToMany`, _errorData)
 
     if (relationship.x?.props) {
       if (typeof relationship.x.props !== 'object' || Array.isArray(relationship.x.props)) throw error('schema__invalid-relationship-props', `The relationship name ${ relationshipName } has invalid props, if you'd love to include props please ensure relationship.props type, is an object`, _errorData)
@@ -134,19 +158,19 @@ function validateSchema (schema) {
 
         if (!mapValue) uniqueRelationshipPropsMap.set(relationshipName, new Set([propName]))
         else {
-          if (mapValue.has(propName)) throw error('schema__not-unique-relationship-prop-name', `The relationship name ${ relationshipName } and the prop name ${ propName } has props that are not unique, please ensure all relationship prop names are unique for the node`, { relationshipName, propName })
+          if (mapValue.has(propName)) throw error('schema__not-unique-relationship-prop-name', `The relationship name \`${ relationshipName }\` and the prop name \`${ propName }\` is defined more then once in the schema, please ensure all relationship prop names are unique for the node`, { relationshipName, propName })
           else mapValue.add(propName)
         }
       }
     }
   }
 
-  if (relationshipNames.length !== directionsMap.size) throw error('schema__invalid-relationships', 'All relationships listed in schema.nodes must also be listed in schema.relationships', { schemaNodeRelationships: directionsMap.keys(), schemaRelationships: relationshipNames })
+  if (relationshipNameArray.length !== directionsMap.size) throw error('schema__invalid-relationships', 'All relationships listed in schema.nodes must also be listed in schema.relationships', { schemaNodeRelationships: directionsMap.keys(), schemaRelationships: relationshipNameArray })
 
-  if (relationshipNames.length) {
-    for (const relationshipName of relationshipNames) {
+  if (relationshipNameArray.length) {
+    for (const relationshipName of relationshipNameArray) {
       const directions = directionsMap.get(relationshipName)
-      const notify = () => error('schema__invalid-relationship-alignment', `The relationship name ${ relationshipName } has invalid props, please ensure each relationship has 1 bidirectional relationship prop that is not an inverse or 2 relationship props where one is inverse and neither is bidirectional`, { relationshipName, directions })
+      const notify = () => error('schema__invalid-relationship-alignment', `The relationship name \`${ relationshipName }\` has invalid props, please ensure each relationship has 1 bidirectional relationship prop that is not an inverse or 2 relationship props where one is inverse and neither is bidirectional`, { relationshipName, directions })
 
       if (!directions) throw notify()
       if (directions.length !== 1 && directions.length !== 2) throw notify()

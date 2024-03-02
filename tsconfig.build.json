@@ -2,6 +2,8 @@
   "files": [
     "src/createJWKs.js",
     "src/delete.js",
+    "src/fetchJSON.js",
+    "src/enforcePermissions.js",
     "src/getAlgorithmOptions.js",
     "src/getAlias.js",
     "src/getDerivedValue.js",
@@ -11,6 +13,7 @@
     "src/index.js",
     "src/list.js",
     "src/mutate.js",
+    "src/passport.js",
     "src/query.js",
     "src/queryOptions.js",
     "src/queryWhere.js",

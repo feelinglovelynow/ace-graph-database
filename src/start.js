@@ -2,68 +2,79 @@ import { error } from './throw.js'
 import { _query } from './query.js'
 import { td, enums } from '#manifest'
 import { _mutate } from './mutate.js'
+import { stamp } from './passport.js'
+import { fetchJSON } from './fetchJSON.js'
 import { createJWKs } from './createJWKs.js'
+import { NODE_UIDS_KEY } from './variables.js'
 import { _setSchema, _getSchema } from './schema.js'
-import { NODE_UIDS_KEY, SCHEMA_KEY } from './variables.js'
 
 
 /**
- * @typedef { Promise<{ username: string, token: string, privateJWK: string, publicJWK: string }> } StartResponse
+ * Start Ace Graph Database
  * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
- * @returns { Promise<StartResponse> }
+ * @returns { Promise<td.AceStartResponse> }
  */
 export async function start (url) {
-  /** @type { RequestInit } */
-  const requestInit = { method: 'GET', headers: { 'content-type': 'application/json' } }
-  const response = await fetch(`${ url }${ enums.endpoints.start }`, requestInit)
-  return await response.json()
+  return fetchJSON(url + enums.endpoints.start, null, { method: 'GET' })
 }
 
 
 /**
- * @param { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Database)
- * @returns { Promise<StartResponse> }
+ * Start Ace Graph Database
+ * @param { td.AcePassport } passport
+ * @returns { Promise<td.AceStartResponse> }
  */
-export async function _start (storage) {
+export async function _start (passport) {
   try {
-    const getEntries = await storage.get([SCHEMA_KEY, NODE_UIDS_KEY])
-    const allNodeUids = getEntries.get(NODE_UIDS_KEY)
-    const schema = getEntries.get(SCHEMA_KEY)
-    const userUids = allNodeUids ? allNodeUids['AceUser'] : []
-    const roleUids = allNodeUids ? allNodeUids['AceRole'] : []
-    const permissionUids = allNodeUids ? allNodeUids['AcePermission'] : []    
-    const nodesLength = Object.keys(schema?.nodes || {})?.length
-    const relationshipsLength = Object.keys(schema?.relationships || {})?.length
+    await stamp(passport)
 
-    if (nodesLength) throw error('start__schema-nodes-truthy', 'Request fails because there are nodes defined in your schema. Start is meant to boot up a graph without nodes. Delete you schema if you would love to start a new graph.', { nodesLength })
-    if (relationshipsLength) throw error('start__schema-relationships-truthy', 'Request fails because there are relationships defined in your schema. Start is meant to boot up a graph without relationships. Delete you schema if you would love to start a new graph.', { relationshipsLength })
-    if (userUids.length) throw error('start__users-found', 'Request fails because there are AceUser uids in your graph. Start is meant to boot up a graph without AceUser\'s. Delete your AceUser\'s if you would love to start a new graph.', { userUidsLength: userUids.length })
-    if (roleUids.length) throw error('start__roles-found', 'Request fails because there are AceRole uids in your graph. Start is meant to boot up a graph without AceRole\'s. Delete your AceRole\'s if you would love to start a new graph.', { roleUidsLength: roleUids.length })
-    if (permissionUids.length) throw error('start__permissions-found', 'Request fails because there are AcePermission uids in your graph. Start is meant to boot up a graph without AcePermission\'s. Delete your AcePermission\'s if you would love to start a new graph.', { permissionUidLength: permissionUids.length })
+    /** @type { { [nodeName: string]: string[] } } - Uids of all nodes in graph  */
+    const allNodeUids = (await passport.storage.get(NODE_UIDS_KEY)) || {}
 
-    const username = 'admin'
-    const token = crypto.randomUUID()
+    /** @type { number } - Count of nodes defined in schema  */
+    const schemaNodesDefined = Object.keys(passport.schema?.nodes || {})?.length
+
+    /** @type { number } - Count of relationships defined in schema  */
+    const relationshipNodesDefined = Object.keys(passport.schema?.relationships || {})?.length
+
+    /** @type { { username: string, uid: string, token: string, role: string } } - Common admin variables */
+    const admin = { username: 'admin', uid: '_:userAdmin', token: '_:tokenAdmin', role: '_:roleAdmin' }
+  
+    validate()
+
+    /** @type { [ { privateJWK: string, publicJWK: string }, td.Schema] } - Public JWK, Private JWK and Schema */
     const [ jwks ] = await Promise.all([ createJWKs(), setSchema() ])
 
-    await mutate()
+    /** @type { td.MutateResponse } */
+    const rMutate = await mutate()
 
     return {
-      token,
-      username,
       publicJWK: jwks.publicJWK,
       privateJWK: jwks.privateJWK,
+      admin: {
+        uid: rMutate.identity[admin.uid],
+        username: admin.username,
+        token: rMutate.identity[admin.token]
+      },
     }
 
+
+    function validate () {
+      if (schemaNodesDefined) throw error('start__schema-nodes-defined', 'Request fails because there are nodes defined in your schema. Start is meant to boot up a graph without nodes. Delete you schema if you would love to start a new graph.', { schemaNodesDefined })
+      if (relationshipNodesDefined) throw error('start__schema-relationships-defined', 'Request fails because there are relationships defined in your schema. Start is meant to boot up a graph without relationships. Delete you schema if you would love to start a new graph.', { relationshipsLength: relationshipNodesDefined })
+      if (allNodeUids?.length) throw error('start__nodes-found', 'Request fails because there are nodes in your graph. Start is meant to boot up a graph without nodes. Delete your nodes if you would love to start a new graph.', { allNodeUidsLength: allNodeUids.length })
+    }
+    
+
     async function setSchema () {
-      return _setSchema(storage, {
+      return _setSchema(passport, {
         nodes: {
           AceSetting: {
             name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            slug: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            slug: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true, uniqueIndex: true } },
             isOn: { id: 'Prop', x: { dataType: 'boolean', mustBeDefined: true } },
           },
           AceUser: {
-            age: { id: 'Prop', x: { dataType: 'number' } },
             username: { id: 'Prop', x: { dataType: 'string' } },
             password: { id: 'Prop', x: { dataType: 'hash' } },
             token: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
@@ -71,7 +82,6 @@ export async function _start (storage) {
           },
           AceToken: {
             name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            value: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
             createdAt: { id: 'Prop', x: { dataType: 'isoString', mustBeDefined: true } },
             user: { id: 'ReverseRelationshipProp', x: { has: 'one', nodeName: 'AceUser', relationshipName: 'hasTheAceToken' } },
           },
@@ -87,6 +97,7 @@ export async function _start (storage) {
             nodeName: { id: 'Prop', x: { dataType: 'string' } },
             relationshipName: { id: 'Prop', x: { dataType: 'string' } },
             propName: { id: 'Prop', x: { dataType: 'string' } },
+            allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When Ace provides a node / prop Ace may find that the node / prop may not be read or written to b/c of this permission. However, Ace will allow the read or write when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
             roles: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission' } },
           }
         },
@@ -98,20 +109,22 @@ export async function _start (storage) {
       })
     }
 
+
     async function mutate () {
-      return _mutate(storage, {
+      return _mutate(passport, {
         insert: [
-          { id: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', slug: 'enforcePermissions', isOn: false } },
-          { id: 'AceUser', x: { uid: '_:userAdmin', username, age: 18 } },
+          { id: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', slug: enums.settings.enforcePermissions, isOn: false } },
+          { id: 'AceUser', x: { uid: admin.uid, username: admin.username } },
           { id: 'AceUser', x: { uid: '_:jenny', username: 'jenny' } },
           { id: 'AceUser', x: { uid: '_:roy', username: 'roy' } },
-          { id: 'AceUser', x: { uid: '_:donna', username: 'donna', age: 32 } },
-          { id: 'AceToken',  x: { uid: '_:tokenAdmin', name: 'Admin', value: token,  createdAt: 'now' } },
-          { id: 'AceRole', x: { uid: '_:roleAdmin', name: 'Admin', slug: 'admin' } },
+          { id: 'AceUser', x: { uid: '_:donna', username: 'donna' } },
+          { id: 'AceToken',  x: { uid: admin.token, name: 'Admin', createdAt: 'now' } },
+          { id: 'AceRole', x: { uid: admin.role, name: 'Admin', slug: 'admin' } },
           { id: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', slug: 'architect' } },
           { id: 'AceRole', x: { uid: '_:roleEditor', name: 'Editor', slug: 'editor' } },
           { id: 'AceRole', x: { uid: '_:roleReader', name: 'Reader', slug: 'reader' } },
-          { id: 'AcePermission', x: { uid: '_:permissionSchema', action: 'write', schema: '*', } },
+          { id: 'AcePermission', x: { uid: '_:permissionSchema', action: 'write', schema: '*' } },
+          { id: 'AcePermission', x: { uid: '_:permissionAceSetting', action: 'write', nodeName: 'AceSetting', propName: '*' } },
           { id: 'AcePermission', x: { uid: '_:permissionWriteAceUser', action: 'write', nodeName: 'AceUser', propName: '*' } },
           { id: 'AcePermission', x: { uid: '_:permissionWriteAceSetting', action: 'write', nodeName: 'AceSetting', propName: '*' } },
           { id: 'AcePermission', x: { uid: '_:permissionWriteAceToken', action: 'write', nodeName: 'AceToken', propName: '*' } },
@@ -119,15 +132,19 @@ export async function _start (storage) {
           { id: 'AcePermission', x: { uid: '_:permissionWriteAcePermission', action: 'write', nodeName: 'AcePermission', propName: '*' } },
           { id: 'AcePermission', x: { uid: '_:permissionWriteAnyNode', action: 'write', nodeName: '*', propName: '*' } },
 
-          { id: 'hasTheAceToken', x: { a: '_:userAdmin', b: '_:tokenAdmin' } },
-          { id: 'isTheAceRole', x: { a: '_:userAdmin', b: '_:roleArchitect' } },
+          { id: 'hasTheAceToken', x: { a: admin.uid, b: admin.token } },
+          { id: 'isTheAceRole', x: { a: admin.uid, b: admin.role } },
 
+          { id: 'revokesAcePermission', x: { a: admin.role, b: '_:permissionWriteAceSetting' } }, // testing
+
+          { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionAceSetting' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceUser' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceSetting' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceToken' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceRole' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAcePermission' } },
 
+          { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionAceSetting' } },
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionSchema' } },
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteAceUser' } },
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteAceSetting' } },
@@ -139,7 +156,7 @@ export async function _start (storage) {
           { id: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionWriteAnyNode' } },
         ]
       })
-    }  
+    }
   } catch (error) {
     console.log('error', error)
     throw error

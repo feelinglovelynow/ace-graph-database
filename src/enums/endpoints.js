@@ -6,4 +6,5 @@ export const endpoints = new Map([
   ['query', '/query'],
   ['list', '/list'],
   ['deleteDataAndSchema', '/delete-data-and-schema'],
+  ['enforcePermissions', '/enforce-permissions']
 ])

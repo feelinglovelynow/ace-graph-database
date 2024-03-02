@@ -8,11 +8,11 @@ import { getRelationshipNode } from './getRelationshipNode.js'
  * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
  * @param { td.QueryResponse } response 
  * @param { boolean } isUsingSortIndexNodes 
- * @param { td.PublicJWKs | null } publicJWKs 
- * @param { td.Schema } schema 
+ * @param { td.QueryPublicJWKs | null } publicJWKs 
+ * @param { td.AcePassport } passport 
  * @returns { Promise<void> }
  */
-export async function implementQueryOptions (generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, schema) {
+export async function implementQueryOptions (generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, passport) {
   if (generatedQueryFormatSection.x.$options) {
     for (let option of generatedQueryFormatSection.x.$options) {
       switch (option.id) {
@@ -24,7 +24,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
         case enums.idsQuery.FindUndefined:
         case enums.idsQuery.FilterDefined:
         case enums.idsQuery.FilterUndefined:
-          await queryWhere(generatedQueryFormatSection, response, option, publicJWKs, schema)
+          await queryWhere(generatedQueryFormatSection, response, option, publicJWKs, passport)
           break
 
         case enums.idsQuery.Limit:
@@ -100,7 +100,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryLimit } option */
+  /** @param { td.QueryLimit } option */
   function doLimit (option) {
     if (option.x.skip && option.x.count) {
       response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(option.x.skip, option.x.skip + option.x.count)
@@ -115,7 +115,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QuerySort } option */
+  /** @param { td.QuerySort } option */
   function doSort (option) {
     if (!isUsingSortIndexNodes) { // IF not using a sorted index array => sort items
       const property = option.x.property
@@ -146,10 +146,10 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryDerivedProperty } option */
+  /** @param { td.QueryDerivedProperty } option */
   function doDerivedProperty (option) {
     for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-      const derivedValue = getDerivedValue(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][i], option.x.symbol, option.x.items, schema)
+      const derivedValue = getDerivedValue(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][i], option.x.symbol, option.x.items, passport)
 
       response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = derivedValue
       if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = derivedValue
@@ -157,7 +157,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QuerySumAsProperty } option */
+  /** @param { td.QuerySumAsProperty } option */
   function doSumAsProperty (option) {
     let sum = 0
 
@@ -172,7 +172,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QuerySumAsResponse } option */
+  /** @param { td.QuerySumAsResponse } option */
   function doSumAsResponse (option) {
     let sum = 0
 
@@ -185,7 +185,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryAverageAsProperty } option */
+  /** @param { td.QueryAverageAsProperty } option */
   function doAverageAsProperty (option) {
     let sum = 0
 
@@ -204,7 +204,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryAverageAsResponse } option */
+  /** @param { td.QueryAverageAsResponse } option */
   function doAverageAsResponse (option) {
     let sum = 0
 
@@ -221,7 +221,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryMinAmountAsProperty } option */
+  /** @param { td.QueryMinAmountAsProperty } option */
   function doMinAmountAsProperty (option) {
     let amount = 0
 
@@ -238,7 +238,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryMinAmountAsResponse } option */
+  /** @param { td.QueryMinAmountAsResponse } option */
   function doMinAmountAsResponse (option) {
     let amount = 0
 
@@ -253,7 +253,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryMinNodeAsResponse } option */
+  /** @param { td.QueryMinNodeAsResponse } option */
   function doMinNodeAsResponse (option) {
     let node = null
     let amount = 0
@@ -272,7 +272,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryMaxNodeAsResponse } option */
+  /** @param { td.QueryMaxNodeAsResponse } option */
   function doMaxNodeAsResponse (option) {
     let node = null
     let amount = 0
@@ -291,7 +291,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryMaxAmountAsProperty } option */
+  /** @param { td.QueryMaxAmountAsProperty } option */
   function doMaxAmountAsProperty (option) {
     let amount = 0
 
@@ -308,7 +308,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryMaxAmountAsResponse } option */
+  /** @param { td.QueryMaxAmountAsResponse } option */
   function doMaxAmountAsResponse (option) {
     let amount = 0
 
@@ -323,7 +323,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryCountAsProperty } option */
+  /** @param { td.QueryCountAsProperty } option */
   function doCountAsProperty (option) {
     const count = response.original[generatedQueryFormatSection.property].length
 
@@ -342,19 +342,21 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
 
-  /**  @param { td.QueryPropertyAsResponse } option */
+  /** @param { td.QueryPropertyAsResponse } option */
   function doPropertyAsResponse (option) {
     let value
 
-    if (!option.x.relationships?.length) value = response.original[generatedQueryFormatSection.property][0][option.x.property]
+    let original = response.original[generatedQueryFormatSection.property]
+
+    if (!option.x.relationships?.length) value = original?.[0]?.[option.x.property]
     else {
-      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][0], null, schema, option.x.relationships)
+      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], null, passport, option.x.relationships)
       value = rRelationshipNode?.node?.[option.x.property]
     }
 
-    if (value) {
-      response.current[generatedQueryFormatSection.property] = [value]
-      response.original[generatedQueryFormatSection.property] = [value]
+    if (typeof value !== 'undefined') {
+      response.current[generatedQueryFormatSection.property] = [ value ]
+      original = [ value ]
     }
   }
 }

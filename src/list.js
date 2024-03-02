@@ -1,4 +1,7 @@
-import { td, enums }from '#manifest'
+import { error } from './throw.js'
+import { td, enums } from '#manifest'
+import { stamp } from './passport.js'
+import { fetchJSON } from './fetchJSON.js'
 
 
 /**
@@ -8,19 +11,24 @@ import { td, enums }from '#manifest'
  * @returns { Promise<{ [k: string]: any }[]> }
  */
 export async function list (url, options) {
-  /** @type { RequestInit } */
-  const requestInit = { body: JSON.stringify(options), method: 'POST', headers: { 'content-type': 'application/json' } }
-  const rFetch = await fetch(`${ url }${ enums.endpoints.list }`, requestInit)
-  return await rFetch.json()
+  return fetchJSON(url + enums.endpoints.list, null, { body: JSON.stringify(options || {}) })
 }
 
 
 /**
  * Returns all keys and values (`Map<string, any>`) in Ace Database, in ascending sorted order based on the keys’ UTF-8 encodings.
- * @param { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Database)
+ * @param { td.AcePassport } passport
  * @param { td.CF_DO_StorageListOptions } [ options ]
  * @returns { Promise<Map<string, any>> }
  */
-export async function _list (storage, options) {
-  return await storage.list(options)
+export async function _list (passport, options) {
+  await stamp(passport)
+
+  passport.revokesAcePermissions?.forEach((value) => {
+    if (value.action === 'read' && value.schema === true) throw error('auth__read-schema', `Because read permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+    if (value.action === 'read' && value.nodeName) throw error('auth__read-node', `Because read permissions to the node name \`${value.nodeName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+    if (value.action === 'read' && value.relationshipName) throw error('auth__read-node', `Because read permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+  })
+
+  return await passport.storage.list(options)
 }

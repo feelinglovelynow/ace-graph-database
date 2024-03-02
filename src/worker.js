@@ -1,12 +1,14 @@
 import { _list } from './list.js'
 import { error } from './throw.js'
 import { _query } from './query.js'
-import { td, enums }from '#manifest'
+import { _start } from './start.js'
+import { td, enums } from '#manifest'
 import { _mutate } from './mutate.js'
+import { create } from './passport.js'
 import { endpoints } from './enums/endpoints.js'
 import { _deleteDataAndSchema } from './delete.js'
 import { _setSchema, _getSchema } from './schema.js'
-import { _start } from './start.js'
+import { _enforcePermissions } from './enforcePermissions.js'
 
 
 /**
@@ -21,14 +23,14 @@ async function getResponse (storage, request) {
   switch (url.pathname) {
     // start
     case enums.endpoints.start:
-      return new Response(JSON.stringify(await _start(storage)), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _start(create(storage, request, enums.passportSource.start))), { headers: getHeaders('json') })
 
 
     // schema
     case enums.endpoints.setSchema:
-      return new Response(JSON.stringify(await _setSchema(storage, await request.json())), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _setSchema(create(storage, request, enums.passportSource.setSchema), await request.json())), { headers: getHeaders('json') })
     case enums.endpoints.getSchema:
-      return new Response(JSON.stringify(await _getSchema(storage)), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _getSchema(create(storage, request, enums.passportSource.getSchema))), { headers: getHeaders('json') })
 
 
     // list
@@ -37,25 +39,30 @@ async function getResponse (storage, request) {
       const r = {}
       body = await request.text() // might be undefined
       body = body ? JSON.parse(body) : {} // if defined => parse body to get options
-      const map = await _list(storage, body) // returns a map
+      const map = await _list(create(storage, request, enums.passportSource.list), body) // returns a map
       map.forEach((value, key) => r[key] = value) // convert map to an object b/c we can't stringify a map
       return new Response(JSON.stringify(r), { headers: getHeaders('json') })
 
 
     // delete
     case enums.endpoints.deleteDataAndSchema:
-      await _deleteDataAndSchema(storage)
+      await _deleteDataAndSchema(create(storage, request, enums.passportSource.deleteDataAndSchema))
       return new Response(JSON.stringify({ success: true }), { headers: getHeaders('json') })
 
 
     // mutate
     case enums.endpoints.mutate:
-      return new Response(JSON.stringify(await _mutate(storage, await request.json())), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _mutate(create(storage, request, enums.passportSource.mutate), await request.json())), { headers: getHeaders('json') })
 
 
     // query
     case enums.endpoints.query:
-      return new Response(JSON.stringify(await _query(storage, await request.json())), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _query(create(storage, request, enums.passportSource.query), await request.json())), { headers: getHeaders('json') })
+
+
+    // enforcePermissions
+    case enums.endpoints.enforcePermissions:
+      return new Response(JSON.stringify(await _enforcePermissions(create(storage, request, enums.passportSource.enforcePermissions), await request.json())), { headers: getHeaders('json') })
 
 
     // throw b/c unknown pathname provided

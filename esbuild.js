@@ -9,6 +9,8 @@ esbuild.build({ // // https://esbuild.github.io/api/
   entryPoints: [ // This is an array of files that each serve as an input to the bundling algorithm.
     './tsc/src/createJWKs.js',
     './tsc/src/delete.js',
+    './tsc/src/fetchJSON.js',
+    './tsc/src/enforcePermissions.js',
     './tsc/src/getAlgorithmOptions.js',
     './tsc/src/getAlias.js',
     './tsc/src/getDerivedValue.js',
@@ -18,6 +20,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/index.js',
     './tsc/src/list.js',
     './tsc/src/mutate.js',
+    './tsc/src/passport.js',
     './tsc/src/query.js',
     './tsc/src/queryOptions.js',
     './tsc/src/queryWhere.js',

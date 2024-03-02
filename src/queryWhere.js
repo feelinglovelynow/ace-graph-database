@@ -3,44 +3,42 @@ import { error } from './throw.js'
 import { td, enums } from '#manifest'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
-/**
- * clone <- original
- * FOR clone
-  * IF splice
-    * splice from original AND 
- */
-
 
 /**
  * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
  * @param { td.QueryResponse } response 
  * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } $where 
- * @param { td.PublicJWKs | null } publicJWKs 
- * @param { td.Schema } schema 
+ * @param { td.QueryPublicJWKs | null } publicJWKs 
+ * @param { td.AcePassport } passport 
  */
-export async function queryWhere (generatedQueryFormatSection, response, $where, publicJWKs, schema) {
-  if (Array.isArray(response.original[generatedQueryFormatSection.property])) {
-    let iOrignal = 0
-    const clone = [...(response.original[generatedQueryFormatSection.property]) ]
+export async function queryWhere (generatedQueryFormatSection, response, $where, publicJWKs, passport) {
+  await main
 
-    for (let iClone = 0; iClone < clone.length; iClone++) {
-      let spliced = false
 
-      if ($where.id === enums.idsQuery.FindGroup || $where.id === enums.idsQuery.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
-      else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
+  async function main () {
+    if (Array.isArray(response.original[generatedQueryFormatSection.property])) {
+      let iOrignal = 0
+      const clone = [...(response.original[generatedQueryFormatSection.property]) ]
 
-      if (!spliced && ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.FindDefined || $where.id === enums.idsQuery.FindUndefined)) {
-        response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iOrignal] ]
-        response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iOrignal] ]
-        break
+      for (let iClone = 0; iClone < clone.length; iClone++) {
+        let spliced = false
+
+        if ($where.id === enums.idsQuery.FindGroup || $where.id === enums.idsQuery.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
+        else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
+
+        if (!spliced && ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.FindDefined || $where.id === enums.idsQuery.FindUndefined)) {
+          response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iOrignal] ]
+          response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iOrignal] ]
+          break
+        }
+
+        if (!spliced) iOrignal++
       }
 
-      if (!spliced) iOrignal++
-    }
-
-    if (Array.isArray(response.original[generatedQueryFormatSection.property]) && !response.original[generatedQueryFormatSection.property].length) {
-      response.current[generatedQueryFormatSection.property] = null
-      response.original[generatedQueryFormatSection.property] = null
+      if (Array.isArray(response.original[generatedQueryFormatSection.property]) && !response.original[generatedQueryFormatSection.property].length) {
+        response.current[generatedQueryFormatSection.property] = null
+        response.original[generatedQueryFormatSection.property] = null
+      }
     }
   }
     
@@ -222,7 +220,7 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
           response.value = graphNode[queryProperty.x.property]
           response.generatedQueryFormatSection = generatedQueryFormatSection
         } else {
-          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, null, schema, queryProperty.x.relationships)
+          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, null, passport, queryProperty.x.relationships)
 
           if (rRelationshipNode?.node?.[queryProperty.x.property]) {
             response.generatedQueryFormatSection = rRelationshipNode.generatedQueryFormatSection
@@ -247,7 +245,7 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
    */
   function isLeftOrRightHash (qw, left, right, sideIndex) {
     const side = sideIndex === 0 ? left : right
-    return Boolean(side.type === 'QueryProperty' && side.generatedQueryFormatSection && /** @type { td.SchemaProp } */ (schema.nodes?.[side.generatedQueryFormatSection.nodeName]?.[/** @type { td.QueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
+    return Boolean(side.type === 'QueryProperty' && side.generatedQueryFormatSection && /** @type { td.SchemaProp } */ (passport.schema?.nodes?.[side.generatedQueryFormatSection.nodeName]?.[/** @type { td.QueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
   }
 
 

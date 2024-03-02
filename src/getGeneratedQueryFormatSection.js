@@ -8,12 +8,12 @@ import { getAlias } from './getAlias.js'
  * 
  * @param { td.QueryRequestFormatX } x
  * @param { string } schemaPropName
- * @param { td.Schema } schema
+ * @param { td.AcePassport } passport
  * @param { td.QueryRequestFormatGenerated | null } generatedParent
  * @returns { td.QueryRequestFormatGenerated }
  */
-export function getGeneratedQueryFormatSectionByParent (x, schemaPropName, schema, generatedParent) {
-  const schemaPropValue = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (schema.nodes?.[generatedParent?.nodeName || '']?.[schemaPropName])
+export function getGeneratedQueryFormatSectionByParent(x, schemaPropName, passport, generatedParent) {
+  const schemaPropValue = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[generatedParent?.nodeName || '']?.[schemaPropName])
 
   if (!schemaPropValue) throw error('query__falsy-query-format-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is not defined in your schema`, { queryFormatKey: schemaPropName, nodeName: generatedParent?.nodeName })
   
@@ -40,12 +40,12 @@ export function getGeneratedQueryFormatSectionByParent (x, schemaPropName, schem
 /**
  * @param { td.QueryRequestFormat } queryFormatSection
  * @param { string } schemaProperty
- * @param { td.Schema } schema
+ * @param { td.AcePassport } passport
  * @returns { td.QueryRequestFormatGenerated }
  */
-export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaProperty, schema) {
-  if (typeof queryFormatSection.id !== 'string' || !queryFormatSection.id) throw error('query__format-section-id-falsy', 'This request is failing b/c request.format.id is not a truthy string', { queryFormatSection })
-  if (!schema.nodes[queryFormatSection.id]) throw error('query__format-section-id-node-invalid', 'This request is failing b/c request.format.id is not a node in your schema', { queryFormatSection })
+export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaProperty, passport) {
+  if (typeof queryFormatSection?.id !== 'string' || !queryFormatSection.id) throw error('query__format-section-id-falsy', 'This request is failing b/c request.format.id is not a truthy string', { queryFormatSection })
+  if (!passport.schema?.nodes[queryFormatSection.id]) throw error('query__format-section-id-node-invalid', 'This request is failing b/c request.format.id is not a node in your schema', { queryFormatSection })
 
   const aliasProperty = getAlias(queryFormatSection.x.$options)
 
@@ -72,6 +72,8 @@ function getOptionsBoolean (x) {
     for (const $o of x.$options) {
       switch ($o.id) {
         case enums.idsQuery.Find:
+        case enums.idsQuery.FindByUid:
+        case enums.idsQuery.FindByUnique:
         case enums.idsQuery.FindGroup:
         case enums.idsQuery.FindDefined:
         case enums.idsQuery.FindUndefined:
