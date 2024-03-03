@@ -36,12 +36,12 @@ async function getResponse (storage, request) {
     // list
     case enums.endpoints.list:
       /** @type { { [k: string]: any } } */
-      const r = {}
+      const rList = {}
       body = await request.text() // might be undefined
       body = body ? JSON.parse(body) : {} // if defined => parse body to get options
       const map = await _list(create(storage, request, enums.passportSource.list), body) // returns a map
-      map.forEach((value, key) => r[key] = value) // convert map to an object b/c we can't stringify a map
-      return new Response(JSON.stringify(r), { headers: getHeaders('json') })
+      map.forEach((value, key) => rList[key] = value) // convert map to an object b/c we can't stringify a map
+      return new Response(JSON.stringify(rList), { headers: getHeaders('json') })
 
 
     // delete

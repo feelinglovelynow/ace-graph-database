@@ -108,15 +108,15 @@ export async function _query (passport, request) {
      * @returns { Promise<void> }
      */
     async function addNodesToResponse (generatedQueryFormatSection, response, uids, graphRelationships, isUsingSortIndexNodes) {
-      const revokesValue = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', nodeName: generatedQueryFormatSection.nodeName, propName: '*' }))
+      const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', nodeName: generatedQueryFormatSection.nodeName, propName: '*' }))
 
-      if (revokesValue || revokesValue?.allowPropName) throw error('auth__read-node', `Because the read node name \`${ generatedQueryFormatSection.nodeName }\` permission is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+      if (permission && !permission.allowPropName) throw error('auth__read-node', `Because the read node name \`${ generatedQueryFormatSection.nodeName }\` permission is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
       else {
         const rGetPutCache = await getPutCache(uids)
 
         for (let i = 0; i < uids.length; i++) {
           const node = rGetPutCache.get(uids[i])
-          if (isRevokesAllowed(node.x, { value: revokesValue })) await addPropsToResponse(generatedQueryFormatSection, response, { node }, graphRelationships?.[i] || null) // call desired function on each node
+          if (isRevokesAllowed(node.x, { permission })) await addPropsToResponse(generatedQueryFormatSection, response, { node }, graphRelationships?.[i] || null) // call desired function on each node
         }
 
         await implementQueryOptions(generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, passport)
@@ -251,7 +251,7 @@ export async function _query (passport, request) {
 
     /**
      * @param { { [propName: string]: any; } } node
-     * @param { { key?: string, value?: any } } options
+     * @param { { key?: string, permission?: any } } options
      * @returns { boolean }
      */
     function isRevokesAllowed (node, options) {
@@ -259,7 +259,7 @@ export async function _query (passport, request) {
       let isAllowed = false
 
       if (options.key) revokesValue = passport.revokesAcePermissions?.get(options.key)
-      if (options.value) revokesValue = options.value
+      if (options.permission) revokesValue = options.permission
 
       if (!revokesValue) isAllowed = true
       else if (passport?.user?.uid && node?.[revokesValue?.allowPropName] && passport.user.uid === node[revokesValue.allowPropName]) isAllowed = true

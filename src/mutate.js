@@ -115,21 +115,27 @@ export async function _mutate (passport, request) {
         }
       }
 
-
       async function populateSertNodesArray () {
         for (let i = 0; i < /** @type { td.MutateRequestInsertItem[] } */(request[action])?.length; i++) {
           let requestItem = /** @type { td.MutateRequestInsertNodeDefaultItem } */ (request[action]?.[i])
 
-          if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: '*' }))) throw error('auth__write-node', `Because the write permission to the node name \`${ requestItem.id }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
-
           if (requestItem && nodeNamesSet.has(requestItem.id)) { // IF permission to write this nodeName
             if (!requestItem?.x?.uid || typeof requestItem.x.uid !== 'string') throw error('mutate__falsy-uid', 'Please pass a request item that includes a uid that is a typeof string', { requestItem })
 
-            if (action === 'upsert' && upsertRequestItems) {
-              const graphNode = /** @type { Map<string, any> } */(upsertRequestItems).get(requestItem.x.uid)
+            const permissionStar = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: '*' }))
 
-              if (!graphNode) throw error('mutate__invalid-upsert-uid', `Please pass a request item uid that is a uid defined in your graph, the uid "${ requestItem.x.uid }" is not defined in your graph`, { requestItem })
-              if (graphNode.id !== requestItem.id) throw error('mutate__invalid-upsert-uid', `Please pass a request item uid that is a uid defined in your graph as a "${ graphNode.id }", the uid "${ requestItem.x.uid }" is not defined as a "${ requestItem.id }"`, { requestItem, graphNodeId: graphNode.id })
+            if (action === 'insert' && requestItem.x.uid.startsWith(REQUEST_UID_PREFIX) && permissionStar && !permissionStar?.allowNewInsert) { // IF this is a fresh insert AND star revoked this permission AND allowNewInsert not specefied
+              throw error('auth__insert-node', `Because the write permission to the node name \`${requestItem.id}\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+            }
+
+            let graphNode
+
+            if (action === 'upsert' && upsertRequestItems) {
+              graphNode = /** @type { Map<string, any> } */(upsertRequestItems).get(requestItem.x.uid)
+
+              if (!graphNode) throw error('mutate__invalid-upsert-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${ requestItem.x.uid }\` is not defined in your graph`, { requestItem })
+              if (graphNode.id !== requestItem.id) throw error('mutate__invalid-upsert-uid', `Please pass a request item uid that is a uid defined in your graph as a \`${ graphNode.id }\`, the uid \`${ requestItem.x.uid }\` is not defined as a \`${ requestItem.id }\``, { requestItem, graphNodeId: graphNode.id })
+              if (permissionStar && (!passport?.user?.uid || !permissionStar.allowPropName || !graphNode.x[permissionStar.allowPropName] || graphNode.x[permissionStar.allowPropName] !== passport.user.uid)) throw error('auth__upsert-node', `Because the write permission to the node name \`${ requestItem.id }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
 
               requestItem = { ...graphNode, ...requestItem }
             }
@@ -145,7 +151,12 @@ export async function _mutate (passport, request) {
             }
 
             for (const nodePropName in requestItem.x) { // loop each request property => validate each property => IF invalid throw errors => IF valid do index things
-              if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: nodePropName }))) throw error('auth__write-prop', `Because the permission write to the node name \`${requestItem.id}\` and the prop name \`${nodePropName}\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+              const permissionProp = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: nodePropName }))
+
+              if (permissionProp) {
+                if (action === 'insert' && !permissionProp.allowNewInsert) throw error('auth__insert-prop', `Because the permission write to the node name \`${ requestItem.id }\` and the prop name \`${ nodePropName }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+                if (action === 'upsert' && (!graphNode || !passport?.user?.uid || !permissionProp.allowPropName || !graphNode.x[permissionProp.allowPropName] || graphNode.x[permissionProp.allowPropName] !== passport.user.uid)) throw error('auth__upsert-prop', `Because the permission write to the node name \`${ requestItem.id }\` and the prop name \`${ nodePropName }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+              }
 
               const nodePropValue = requestItem?.x?.[nodePropName]
               const schemaProp = /** @type { td.SchemaProp } */ (schema.nodes?.[requestItem.id][nodePropName])

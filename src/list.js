@@ -7,11 +7,12 @@ import { fetchJSON } from './fetchJSON.js'
 /**
  * Returns all keys and values (array of objects) in Ace Database, in ascending sorted order based on the keys’ UTF-8 encodings.
  * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @param { string | null } token 
  * @param { td.CF_DO_StorageListOptions } [ options ]
  * @returns { Promise<{ [k: string]: any }[]> }
  */
-export async function list (url, options) {
-  return fetchJSON(url + enums.endpoints.list, null, { body: JSON.stringify(options || {}) })
+export async function list (url, token, options) {
+  return fetchJSON(url + enums.endpoints.list, token, { body: JSON.stringify(options || {}) })
 }
 
 
@@ -27,7 +28,7 @@ export async function _list (passport, options) {
   passport.revokesAcePermissions?.forEach((value) => {
     if (value.action === 'read' && value.schema === true) throw error('auth__read-schema', `Because read permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
     if (value.action === 'read' && value.nodeName) throw error('auth__read-node', `Because read permissions to the node name \`${value.nodeName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
-    if (value.action === 'read' && value.relationshipName) throw error('auth__read-node', `Because read permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+    if (value.action === 'read' && value.relationshipName) throw error('auth__read-relationship', `Because read permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
   })
 
   return await passport.storage.list(options)

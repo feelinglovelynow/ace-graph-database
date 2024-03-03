@@ -1,8 +1,8 @@
+import { error } from './throw.js'
 import { _query } from './query.js'
 import { td, enums } from '#manifest'
 import { _getSchema } from './schema.js'
 import { REQUEST_TOKEN_HEADER, SCHEMA_KEY, getRevokesKey, getUniqueIndexKey } from './variables.js'
-import { error } from './throw.js'
 
 
 /**
@@ -88,6 +88,7 @@ export async function stamp (passport) {
                   propName: true,
                   schema: true,
                   allowPropName: true,
+                  allowNewInsert: true,
                 }
               }
             },

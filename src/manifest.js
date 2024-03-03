@@ -136,7 +136,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { boolean } [ isEnforcePermissionsOn ]
  * @property { Map<string, any> } [ revokesAcePermissions ]
  * 
- * @typedef { { uid: string, password: string, role?: { uid: string, revokesAcePermissions: { uid: string, action: string, nodeName?: string, relationshipName?: string, propName?: string, schema?: string, allowPropName?: string } } } } AcePassportUser
+ * @typedef { { uid: string, password: string, role?: { uid: string, revokesAcePermissions: { uid: string, action: string, nodeName?: string, relationshipName?: string, propName?: string, schema?: string, allowPropName?: string, allowNewInsert?: boolean } } } } AcePassportUser
  */
 
 

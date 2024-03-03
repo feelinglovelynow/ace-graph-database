@@ -45,7 +45,7 @@ export async function _start (passport) {
     /** @type { [ { privateJWK: string, publicJWK: string }, td.Schema] } - Public JWK, Private JWK and Schema */
     const [ jwks ] = await Promise.all([ createJWKs(), setSchema() ])
 
-    /** @type { td.MutateResponse } */
+    /** @type { td.MutateResponse } - Mutation response */
     const rMutate = await mutate()
 
     return {
@@ -97,7 +97,8 @@ export async function _start (passport) {
             nodeName: { id: 'Prop', x: { dataType: 'string' } },
             relationshipName: { id: 'Prop', x: { dataType: 'string' } },
             propName: { id: 'Prop', x: { dataType: 'string' } },
-            allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When Ace provides a node / prop Ace may find that the node / prop may not be read or written to b/c of this permission. However, Ace will allow the read or write when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
+            allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When Ace encounters a node or prop, Ace may find that this node or prop may not be queried (read) or mutated (write) b/c of this permission. However, Ace will allow the read or write when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
+            allowNewInsert: { id: 'Prop', x: { dataType: 'boolean', description: 'We may love to only allow writing to a prop IF this is an upsert and the current user is the user (done w/ allowPropName) or this is a fresh insert and not an upsert (done with allowNewInsert)' } },
             roles: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission' } },
           }
         },
@@ -131,11 +132,11 @@ export async function _start (passport) {
           { id: 'AcePermission', x: { uid: '_:permissionWriteAceRole', action: 'write', nodeName: 'AceRole', propName: '*' } },
           { id: 'AcePermission', x: { uid: '_:permissionWriteAcePermission', action: 'write', nodeName: 'AcePermission', propName: '*' } },
           { id: 'AcePermission', x: { uid: '_:permissionWriteAnyNode', action: 'write', nodeName: '*', propName: '*' } },
+          { id: 'AcePermission', x: { uid: '_:permissionWritePassword', action: 'write', nodeName: 'AceUser', propName: 'password', allowPropName: 'uid', allowNewInsert: true } },
+          { id: 'AcePermission', x: { uid: '_:permissionReadPassword', action: 'read', nodeName: 'AceUser', propName: 'password', allowPropName: 'uid' } },
 
           { id: 'hasTheAceToken', x: { a: admin.uid, b: admin.token } },
           { id: 'isTheAceRole', x: { a: admin.uid, b: admin.role } },
-
-          { id: 'revokesAcePermission', x: { a: admin.role, b: '_:permissionWriteAceSetting' } }, // testing
 
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionAceSetting' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceUser' } },
@@ -143,6 +144,8 @@ export async function _start (passport) {
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceToken' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAceRole' } },
           { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWriteAcePermission' } },
+          { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionWritePassword' } },
+          { id: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionReadPassword' } },
 
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionAceSetting' } },
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionSchema' } },
@@ -151,9 +154,12 @@ export async function _start (passport) {
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteAceToken' } },
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteAceRole' } },
           { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteAcePermission' } },
+          { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWritePassword' } },
+          { id: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionReadPassword' } },
 
           { id: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionSchema' } },
           { id: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionWriteAnyNode' } },
+          { id: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadPassword' } },
         ]
       })
     }
