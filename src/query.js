@@ -28,11 +28,14 @@ export async function _query (passport, request) {
   try {
     await stamp(passport)
 
-    /** @type { td.QueryPublicJWKs } - Converts `JSON.stringify()` jwks into `CryptoKey` jwks */
-    const publicJWKs = {}
+    /** @type { td.QueryRequestArray } - Ensure we are always dealing with an array */
+    const arrayRequests = Array.isArray(request) ? request : [ request ]
 
     /** @type { QueryCache } - Store nodes we look up in this cache map, so if the nodes are requested again (w/in a relationship), we can retrieve the nodes from this cache map */
     const cache = new Map()
+
+    /** @type { td.QueryPublicJWKs[] } - Converts `JSON.stringify()` jwks into `CryptoKey` jwks */
+    const publicJWKs = []
 
     /** @type { td.QueryResponse } - Nodes with all properties will be in original, nodes with requested properties from `query.format` will be in current. */
     const response = { current: {}, original: {} }
@@ -42,26 +45,41 @@ export async function _query (passport, request) {
      * @typedef { Map<string, { relationshipName: string, nodePropName: string }> } SchemaRelationshipsMap
      */
 
-    await setPublicJWKs()
-    const { uids, generatedQueryFormatSection, isUsingSortIndexNodes } = await getInitialUids()
-    await addNodesToResponse(generatedQueryFormatSection, response, uids, null, isUsingSortIndexNodes)
+    for (let iQuery = 0; iQuery < arrayRequests.length; iQuery++) {
+      const query = arrayRequests[iQuery]
+      await setPublicJWKs(query, iQuery)
+      const { uids, generatedQueryFormatSection, isUsingSortIndexNodes } = await getInitialUids(query)
+      await addNodesToResponse(generatedQueryFormatSection, response, uids, null, isUsingSortIndexNodes, iQuery)
+    }
+
     return response.current
 
 
-    async function setPublicJWKs () {
-      if (request.publicJWKs) {
-        for (const key in request.publicJWKs) {
-          publicJWKs[key] = await crypto.subtle.importKey('jwk', JSON.parse(request.publicJWKs[key]), getAlgorithmOptions('import'), true, ['verify'])
+    /**
+     * @param { td.QueryRequestDefault } query
+     * @param { number } iQuery
+     */
+    async function setPublicJWKs (query, iQuery) {
+      if (query.publicJWKs) {
+        const jwks = /** @type { td.QueryPublicJWKs } */ ({})
+
+        for (const key in query.publicJWKs) {
+          jwks[key] = await crypto.subtle.importKey('jwk', JSON.parse(query.publicJWKs[key]), getAlgorithmOptions('import'), true, ['verify'])
         }
+
+        publicJWKs[iQuery] = jwks
       }
     }
 
 
-    /** @returns { Promise<{ uids: any, isUsingSortIndexNodes: any, generatedQueryFormatSection: any }> } */
-    async function getInitialUids () {
+    /**
+     * @param { td.QueryRequestDefault } query
+     * @returns { Promise<{ uids: any, isUsingSortIndexNodes: any, generatedQueryFormatSection: any }> }
+     */
+    async function getInitialUids (query) {
       let uids
 
-      const generatedQueryFormatSection = getGeneratedQueryFormatSectionById(request.format, request.property, passport)
+      const generatedQueryFormatSection = getGeneratedQueryFormatSectionById(query.format, query.property, passport)
       const sortOptions = /** @type { td.QuerySort } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.Sort))
       const findByUid = /** @type { td.QueryFindByUid } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUid))
       const findByUnique = /** @type { td.QueryFindByUnique } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUnique))
@@ -119,9 +137,10 @@ export async function _query (passport, request) {
      * @param { string[] } uids 
      * @param { any[] | null } graphRelationships
      * @param { boolean } isUsingSortIndexNodes
+     * @param { number } iQuery
      * @returns { Promise<void> }
      */
-    async function addNodesToResponse (generatedQueryFormatSection, response, uids, graphRelationships, isUsingSortIndexNodes) {
+    async function addNodesToResponse (generatedQueryFormatSection, response, uids, graphRelationships, isUsingSortIndexNodes, iQuery) {
       const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', nodeName: generatedQueryFormatSection.nodeName, propName: '*' }))
 
       if (permission && !permission.allowPropName) throw error('auth__read-node', `Because the read node name \`${ generatedQueryFormatSection.nodeName }\` permission is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
@@ -130,10 +149,10 @@ export async function _query (passport, request) {
 
         for (let i = 0; i < uids.length; i++) {
           const node = rGetPutCache.get(uids[i])
-          if (isRevokesAllowed(node.x, { permission })) await addPropsToResponse(generatedQueryFormatSection, response, { node }, graphRelationships?.[i] || null) // call desired function on each node
+          if (isRevokesAllowed(node.x, { permission })) await addPropsToResponse(generatedQueryFormatSection, response, { node }, graphRelationships?.[i] || null, iQuery) // call desired function on each node
         }
 
-        await implementQueryOptions(generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, passport)
+        await implementQueryOptions(generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs[iQuery], passport)
       }
     }
 
@@ -143,9 +162,10 @@ export async function _query (passport, request) {
      * @param { td.QueryResponse } response 
      * @param { { node?: any, uid?: string } } item 
      * @param { { key: string, value: any } | null } graphRelationship
+     * @param { number } iQuery
      * @returns { Promise<void> }
      */
-    async function addPropsToResponse (generatedQueryFormatSection, response, item, graphRelationship) {
+    async function addPropsToResponse (generatedQueryFormatSection, response, item, graphRelationship, iQuery) {
       let graphNode = item.node
 
       const uid = item.uid || item.node?.x?.uid
@@ -251,7 +271,7 @@ export async function _query (passport, request) {
                   else isValid = false
                 }
 
-                if (isValid) await addNodesToResponse(relationshipGeneratedQueryFormatSection, { current: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false)
+                if (isValid) await addNodesToResponse(relationshipGeneratedQueryFormatSection, { current: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false, iQuery)
               }
             }
 

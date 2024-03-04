@@ -748,7 +748,8 @@ ${ mutateInsertNode }
 
       typedefs += `/** MULTIPLE NODES
  *
- * @typedef { QueryRequestDefault } QueryRequest
+ * @typedef { QueryRequestDefault | QueryRequestArray } QueryRequest
+ * @typedef { QueryRequestDefault[] } QueryRequestArray
  * ${ queryResultDefault }
  * @typedef { ${ mutateRequestInsertItem } } MutateRequestInsertItem
  * @typedef { ${ mutateRequestUpsertItem } } MutateRequestUpsertItem

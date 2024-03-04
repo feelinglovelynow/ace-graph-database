@@ -99,8 +99,8 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   }
 
   if (generatedQueryFormatSection.has === enums.has.one || generatedQueryFormatSection.hasOptionsFind || generatedQueryFormatSection.hasValueAsResponse || generatedQueryFormatSection.hasCountOne) {
-    response.current[generatedQueryFormatSection.property] = typeof response.current[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.current[generatedQueryFormatSection.property]?.[0]
-    response.original[generatedQueryFormatSection.property] = typeof response.original[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.original[generatedQueryFormatSection.property]?.[0]
+    response.current[generatedQueryFormatSection.property] = typeof response.current[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.current[generatedQueryFormatSection.property][0]
+    response.original[generatedQueryFormatSection.property] = typeof response.original[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.original[generatedQueryFormatSection.property][0]
   }
 
 
