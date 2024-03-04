@@ -89,7 +89,11 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
         case enums.idsQuery.SumAsResponse:
           doSumAsResponse(option)
-          break        
+          break
+
+        case enums.idsQuery.PropertyAdjacentToResponse:
+          doPropertyAdjacentToResponse(option)
+          break
       }
     }
   }
@@ -328,8 +332,8 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
     const count = response.original[generatedQueryFormatSection.property].length
 
     for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-      response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = count
-      if (!option.x.isResponseHidden) response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = count
+      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = count
+      response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = count
     }
   }
 
@@ -357,6 +361,25 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
     if (typeof value !== 'undefined') {
       response.current[generatedQueryFormatSection.property] = [ value ]
       original = [ value ]
+    }
+  }
+
+
+  /** @param { td.QueryPropertyAdjacentToResponse } option */
+  function doPropertyAdjacentToResponse (option) {
+    let value
+
+    let original = response.original[generatedQueryFormatSection.property]
+
+    if (!option.x.relationships?.length) value = original?.[0]?.[option.x.sourceProperty]
+    else {
+      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], null, passport, option.x.relationships)
+      value = rRelationshipNode?.node?.[option.x.sourceProperty]
+    }
+
+    if (typeof value !== 'undefined') {
+      response.current[option.x.adjacentProperty] = value
+      response.original[option.x.adjacentProperty] = value
     }
   }
 }

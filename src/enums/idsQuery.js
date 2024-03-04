@@ -34,4 +34,5 @@ export const idsQuery = new Set([
   'MinAmountAsResponse',
   'MaxAmountAsProperty',
   'MaxAmountAsResponse',
+  'PropertyAdjacentToResponse',
 ])

@@ -30,7 +30,7 @@ import { sortOptions } from './enums/sortOptions.js'
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
-    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
+    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryPropertyAdjacentToResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
 
     const files = {
       dir: '.manifest',
@@ -368,6 +368,14 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { QueryPropertyAsResponseX } x
  * @typedef { object } QueryPropertyAsResponseX
  * @property { string } property - String that is the prop name that you would love to show as the response
+ * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ format: { role: { uid: true } } }\`
+ * 
+ * @typedef { object } QueryPropertyAdjacentToResponse
+ * @property { typeof enums.idsQuery.PropertyAdjacentToResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
+ * @property { QueryPropertyAdjacentToResponseX } x
+ * @typedef { object } QueryPropertyAdjacentToResponseX
+ * @property { string } sourceProperty
+ * @property { string } adjacentProperty
  * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ format: { role: { uid: true } } }\`
  *
  * @typedef { object } QueryAverageAsProperty
