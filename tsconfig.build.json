@@ -5,7 +5,6 @@
     "src/fetchJSON.js",
     "src/enforcePermissions.js",
     "src/getAlgorithmOptions.js",
-    "src/getAlias.js",
     "src/getDerivedValue.js",
     "src/getGeneratedQueryFormatSection.js",
     "src/getRelationshipNode.js",

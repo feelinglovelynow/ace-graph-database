@@ -59,16 +59,14 @@ export async function _query (passport, request) {
 
     /** @returns { Promise<{ uids: any, isUsingSortIndexNodes: any, generatedQueryFormatSection: any }> } */
     async function getInitialUids () {
-      let uids, sortOptions, findByUniqueOptions, findByUid
-      const generatedQueryFormatSection = getGeneratedQueryFormatSectionById(request.format, request.property, passport)
+      let uids
 
-      if (request.format.x.$options) {
-        for (const o of request.format.x.$options) {
-          if (o.id === enums.idsQuery.Sort) { sortOptions = o; break }
-          if (o.id === enums.idsQuery.FindByUid) { findByUid = o; break }
-          if (o.id === enums.idsQuery.FindByUnique) { findByUniqueOptions = o; break }
-        }
-      }
+      const generatedQueryFormatSection = getGeneratedQueryFormatSectionById(request.format, request.property, passport)
+      const sortOptions = /** @type { td.QuerySort } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.Sort))
+      const findByUid = /** @type { td.QueryFindByUid } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUid))
+      const findByUnique = /** @type { td.QueryFindByUnique } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUnique))
+      const filterByUids = /** @type { td.QueryFilterByUids } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUids))
+      const filterByUniques = /** @type { td.QueryFilterByUniques } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUniques))
 
       if (sortOptions) {
         const indexKey = getSortIndexKey(generatedQueryFormatSection.nodeName, sortOptions.x.property) // IF sorting by an property requested => see if property is a sort index
@@ -79,13 +77,29 @@ export async function _query (passport, request) {
 
       if (uids) isUsingSortIndexNodes = true // IF property is a sort index => tip flag to true
       else {
+        let isValid = true
+
         if (findByUid) uids = [ findByUid.x.uid ]
-        else if (findByUniqueOptions) {
-          const uid = await passport.storage.get(getUniqueIndexKey(generatedQueryFormatSection.nodeName, findByUniqueOptions.x.property, findByUniqueOptions.x.value))
+        else if (filterByUids) {
+          uids = filterByUids.x.uids
+          if (!uids.length) isValid = false
+        } else if (findByUnique) {
+          const key = getUniqueIndexKey(generatedQueryFormatSection.nodeName, findByUnique.x.property, findByUnique.x.value)
+          const rGetPutCache = await getPutCache([ key ])
+          const uid = rGetPutCache.get(key)
           uids = uid ? [uid ] : []
+          if (!uids.length) isValid = false
+        } else if (filterByUniques) {
+          const keys = filterByUniques.x.uniques.map((value) => {
+            return getUniqueIndexKey(generatedQueryFormatSection.nodeName, value.property, value.value)
+          })
+
+          const rGetPutCache = await getPutCache(keys)
+          uids = [ ...(rGetPutCache.values()) ]
+          if (!uids.length) isValid = false
         }
 
-        if (!uids?.length) {
+        if (isValid && !uids?.length) {
           const allNodes = await passport.storage.get(NODE_UIDS_KEY)
           uids = allNodes ? allNodes[generatedQueryFormatSection.nodeName] : [] // IF property is not a sort index => get unsorted node uids from $nodeUids in database
         }
@@ -173,36 +187,71 @@ export async function _query (passport, request) {
               const relationshipGeneratedQueryFormatSection = getGeneratedQueryFormatSectionByParent(queryFormatPropertyValue, queryFormatPropertyKey, passport, generatedQueryFormatSection)        
 
               if (relationshipUids?.length) {
-                const nodeUids = /** @type { string[] } */ ([])
+                let findByUidFound = false
+                let findBy_UidFound = false
+                let findByUniqueFound = false
+                let nodeUids = /** @type { string[] } */ ([])
                 const graphRelationships = /** @type { any[] } */ ([])
+
+                const findByUid = /** @type { td.QueryFindByUid } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUid))
+                const findBy_Uid = /** @type { td.QueryFindBy_Uid } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindBy_Uid))
+                const findByUnique = /** @type { td.QueryFindByUnique } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUnique))
+                const filterByUniques = /** @type { td.QueryFilterByUniques } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUniques))
+                
+                const uniqueKeys = /** @type { string[] } */ ([])
+
+                if (findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryFormatSection.nodeName, findByUnique.x.property, findByUnique.x.value))
+                else if (filterByUniques) {
+                  for (const unique of filterByUniques.x.uniques) {
+                    uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryFormatSection.nodeName, unique.property, unique.value))
+                  }
+                }
+
+                const uniqueUids = /** @type { string[] } */ ([])
+
+                if (uniqueKeys.length) {
+                  const rGetPutCache = await getPutCache(uniqueKeys)
+                  uniqueUids.push(...[ ...rGetPutCache.values() ])
+                }
+
                 const rGetPutCache = await getPutCache(relationshipUids)
 
                 switch (schemaNodeProp.id) {
                   case enums.idsSchema.ForwardRelationshipProp:
                     rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
-                      if (uid === graphRelationship?.x.a) {
-                        graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
-                        nodeUids.push(graphRelationship.x.b)
-                      }
+                      if (uid === graphRelationship?.x.a) validateAndPushUids(relationshipGeneratedQueryFormatSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
                     })
                     break
                   case enums.idsSchema.ReverseRelationshipProp:
                     rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
-                      if (uid === graphRelationship?.x.b) {
-                        graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
-                        nodeUids.push(graphRelationship?.x.a)
-                      }
+                      if (uid === graphRelationship?.x.b) validateAndPushUids(relationshipGeneratedQueryFormatSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
                     })
                     break
                   case enums.idsSchema.BidirectionalRelationshipProp:
                     rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
-                      graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
-                      nodeUids.push(uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a)
+                      validateAndPushUids(relationshipGeneratedQueryFormatSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
                     })
                     break
                 }
 
-                await addNodesToResponse(relationshipGeneratedQueryFormatSection, { current: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false)
+                let isValid = true
+
+                if (findByUid) {
+                  if (findByUidFound) nodeUids = [ findByUid.x.uid ]
+                  else isValid = false
+                }
+
+                if (findByUnique) {
+                  if (findByUniqueFound) nodeUids = [ uniqueUids[0] ]
+                  else isValid = false
+                }
+
+                if (findBy_Uid) {
+                  if (findBy_UidFound) nodeUids = [ findBy_Uid.x._uid ]
+                  else isValid = false
+                }
+
+                if (isValid) await addNodesToResponse(relationshipGeneratedQueryFormatSection, { current: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false)
               }
             }
 
@@ -220,6 +269,41 @@ export async function _query (passport, request) {
     }
 
 
+    /**
+     * @param { td.QueryRequestFormatGenerated } relationshipGeneratedQueryFormatSection 
+     * @param { string } uid 
+     * @param { any[] } graphRelationships 
+     * @param { any } graphRelationship 
+     * @param { string } graphRelationshipKey 
+     * @param { string[] } nodeUids 
+     * @param { td.QueryFindByUid } findByUid 
+     * @param { td.QueryFindBy_Uid } findBy_Uid 
+     * @param { td.QueryFindByUnique } findByUnique
+     * @param { td.QueryFilterByUniques } filterByUniques 
+     * @param { string[] } uniqueUids 
+     * @param { boolean } findByUidFound 
+     * @param { boolean } findByUniqueFound 
+     * @param { boolean } findBy_UidFound 
+     */
+    function validateAndPushUids (relationshipGeneratedQueryFormatSection, uid, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound) {
+      const filterByUids = /** @type { td.QueryFilterByUids } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUids))
+      const filterBy_Uids = /** @type { td.QueryFilterBy_Uids } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterBy_Uids))
+
+      if (!filterByUids || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQuery.FilterByUids)?.has(uid)) {
+        if (!filterBy_Uids || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQuery.FilterBy_Uids)?.has(graphRelationshipKey)) {
+          if (!filterByUniques || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQuery.FilterByUniques)?.has(uid)) {
+            nodeUids.push(uid)
+            graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
+
+            if (findByUid && findByUid.x.uid === uid) findByUidFound = true
+            else if (findBy_Uid && findBy_Uid.x._uid === graphRelationshipKey) findBy_UidFound = true
+            else if (findByUnique && uniqueUids.length && uniqueUids[0] === uid) findByUniqueFound = true
+          }
+        }
+      }
+    }
+
+    
     /**
      * If key is in cache, return cache version. If key is not in cache, return storage version and populate cache.
      * @param { string[] } keys 

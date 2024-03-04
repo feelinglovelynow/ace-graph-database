@@ -6,7 +6,6 @@
     "src/delete.js",
     "src/fetchJSON.js",
     "src/enforcePermissions.js",
-    "src/getAlias.js",
     "src/getDerivedValue.js",
     "src/getGeneratedQueryFormatSection.js",
     "src/getRelationshipNode.js",

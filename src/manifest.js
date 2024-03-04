@@ -30,7 +30,7 @@ import { sortOptions } from './enums/sortOptions.js'
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
-    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
+    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
 
     const files = {
       dir: '.manifest',
@@ -280,6 +280,27 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { QueryFilterDefinedX } x
  * @typedef { object } QueryFilterDefinedX
  * @property { QueryProperty } property - Loop the items and only return the items that are defined at this property
+ *
+ * @typedef { object } QueryFilterByUids
+ * @property { typeof enums.idsQuery.FilterByUids } id - Recieves an array of uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { QueryFilterByUidsX } x
+ * @typedef { object } QueryFilterByUidsX
+ * @property { string[] } uids - With this array of uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ *
+ * @typedef { object } QueryFilterByUniques
+ * @property { typeof enums.idsQuery.FilterByUniques } id - Recieves an array of unique values and returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
+ * @property { QueryFilterByUniquesX } x
+ * @typedef { object } QueryFilterByUniquesX
+ * @property { QueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
+ * @typedef { object } QueryFilterByUniquesXUnique
+ * @property { string } value - The value Ace will query to find a unique match for
+ * @property { string } property - Find node by this prop that has a unique index
+ *
+ * @typedef { object } QueryFilterBy_Uids
+ * @property { typeof enums.idsQuery.FilterBy_Uids } id - Recieves an array of _uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { QueryFilterBy_UidsX } x
+ * @typedef { object } QueryFilterBy_UidsX
+ * @property { string[] } _uids - With this array of _uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
  * 
  * @typedef { object } QueryFindByUnique
  * @property { typeof enums.idsQuery.FindByUnique } id - Find node by a prop that has a unique index
@@ -293,6 +314,12 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { QueryFindByUidX } x
  * @typedef { object } QueryFindByUidX
  * @property { string } uid - Find node by this uid
+ *
+ * @typedef { object } QueryFindBy_Uid
+ * @property { typeof enums.idsQuery.FindBy_Uid } id - Find relationship by a _uid
+ * @property { QueryFindBy_UidX } x
+ * @typedef { object } QueryFindBy_UidX
+ * @property { string } _uid - Find relationship by this _uid
  *
  * @typedef { object } QueryCountAsResponse
  * @property { typeof enums.idsQuery.CountAsResponse } id - Set the count for the number of items in the response as the response
@@ -395,7 +422,21 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { { id: string,   x: QueryRequestFormatX } } QueryRequestFormat
  * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty,   $options?: QueryRequestFormatOptions } } QueryRequestFormatX
  * @typedef ${ queryRequestFormatOptions } QueryRequestFormatOptions
- * @typedef { { property: string,   schemaProperty: string,   aliasProperty?: string,   has: enums.has,   nodeName: string,   relationshipName?: string,   x: QueryRequestFormatX, hasOptionsFind: boolean, hasValueAsResponse: boolean, hasCountOne: boolean } } QueryRequestFormatGenerated
+ * 
+ * @typedef { object } QueryRequestFormatGenerated
+ * @property { string } property
+ * @property { string } schemaProperty
+ * @property { string } [ aliasProperty ]
+ * @property { enums.has } has
+ * @property { string } nodeName
+ * @property { string } [ relationshipName ]
+ * @property { QueryRequestFormatX } x
+ * @property { boolean } hasOptionsFind
+ * @property { boolean } hasValueAsResponse
+ * @property { boolean } hasCountOne
+ * @property { Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>> } sets - Allow us to not have to call Set.has() rather then [].includes()
+ * @property { QueryRequestFormatGeneratedPriorityOptions } priorityOptions
+ * @typedef { Map<enums.idsQuery, (QuerySort | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques)> } QueryRequestFormatGeneratedPriorityOptions
  */
 
 
