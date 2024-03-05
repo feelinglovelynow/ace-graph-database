@@ -9,4 +9,6 @@ export const queryWhereSymbol = new Set([
   'endsWith',
   'contains',
   'doesNotContain',
+  'isoIsBefore',
+  'isoIsAfter',
 ])

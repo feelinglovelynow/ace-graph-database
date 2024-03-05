@@ -12,36 +12,40 @@ import { getRelationshipNode } from './getRelationshipNode.js'
  * @param { td.AcePassport } passport 
  */
 export async function queryWhere (generatedQueryFormatSection, response, $where, publicJWKs, passport) {
-  await main
+  if (Array.isArray(response.original[generatedQueryFormatSection.property])) {
+    let iOrignal = 0
+    const clone = [ ...(response.original[generatedQueryFormatSection.property]) ]
 
+    for (let iClone = 0; iClone < clone.length; iClone++) {
+      let spliced = false
 
-  async function main () {
-    if (Array.isArray(response.original[generatedQueryFormatSection.property])) {
-      let iOrignal = 0
-      const clone = [...(response.original[generatedQueryFormatSection.property]) ]
+      if ($where.id === enums.idsQuery.FindGroup || $where.id === enums.idsQuery.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
+      else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
 
-      for (let iClone = 0; iClone < clone.length; iClone++) {
-        let spliced = false
-
-        if ($where.id === enums.idsQuery.FindGroup || $where.id === enums.idsQuery.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
-        else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
-
-        if (!spliced && ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.FindDefined || $where.id === enums.idsQuery.FindUndefined)) {
-          response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iOrignal] ]
-          response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iOrignal] ]
-          break
-        }
-
-        if (!spliced) iOrignal++
+      if (!spliced && ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.FindDefined || $where.id === enums.idsQuery.FindUndefined)) {
+        response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iOrignal] ]
+        response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iOrignal] ]
+        break
       }
 
-      if (Array.isArray(response.original[generatedQueryFormatSection.property]) && !response.original[generatedQueryFormatSection.property].length) {
-        response.current[generatedQueryFormatSection.property] = null
-        response.original[generatedQueryFormatSection.property] = null
-      }
+      if (!spliced) iOrignal++
+    }
+
+    if (Array.isArray(response.original[generatedQueryFormatSection.property]) && !response.original[generatedQueryFormatSection.property].length) {
+      response.current[generatedQueryFormatSection.property] = null
+      response.original[generatedQueryFormatSection.property] = null
     }
   }
-    
+
+
+  /**
+   * @typedef { object } GetValueResponse
+   * @property { null | 'QueryValue' | 'QueryProperty' } type
+   * @property { any } value
+   * @property { null | td.QueryRequestFormatGenerated } generatedQueryFormatSection
+   */
+
+
   /**
    * @param { td.QueryFindGroup | td.QueryFilterGroup } group 
    * @param { number } i 
@@ -184,6 +188,12 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
         case enums.queryWhereSymbol.doesNotContain:
           if (isUndefined || typeof left.value !== 'string' || left.value.includes(String(right.value.value))) bye()
           break
+        case enums.queryWhereSymbol.isoIsBefore:
+          if (isUndefined || new Date(left.value) >= new Date(right.value)) bye()
+          break
+        case enums.queryWhereSymbol.isoIsAfter:
+          if (isUndefined || new Date(left.value) <= new Date(right.value)) bye()
+          break
       }
     }
 
@@ -192,8 +202,6 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
 
 
   /**
-   * @typedef { { type: null | 'QueryValue' | 'QueryProperty', value: any, generatedQueryFormatSection: null | td.QueryRequestFormatGenerated } } GetValueResponse
-   * 
    * @param { td.QueryProperty | td.QueryValue } propertyOrValue 
    * @param { any } graphNode
    * @returns { GetValueResponse }

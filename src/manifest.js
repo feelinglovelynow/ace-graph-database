@@ -232,10 +232,24 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { { id: typeof enums.idsQuery.Alias, x: { alias: string } } } QueryAliasProperty
  * @typedef { { id: typeof enums.idsQuery.Limit, x: { skip?: number, count?: number } } } QueryLimit
  * @typedef { { id: typeof enums.idsQuery.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
- * @typedef { { id: typeof enums.idsQuery.Find, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFind
- * @typedef { { id: typeof enums.idsQuery.Filter, x: { symbol: enums.queryWhereSymbol, publicJWK?: string, items: [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } } } QueryFilter
  * @typedef { { id: typeof enums.idsQuery.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
  * 
+ * @typedef { object } QueryFind
+ * @property { typeof enums.idsQuery.Find } id
+ * @property { QueryFindX } x
+ * @typedef { object } QueryFindX
+ * @property { enums.queryWhereSymbol } symbol
+ * @property { [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } items
+ * @property { string } [ publicJWK ]
+ *
+ * @typedef { object } QueryFilter
+ * @property { typeof enums.idsQuery.Filter } id
+ * @property { QueryFilterX } x
+ * @typedef { object } QueryFilterX
+ * @property { enums.queryWhereSymbol } symbol
+ * @property { [ QueryProperty, QueryProperty ] | [ QueryValue, QueryProperty ] | [ QueryProperty, QueryValue ] } items
+ * @property { string } [ publicJWK ]
+ *
  * @typedef { object } QueryProperty
  * @property { typeof enums.idsQuery.Property } id - Define a property
  * @property { QueryPropertyX } x
