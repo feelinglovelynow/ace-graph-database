@@ -7,13 +7,12 @@ import { getGeneratedQueryFormatSectionByParent } from './getGeneratedQueryForma
  * @typedef { { node: any, generatedQueryFormatSection: null | td.QueryRequestFormatGenerated } } GetRelationshipNodeResponse
  * 
  * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
- * @param { any } startingNode1
- * @param { any } startingNode2
+ * @param { any } startingNode
  * @param { td.AcePassport } passport 
  * @param { string[] } relationships 
  * @returns { GetRelationshipNodeResponse }
  */
-export function getRelationshipNode (generatedQueryFormatSection, startingNode1, startingNode2, passport, relationships) {
+export function getRelationshipNode (generatedQueryFormatSection, startingNode, passport, relationships) {
   const response = /** @type { GetRelationshipNodeResponse } */ ({ node: null, generatedQueryFormatSection: null })
   let relationshipNodeName = generatedQueryFormatSection.nodeName, schemaRelationshipProp
 
@@ -33,7 +32,7 @@ export function getRelationshipNode (generatedQueryFormatSection, startingNode1,
 
       const nodePropName = response.generatedQueryFormatSection?.aliasProperty || relationshipPropName
 
-      if (iRelationships === 0) response.node = startingNode1?.[nodePropName] || startingNode2?.[nodePropName]
+      if (iRelationships === 0) response.node = startingNode?.[nodePropName]
       else if (response.node) response.node = response.node[nodePropName]
       else response.node = null
 

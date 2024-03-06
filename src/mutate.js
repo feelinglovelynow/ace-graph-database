@@ -59,10 +59,13 @@ export async function _mutate (passport, request) {
     /** @type { { [key: string]: CryptoKey } } - Object that converts stringified jwks into CryptoKey's */
     const privateJWKs = {}
 
+    /** @type { { nodes: any, relationships: any } } - If updating we store the orignal items here, based on the uid (nodes) or _uid (relationships)  */
+    const updateRequestItems = { nodes: null, relationships: null }
+
     /** @typedef { Map<string, Map<string, (td.SchemaProp | td.SchemaRelationshipProp | td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp)>> } MustPropsMap */
 
     await setPrivateJWKs()
-    await sert()
+    await inup()
     throwIfMissingMustProps()
     await addSortIndicesToGraph()
     return conclude()
@@ -77,233 +80,291 @@ export async function _mutate (passport, request) {
     }
 
 
-    async function sert () {
+    async function inup () {
       for (const action in request) {
-        if (action === 'insert' || action === 'upsert') {
-          await sertNodes(action)
-          sertRelationships(action)
+        if (action === 'insert' || action === 'update') {
+          if (action === 'update') await setUpdateRequestItems()
+          await inupNodes(action)
+          await inupRelationships(action)
         }
       }
-    }
 
 
-    /**
-     * Add nodes for upsert or insert to putEntries
-     * @param { 'insert' | 'upsert' } action 
-     */
-    async function sertNodes (action) {
-      let upsertRequestItems = /** @type {*} */ (undefined)
-      const sertNodesArray = /** @type { [ td.MutateRequestInsertNodeDefaultItem, string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate mapUids
+      async function setUpdateRequestItems () {
+        if (request.update) {
+          const nodeUids = []
+          const relationshipUids = []
 
+          for (let i = 0; i < request.update.length; i++) {
+            const x = /** @type { { uid?: string, _uid?: string } } */(request.update[i].x)
 
-      await setUpsertRequestItems()
-      await populateSertNodesArray()
-      implementSertNodesArray()
-      putEntries.set(NODE_UIDS_KEY, allNodeUids) // add $nodeUids to ace
-
-
-      async function setUpsertRequestItems () {
-        if (action === 'upsert' && request.upsert) {
-          const uids = []
-
-          for (let i = 0; i < request.upsert.length; i++) {
-            const x = /** @type { { uid: string } } */(request.upsert[i].x)
-            if (x.uid) uids.push(x.uid) // is a node upsert & not a relationship upsert
+            if (x.uid) nodeUids.push(x.uid)
+            else if (x._uid) relationshipUids.push(x._uid)
           }
 
-          upsertRequestItems = await passport.storage.get(uids)
+          if (nodeUids.length) updateRequestItems.nodes = await passport.storage.get(nodeUids)
+          if (relationshipUids.length) updateRequestItems.relationships = await passport.storage.get(relationshipUids)
         }
       }
 
-      async function populateSertNodesArray () {
+
+      /**
+       * Add nodes for insert or update to putEntries
+       * @param { 'insert' | 'update' } action 
+       */
+      async function inupNodes (action) {
+        const inupNodesArray = /** @type { [ td.MutateRequestInsertNodeDefaultItem, string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate mapUids
+
+        await populateInupNodesArray()
+        implementInupNodesArray()
+        putEntries.set(NODE_UIDS_KEY, allNodeUids) // add $nodeUids to ace
+
+
+        async function populateInupNodesArray () {
+          for (let i = 0; i < /** @type { td.MutateRequestInsertItem[] } */(request[action])?.length; i++) {
+            const requestItem = /** @type { td.MutateRequestInsertNodeDefaultItem } */ (request[action]?.[i])
+
+            if (requestItem && nodeNamesSet.has(requestItem.id)) { // IF permission to write this nodeName
+              if (!requestItem?.x?.uid || typeof requestItem.x.uid !== 'string') throw error('mutate__falsy-uid', 'Please pass a request item that includes a uid that is a typeof string', { requestItem })
+
+              const permissionStar = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: '*' }))
+
+              if (action === 'insert' && requestItem.x.uid.startsWith(REQUEST_UID_PREFIX) && permissionStar && !permissionStar?.allowNewInsert) { // IF this is a fresh insert AND star revoked this permission AND allowNewInsert not specefied
+                throw error('auth__insert-node', `Because the write permission to the node name \`${ requestItem.id }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+              }
+
+              let graphNode
+
+              if (action === 'update' && updateRequestItems.nodes?.size) {
+                graphNode = /** @type { Map<string, any> } */(updateRequestItems.nodes).get(requestItem.x.uid)
+
+                if (!graphNode) throw error('mutate__invalid-update-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${requestItem.x.uid}\` is not defined in your graph`, { requestItem })
+                if (graphNode.id !== requestItem.id) throw error('mutate__invalid-update-uid', `Please pass a request item uid that is a uid defined in your graph with a matching graphNode.id: \`${ graphNode.id }\`and requestItem.id: \`${ requestItem.id }\``, { requestItem, graphNodeId: graphNode.id })
+                if (permissionStar && (!passport?.user?.uid || !permissionStar.allowPropName || !graphNode.x[permissionStar.allowPropName] || graphNode.x[permissionStar.allowPropName] !== passport.user.uid)) throw error('auth__update-node', `Because the write permission to the node name \`${requestItem.id}\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+
+                requestItem.x = { ...graphNode.x, ...requestItem.x }
+              }
+
+              let graphUid
+
+              if (action === 'update') graphUid = requestItem.x.uid
+              else {
+                graphUid = getGraphUidAndAddToMapUids(requestItem.x.uid)
+
+                if (Array.isArray(allNodeUids[requestItem.id])) allNodeUids[requestItem.id].push(graphUid) // IF schema $nodeUids for this uid's node is already an array => push onto it
+                else allNodeUids[requestItem.id] = [graphUid] // IF schema $nodeUids for this uid's node is not an array => set as array w/ uid as first value
+              }
+
+              for (const nodePropName in requestItem.x) { // loop each request property => validate each property => IF invalid throw errors => IF valid do index things
+                const permissionProp = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: nodePropName }))
+
+                if (permissionProp) {
+                  if (action === 'insert' && !permissionProp.allowNewInsert) throw error('auth__insert-prop', `Because the permission write to the node name \`${requestItem.id}\` and the prop name \`${nodePropName}\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+                  if (action === 'update' && (!graphNode || !passport?.user?.uid || !permissionProp.allowPropName || !graphNode.x[permissionProp.allowPropName] || graphNode.x[permissionProp.allowPropName] !== passport.user.uid)) throw error('auth__update-prop', `Because the permission write to the node name \`${requestItem.id}\` and the prop name \`${nodePropName}\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+                }
+
+                const nodePropValue = requestItem?.x?.[nodePropName]
+                const schemaProp = /** @type { td.SchemaProp } */ (schema.nodes?.[requestItem.id][nodePropName])
+
+                if (nodePropName !== '$options' && nodePropName !== 'uid') {
+                  if (schemaProp?.id !== 'Prop') throw error('mutate__invalid-schema-prop', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because it is not defined in your schema`, { requestItem, nodeName: requestItem.id, nodePropName })
+
+                  const _errorData = { schemaProp, requestItem, nodePropName, nodePropValue }
+
+                  if (schemaProp.x.dataType === enums.dataTypes.string && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
+                  if (schemaProp.x.dataType === enums.dataTypes.isoString && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
+                  if (schemaProp.x.dataType === enums.dataTypes.number && typeof nodePropValue !== 'number') throw error('mutate__invalid-property-value__number', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because when the schema property data type is "number", the request typeof must be a "number"`, _errorData)
+                  if (schemaProp.x.dataType === enums.dataTypes.boolean && typeof nodePropValue !== 'boolean') throw error('mutate__invalid-property-value__boolean', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because when the schema property data type is "boolean", the request typeof must be a "boolean"`, _errorData)
+
+                  if (schemaProp.x.dataType === enums.dataTypes.hash) {
+                    const jwkName = requestItem.x.$options?.find(o => o.id === 'PrivateJWK')?.x.name
+
+                    if (!jwkName) throw error('mutate__falsy-options-private-jwk', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because requestItem.x.$options does not have a PrivateJWK. Example: requestItem.$options: [ { id: 'PrivateJWK', x: { name: 'password' } } ]`, _errorData)
+                    if (!privateJWKs?.[jwkName]) throw error('mutate__falsy-request-item-private-jwk', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because requestItem.x.$options[PrivateJWK].name does not align with any request.privateJWKs. Names must align.`, _errorData)
+
+                    requestItem.x[nodePropName] = await sign(privateJWKs[jwkName], requestItem.x[nodePropName]?.value)
+                  }
+
+                  if (schemaProp.x.uniqueIndex) putEntries.set(getUniqueIndexKey(requestItem.id, nodePropName, nodePropValue), graphUid)
+
+                  if (schemaProp.x.sortIndex) {
+                    const key = requestItem.id + DELIMITER + nodePropName
+                    const value = sortIndexMap.get(key) || { nodeName: requestItem.id, nodePropName, uids: /** @type { string[] } */ ([]) }
+
+                    value.uids.push(graphUid)
+                    sortIndexMap.set(key, value)
+                  }
+
+                  if (schemaProp.x.dataType === enums.dataTypes.isoString && nodePropValue === ADD_NOW_DATE) requestItem.x[nodePropName] = getNow()
+                }
+              }
+
+              inupNodesArray.push([requestItem, graphUid]) // add meta data about each value to sertNodesArray array, we need to loop them all first, before adding them to the graph, to populate mapUids
+            }
+          }
+        }
+
+
+        function implementInupNodesArray () {
+          for (const [requestItem, graphUid] of inupNodesArray) { // loop the uids that we'll add to the graph
+            for (const requestItemKey in requestItem.x) {
+              overwriteUids(requestItem, requestItemKey)
+            }
+
+            putEntries.set(graphUid, requestItem) // The entries we will put
+          }
+        }
+
+
+        /**
+         * @param { string } insertUid 
+         * @returns { string }
+         */
+        function getGraphUidAndAddToMapUids (insertUid) {
+          /** This will be the uid that is added to the graph */
+          let graphUid
+
+          if (typeof insertUid !== 'string') throw error('mutate__uid-invalid-type', `The uid ${insertUid} is invalid because the type is not string, please include only typeof "string" for each uid`, { uid: insertUid })
+
+          if (!insertUid.startsWith(REQUEST_UID_PREFIX)) graphUid = insertUid
+          else {
+            if (mapUids.get(insertUid)) throw error('mutate__duplicate-uid', `The uid ${insertUid} is invalid because it is included as a uid for multiple nodes, please do not include duplicate uids for insert`, { uid: insertUid })
+
+            graphUid = crypto.randomUUID()
+            mapUids.set(insertUid, graphUid)
+          }
+
+          return graphUid
+        }
+      }
+
+
+      /**
+       * Insert / Update Relationships
+       * @param { 'insert' | 'update' } action 
+       */
+      async function inupRelationships (action) {
         for (let i = 0; i < /** @type { td.MutateRequestInsertItem[] } */(request[action])?.length; i++) {
-          let requestItem = /** @type { td.MutateRequestInsertNodeDefaultItem } */ (request[action]?.[i])
+          const requestItem = /** @type { td.MutateRequestInsertRelationshipDefaultItem } */ (request[action]?.[i])
 
-          if (requestItem && nodeNamesSet.has(requestItem.id)) { // IF permission to write this nodeName
-            if (!requestItem?.x?.uid || typeof requestItem.x.uid !== 'string') throw error('mutate__falsy-uid', 'Please pass a request item that includes a uid that is a typeof string', { requestItem })
+          if (requestItem && relationshipNamesSet.has(requestItem.id)) {
+            const schemaRelationship = schema.relationships?.[requestItem.id]
 
-            const permissionStar = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: '*' }))
+            if (!schemaRelationship) throw error('mutate__unknown-relationship-name', `The relationship name ${requestItem.id} is not defined in your schema, please include a relationship name that is defined in your schema`, { relationshipName: requestItem.id })
 
-            if (action === 'insert' && requestItem.x.uid.startsWith(REQUEST_UID_PREFIX) && permissionStar && !permissionStar?.allowNewInsert) { // IF this is a fresh insert AND star revoked this permission AND allowNewInsert not specefied
-              throw error('auth__insert-node', `Because the write permission to the node name \`${requestItem.id}\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+            const permissionStar = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', relationshipName: requestItem.id, propName: '*' }))
+
+            if (action === 'insert' && permissionStar && !permissionStar?.allowNewInsert) { // IF this is a fresh insert AND star revoked this permission AND allowNewInsert not specefied
+              throw error('auth__insert-relationship', `Because the write permission to the relationship name \`${ requestItem.id} \` is revoked from one of your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
             }
 
             let graphNode
 
-            if (action === 'upsert' && upsertRequestItems) {
-              graphNode = /** @type { Map<string, any> } */(upsertRequestItems).get(requestItem.x.uid)
+            if (action === 'update' && updateRequestItems.relationships?.size) {
+              graphNode = /** @type { Map<string, any> } */(updateRequestItems.relationships).get(requestItem.x._uid)
 
-              if (!graphNode) throw error('mutate__invalid-upsert-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${ requestItem.x.uid }\` is not defined in your graph`, { requestItem })
-              if (graphNode.id !== requestItem.id) throw error('mutate__invalid-upsert-uid', `Please pass a request item uid that is a uid defined in your graph as a \`${ graphNode.id }\`, the uid \`${ requestItem.x.uid }\` is not defined as a \`${ requestItem.id }\``, { requestItem, graphNodeId: graphNode.id })
-              if (permissionStar && (!passport?.user?.uid || !permissionStar.allowPropName || !graphNode.x[permissionStar.allowPropName] || graphNode.x[permissionStar.allowPropName] !== passport.user.uid)) throw error('auth__upsert-node', `Because the write permission to the node name \`${ requestItem.id }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+              if (!graphNode) throw error('mutate__invalid-update-uid', `Please pass a request item _uid that is a _uid defined in your graph, the _uid \`${ requestItem.x._uid} \` is not defined in your graph`, { requestItem })
+              if (graphNode.id !== requestItem.id) throw error('mutate__invalid-update-uid', `Please pass a request item _uid that is a _uid defined in your graph with a matching graphNode.id: \`${ graphNode.id }\`,  and requestItem.id: \`${ requestItem.id }\``, { requestItem, graphNodeId: graphNode.id })
+              if (permissionStar && (!passport?.user?.uid || !permissionStar.allowPropName || !graphNode.x[permissionStar.allowPropName] || graphNode.x[permissionStar.allowPropName] !== passport.user.uid)) throw error('auth__update-node', `Because the write permission to the relationship name \`${ requestItem.id }\` is revoked from one of your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
 
-              requestItem = { ...graphNode, ...requestItem }
+              const aIsDifferent = graphNode.x.a !== requestItem.x.a
+              const bIsDifferent = graphNode.x.b !== requestItem.x.b
+              console.log('aIsDifferent', aIsDifferent)
+              console.log('bIsDifferent', bIsDifferent)
+              if (aIsDifferent) updatePreviousRelationshipNode(aIsDifferent, graphNode.a, requestItem)
+              if (bIsDifferent) updatePreviousRelationshipNode(bIsDifferent, graphNode.b, requestItem)
+
+              requestItem.x = { ...graphNode.x, ...requestItem.x }
+              console.log('requestItem', requestItem)
             }
 
-            let graphUid
+            await inupRelationship(requestItem, schemaRelationship, graphNode)
+          }
+        }
 
-            if (action === 'upsert') graphUid = requestItem.x.uid
-            else {
-              graphUid = getGraphUidAndAddToMapUids(requestItem.x.uid)
 
-              if (Array.isArray(allNodeUids[requestItem.id])) allNodeUids[requestItem.id].push(graphUid) // IF schema $nodeUids for this uid's node is already an array => push onto it
-              else allNodeUids[requestItem.id] = [graphUid] // IF schema $nodeUids for this uid's node is not an array => set as array w/ uid as first value
-            }
+        /**
+         * @param { boolean } isDifferent 
+         * @param { string } pluckedNodeUid 
+         * @param { td.MutateRequestUpdateRelationshipDefaultItem } requestItem 
+         */
+        async function updatePreviousRelationshipNode (isDifferent, pluckedNodeUid, requestItem) {
+          if (isDifferent) {
+            const relationshipNode = putEntries.get(pluckedNodeUid) || (await passport.storage.get(pluckedNodeUid))
 
-            for (const nodePropName in requestItem.x) { // loop each request property => validate each property => IF invalid throw errors => IF valid do index things
-              const permissionProp = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', nodeName: requestItem.id, propName: nodePropName }))
+            if (relationshipNode) {
+              const prop = getRelationshipProp(requestItem.id)
 
-              if (permissionProp) {
-                if (action === 'insert' && !permissionProp.allowNewInsert) throw error('auth__insert-prop', `Because the permission write to the node name \`${ requestItem.id }\` and the prop name \`${ nodePropName }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
-                if (action === 'upsert' && (!graphNode || !passport?.user?.uid || !permissionProp.allowPropName || !graphNode.x[permissionProp.allowPropName] || graphNode.x[permissionProp.allowPropName] !== passport.user.uid)) throw error('auth__upsert-prop', `Because the permission write to the node name \`${ requestItem.id }\` and the prop name \`${ nodePropName }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
-              }
+              if (Array.isArray(relationshipNode[prop])) {
+                if (relationshipNode[prop].length === 1 && relationshipNode[prop][0] === requestItem.x._uid) delete relationshipNode[prop]
+                else {
+                  for (let i = 0; i < relationshipNode[prop].length; i++) {
+                    if (requestItem.x._uid === relationshipNode[prop][i]) relationshipNode[prop].splice(i, 1)
+                  }
 
-              const nodePropValue = requestItem?.x?.[nodePropName]
-              const schemaProp = /** @type { td.SchemaProp } */ (schema.nodes?.[requestItem.id][nodePropName])
-
-              if (nodePropName !== '$options' && nodePropName !== 'uid') {
-                if (schemaProp?.id !== 'Prop') throw error('mutate__invalid-schema-prop', `The node name ${ requestItem.id } with the prop name ${ nodePropName } is invalid because it is not defined in your schema`, { requestItem, nodeName: requestItem.id, nodePropName })
-
-                const _errorData = { schemaProp, requestItem, nodePropName, nodePropValue }
-
-                if (schemaProp.x.dataType === enums.dataTypes.string && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${ requestItem.id } with the prop name ${ nodePropName } is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
-                if (schemaProp.x.dataType === enums.dataTypes.isoString && typeof nodePropValue !== 'string') throw error('mutate__invalid-property-value__isoString', `The node name ${ requestItem.id } with the prop name ${ nodePropName } is invalid because when the schema property data type is "isoString", the request typeof must be a "string"`, _errorData)
-                if (schemaProp.x.dataType === enums.dataTypes.number && typeof nodePropValue !== 'number') throw error('mutate__invalid-property-value__number', `The node name ${ requestItem.id } with the prop name ${ nodePropName } is invalid because when the schema property data type is "number", the request typeof must be a "number"`, _errorData)
-                if (schemaProp.x.dataType === enums.dataTypes.boolean && typeof nodePropValue !== 'boolean') throw error('mutate__invalid-property-value__boolean', `The node name ${ requestItem.id } with the prop name ${ nodePropName } is invalid because when the schema property data type is "boolean", the request typeof must be a "boolean"`, _errorData)
-
-                if (schemaProp.x.dataType === enums.dataTypes.hash) {
-                  const jwkName = requestItem.x.$options?.find(o => o.id === 'PrivateJWK')?.x.name
-
-                  if (!jwkName) throw error('mutate__falsy-options-private-jwk', `The node name ${ requestItem.id } with the prop name ${ nodePropName } is invalid because requestItem.x.$options does not have a PrivateJWK. Example: requestItem.$options: [ { id: 'PrivateJWK', x: { name: 'password' } } ]`, _errorData)
-                  if (!privateJWKs?.[jwkName]) throw error('mutate__falsy-request-item-private-jwk', `The node name ${requestItem.id} with the prop name ${nodePropName } is invalid because requestItem.x.$options[PrivateJWK].name does not align with any request.privateJWKs. Names must align.`, _errorData)
-
-                  requestItem.x[nodePropName] = await sign(privateJWKs[jwkName], requestItem.x[nodePropName]?.value)
+                  if (!relationshipNode[prop].length) delete relationshipNode[prop]
                 }
 
-                if (schemaProp.x.uniqueIndex) putEntries.set(getUniqueIndexKey(requestItem.id, nodePropName, nodePropValue), graphUid)
-
-                if (schemaProp.x.sortIndex) {
-                  const key = requestItem.id + DELIMITER + nodePropName
-                  const value = sortIndexMap.get(key) || { nodeName: requestItem.id, nodePropName, uids: /** @type { string[] } */ ([]) }
-
-                  value.uids.push(graphUid)
-                  sortIndexMap.set(key, value)
-                }
-
-                if (schemaProp.x.dataType === enums.dataTypes.isoString && nodePropValue === ADD_NOW_DATE) requestItem.x[nodePropName] = getNow()
+                putEntries.set(relationshipNode.uid, relationshipNode)
               }
             }
+          }
+        }
 
-            sertNodesArray.push([ requestItem, graphUid ]) // add meta data about each value to sertNodesArray array, we need to loop them all first, before adding them to the graph, to populate mapUids
+
+        /**
+         * @param { td.MutateRequestInsertNodeDefaultItem } requestItem 
+         * @param { any } schemaRelationship 
+         * @param { any } [ graphNode ] 
+         */
+        async function inupRelationship (requestItem, schemaRelationship, graphNode) {
+          if (action === 'insert') requestItem.x._uid = crypto.randomUUID()
+
+          for (const relationshipPropName in requestItem.x) {
+            const permissionProp = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'write', relationshipName: requestItem.id, propName: relationshipPropName }))
+
+            if (permissionProp) {
+              if (action === 'insert' && !permissionProp.allowNewInsert) throw error('auth__insert-prop', `Because the permission write to the relationship name \`${requestItem.id}\` and the prop name \`${ relationshipPropName }\` is revoked from one of your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+              if (action === 'update' && (!graphNode || !passport?.user?.uid || !permissionProp.allowPropName || !graphNode.x[permissionProp.allowPropName] || graphNode.x[permissionProp.allowPropName] !== passport.user.uid)) throw error('auth__update-prop', `Because the write permission to the relationship name \`${ requestItem.id }\` and the prop name \`${ relationshipPropName }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
+            }
+
+            const relationshipPropValue = requestItem.x[relationshipPropName]
+
+            if (relationshipPropValue === ADD_NOW_DATE && schemaRelationship.props?.[relationshipPropName]?.dataType === enums.dataTypes.isoString) requestItem.x[relationshipPropName] = getNow() // populate now timestamp
+            else if (typeof relationshipPropValue === 'string' && relationshipPropValue.startsWith(REQUEST_UID_PREFIX)) overwriteUids(requestItem, relationshipPropName)
+          }
+
+          const relationshipProp = getRelationshipProp(requestItem.id)
+          await addRelationshipToNode('a')
+          await addRelationshipToNode('b')
+
+          putEntries.set(requestItem.x._uid, requestItem)
+
+
+          /** @param { 'a' | 'b' } direction */
+          async function addRelationshipToNode (direction) {
+            const node = putEntries.get(requestItem.x[direction]) || await passport.storage.get(requestItem.x[direction])
+
+            if (!node[relationshipProp]) node[relationshipProp] = [ requestItem.x._uid ]
+            else node[relationshipProp].push(requestItem.x._uid)
           }
         }
       }
 
 
-      function implementSertNodesArray () {
-        for (const [ requestItem, graphUid ] of sertNodesArray) { // loop the uids that we'll add to the graph
-          for (const requestItemKey in requestItem.x) {
-            overwriteUids(requestItem, requestItemKey)
-          }
-
-          putEntries.set(graphUid, requestItem) // The entries we will put
-        }
-      }
-    }
-
-
-    /**
-     * Insert / Upsert Relationships
-     * @param { 'insert' | 'upsert' } action 
-     */
-    function sertRelationships (action) {
-      for (let i = 0; i < /** @type { td.MutateRequestInsertItem[] } */(request[action])?.length; i++) {
-        const requestItem = /** @type { td.MutateRequestInsertRelationshipDefaultItem } */ (request[action]?.[i])
-
-        if (requestItem && relationshipNamesSet.has(requestItem.id)) {
-          const schemaRelationship = schema.relationships?.[requestItem.id]
-
-          if (!schemaRelationship) throw error('mutate__unknown-relationship-name', `The relationship name ${ requestItem.id } is not defined in your schema, please include a relationship name that is defined in your schema`, { relationshipName: requestItem.id })
-          if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', relationshipName: requestItem.id, propName: '*' }))) throw error('auth__write-relationship-name', `Because the write permission to the relationship name \`${ requestItem.id }\` is revoked, you cannot do this`, { token: passport.token, source: passport.source })
-
-          sertRelationship(requestItem, schemaRelationship)
-        }
-      }
-    }
-
-
-    /**
-     * @param { td.MutateRequestInsertNodeDefaultItem } requestItem 
-     * @param { any } schemaRelationship 
-     */
-    function sertRelationship (requestItem, schemaRelationship) {
-      const graphKey = crypto.randomUUID()
-
-      for (const requestItemKey in requestItem.x) {
-        if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', relationshipName: requestItem.id, propName: requestItemKey }))) throw error('auth__write-relationship-name-' + requestItemKey, `Because the write permission to the relationship name \`${requestItem.id}\` and the prop name \`${ requestItemKey }\` is revoked from one of your AcePermissions, you cannot do this`, { token: passport.token, source: passport.source })
-
+      /**
+       * @param { td.MutateRequestInsertNodeDefaultItem } requestItem
+       * @param { string | number } requestItemKey
+       */
+      function overwriteUids (requestItem, requestItemKey) {
         const requestItemValue = requestItem.x[requestItemKey]
 
-        if (requestItemValue === ADD_NOW_DATE && schemaRelationship.props?.[requestItemKey]?.dataType === enums.dataTypes.isoString) requestItem.x[requestItemKey] = getNow() // populate now timestamp
-        else if (typeof requestItemValue === 'string' && requestItemValue.startsWith(REQUEST_UID_PREFIX)) overwriteUids(requestItem, requestItemKey)
-      }
+        if (typeof requestItemValue === 'string' && requestItemValue.startsWith(REQUEST_UID_PREFIX)) {
+          const graphUid = mapUids.get(requestItemValue)
 
-      const relationshipProp = getRelationshipProp(requestItem.id)
-      addRelationshipToNode('a', requestItem, relationshipProp, graphKey)
-      addRelationshipToNode('b', requestItem, relationshipProp, graphKey)
-
-      putEntries.set(graphKey, requestItem)
-    }
-
-
-    /**
-     * @param { 'a' | 'b' } direction
-     * @param { td.MutateRequestInsertNodeDefaultItem } requestItem 
-     * @param { string } relationshipProp 
-     * @param { string } graphKey 
-     */
-    function addRelationshipToNode (direction, requestItem, relationshipProp, graphKey) {
-      const node = putEntries.get(requestItem.x[ direction ])
-
-      if (!node[relationshipProp]) node[relationshipProp] = [ graphKey ]
-      else node[relationshipProp].push(graphKey)
-    }
-
-
-    /**
-     * @param { string } insertUid 
-     * @returns { string }
-     */
-    function getGraphUidAndAddToMapUids (insertUid) {
-      /** This will be the uid that is added to the graph */
-      let graphUid
-
-      if (typeof insertUid !== 'string') throw error('mutate__uid-invalid-type', `The uid ${ insertUid } is invalid because the type is not string, please include only typeof "string" for each uid`, { uid: insertUid })
-
-      if (!insertUid.startsWith(REQUEST_UID_PREFIX)) graphUid = insertUid
-      else {
-        if (mapUids.get(insertUid)) throw error('mutate__duplicate-uid', `The uid ${ insertUid } is invalid because it is included as a uid for multiple nodes, please do not include duplicate uids for insert`, { uid: insertUid })
-
-        graphUid = crypto.randomUUID()
-        mapUids.set(insertUid, graphUid)
-      }
-
-      return graphUid
-    }
-
-
-    /**
-     * @param { td.MutateRequestInsertNodeDefaultItem } requestItem
-     * @param { string | number } requestItemKey
-     */
-    function overwriteUids (requestItem, requestItemKey) {
-      const requestItemValue = requestItem.x[requestItemKey]
-
-      if (typeof requestItemValue === 'string' && requestItemValue.startsWith(REQUEST_UID_PREFIX)) {
-        const graphUid = mapUids.get(requestItemValue)
-
-        if (graphUid) /** @type { td.MutateRequestInsertNodeDefaultItem } */ (/** @type { any } */ (requestItem)).x[requestItemKey] = graphUid
-        else throw error('mutate__invalid-uid', `The uid ${ requestItemValue } is invalid b/c each uid, with an ace uid prefix, must be defined in a node`, { uid: requestItemValue })
+          if (graphUid) /** @type { td.MutateRequestInsertNodeDefaultItem } */ (/** @type { any } */ (requestItem)).x[requestItemKey] = graphUid
+          else throw error('mutate__invalid-uid', `The uid ${ requestItemValue } is invalid b/c each uid, with an ace uid prefix, must be defined in a node`, { uid: requestItemValue })
+        }
       }
     }
 
@@ -402,41 +463,41 @@ export async function _mutate (passport, request) {
             })
           }
         }
-      }
-    }
 
 
-    /**
-     * @param { td.MutateRequestInsertRelationshipDefaultItem } rSchemaRelationshipProp 
-     * @param { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp } schemaRelationshipProp 
-     * @param { string } propName 
-     */
-    function validateNotBidirectionalMustProps (rSchemaRelationshipProp, schemaRelationshipProp, propName) {
-      let isValid = false
-      const storageUids = []
-      const relationshipNodes = []
-      const isInverse = schemaRelationshipProp.id === 'ReverseRelationshipProp'
-      const relationshipUids = rSchemaRelationshipProp.x[getRelationshipProp(schemaRelationshipProp.x.relationshipName)]
+        /**
+         * @param { td.MutateRequestInsertRelationshipDefaultItem } rSchemaRelationshipProp 
+         * @param { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp } schemaRelationshipProp 
+         * @param { string } propName 
+         */
+        function validateNotBidirectionalMustProps (rSchemaRelationshipProp, schemaRelationshipProp, propName) {
+          let isValid = false
+          const storageUids = []
+          const relationshipNodes = []
+          const isInverse = schemaRelationshipProp.id === 'ReverseRelationshipProp'
+          const relationshipUids = rSchemaRelationshipProp.x[getRelationshipProp(schemaRelationshipProp.x.relationshipName)]
 
-      if (relationshipUids) {
-        for (const relationshipUid of relationshipUids) {
-          const putEntry = putEntries.get(relationshipUid)
+          if (relationshipUids) {
+            for (const relationshipUid of relationshipUids) {
+              const putEntry = putEntries.get(relationshipUid)
 
-          if (putEntry) relationshipNodes.push(putEntry)
-          else storageUids.push(relationshipUid)
-        }
+              if (putEntry) relationshipNodes.push(putEntry)
+              else storageUids.push(relationshipUid)
+            }
 
-        if (relationshipNodes.length) {
-          for (const relationshipNode of relationshipNodes) {
-            if (rSchemaRelationshipProp.x.uid === relationshipNode[ isInverse ? 'b' : 'a' ]) {
-              isValid = true
-              break
+            if (relationshipNodes.length) {
+              for (const relationshipNode of relationshipNodes) {
+                if (rSchemaRelationshipProp.x.uid === relationshipNode[isInverse ? 'b' : 'a']) {
+                  isValid = true
+                  break
+                }
+              }
             }
           }
+
+          if (!isValid) throw error('mutate__missing-must-defined-relationship', `${propName} is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
         }
       }
-
-      if (!isValid) throw error('mutate__missing-must-defined-relationship', `${ propName } is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
     }
 
 

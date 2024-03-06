@@ -33,7 +33,7 @@ export function getDerivedValue (generatedQueryFormatSection, graphNode, symbol,
 
           if (!queryProperty.x.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProperty.x.property])
           else {
-            const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, null, passport, queryProperty.x.relationships)
+            const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, passport, queryProperty.x.relationships)
             if (rRelationshipNode.node?.[queryProperty.x.property]) setDerivedValueAndUsing(symbol, rRelationshipNode.node[queryProperty.x.property])
           }
 

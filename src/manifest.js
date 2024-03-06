@@ -200,7 +200,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } MutateRequest
  * @property { {[jwkName: string]: string } } [ privateJWKs ]
  * @property { MutateRequestInsertItem[] } [ insert ]
- * @property { MutateRequestUpsertItem[] } [ upsert ]
+ * @property { MutateRequestUpsertItem[] } [ update ]
  *
  * @typedef { object } MutateRequestInsertNodeDefaultItem
  * @property { string } id
@@ -214,9 +214,9 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { string } id
  * @property { { a: string, b: string, [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
  *
- * @typedef { object } MutateRequestUpsertRelationshipDefaultItem
+ * @typedef { object } MutateRequestUpdateRelationshipDefaultItem
  * @property { string } id
- * @property { { uid?: string, a?: string, b?: string, [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
+ * @property { { _uid?: string, a?: string, b?: string, [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
  *
  * @typedef { object } MutateRequestPrivateJWKOption
  * @property { 'PrivateJWK' } id
@@ -506,7 +506,14 @@ import { sortOptions } from './enums/sortOptions.js'
 
 /** START
  *
- * @typedef { Promise<{ publicJWK: string, privateJWK: string, admin: { uid: string, username: string, token: string } }> } AceStartResponse
+ * @typedef { object } AceStartResponse
+ * @property { string } publicJWK
+ * @property { string } privateJWK
+ * @property { AceStartResponseAdmin } admin
+ * @typedef { object } AceStartResponseAdmin
+ * @property { string } uid
+ * @property { string } username
+ * @property { string } token
  */
 
 
@@ -671,7 +678,7 @@ export const ${ enumStr } =  ''\n\n\n`
  * @property { '${ nodeName }' } id - Upsert \`${ nodeName }\` node
  * @property { ${ nodeName }MutateRequestUpsertItemX } x
  * @typedef { object } ${ nodeName }MutateRequestUpsertItemX
- * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation upsert options
+ * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
  * @property { string } uid - The node's unique identifier`
 
           nodeNames.push(nodeName)
@@ -755,7 +762,7 @@ ${ mutateInsertNode }
       }
 
       if (mutateRequestUpsertItem) mutateRequestUpsertItem = mutateRequestUpsertItem.slice(0, -3) // remove trailing pipe
-      else mutateRequestUpsertItem = '(MutateRequestUpsertNodeDefaultItem | MutateRequestUpsertRelationshipDefaultItem)'
+      else mutateRequestUpsertItem = '(MutateRequestUpsertNodeDefaultItem | MutateRequestUpdateRelationshipDefaultItem)'
       
       if (mutateRequestInsertItem) mutateRequestInsertItem = mutateRequestInsertItem.slice(0, -3) // remove trailing pipe
       else mutateRequestInsertItem = '(MutateRequestInsertNodeDefaultItem | MutateRequestInsertRelationshipDefaultItem)'

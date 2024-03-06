@@ -354,7 +354,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
     if (!option.x.relationships?.length) value = original?.[0]?.[option.x.property]
     else {
-      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], null, passport, option.x.relationships)
+      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], passport, option.x.relationships)
       value = rRelationshipNode?.node?.[option.x.property]
     }
 
@@ -373,7 +373,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
     if (!option.x.relationships?.length) value = original?.[0]?.[option.x.sourceProperty]
     else {
-      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], null, passport, option.x.relationships)
+      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], passport, option.x.relationships)
       value = rRelationshipNode?.node?.[option.x.sourceProperty]
     }
 

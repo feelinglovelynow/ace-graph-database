@@ -182,6 +182,10 @@ export async function _query (passport, request) {
         const responseOriginalNode = graphNode.x
         const responseCurrentNode = /** @type { { [propertyName: string]: any } } */ ({})
 
+        if (graphRelationship?.key) {
+          responseOriginalNode._uid = graphRelationship.key
+        }
+
         for (const queryFormatPropertyKey in generatedQueryFormatSection.x) { // loop a section of query.format object
           if (isRevokesAllowed(responseOriginalNode, { key: getRevokesKey({ action: 'read', nodeName: generatedQueryFormatSection.nodeName, propName: queryFormatPropertyKey }) })) {
             const queryFormatPropertyValue = generatedQueryFormatSection.x[queryFormatPropertyKey]

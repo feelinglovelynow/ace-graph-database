@@ -228,7 +228,7 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
           response.value = graphNode[queryProperty.x.property]
           response.generatedQueryFormatSection = generatedQueryFormatSection
         } else {
-          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, null, passport, queryProperty.x.relationships)
+          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, passport, queryProperty.x.relationships)
 
           if (rRelationshipNode?.node?.[queryProperty.x.property]) {
             response.generatedQueryFormatSection = rRelationshipNode.generatedQueryFormatSection
