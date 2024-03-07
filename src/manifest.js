@@ -227,23 +227,23 @@ import { sortOptions } from './enums/sortOptions.js'
  *
  * @typedef { MutateRequestDeleteNodesItem | MutateRequestDeleteRelationshipsItem | MutateRequestDeleteNodePropsItem | MutateRequestDeleteRelationshipPropsItem } MutateRequestDeleteItem
  * @typedef { object } MutateRequestDeleteNodesItem
- * @property { typeof enums.idsDelete.nodes } id
+ * @property { typeof enums.idsDelete.Nodes } id
  * @property { MutateRequestDeleteNodesItemX } x
  * @typedef { object } MutateRequestDeleteNodesItemX
  * @property { string[] } uids
  * @typedef { object } MutateRequestDeleteRelationshipsItem
- * @property { typeof enums.idsDelete.relationships } id
+ * @property { typeof enums.idsDelete.Relationships } id
  * @property { MutateRequestDeleteRelationshipsItemX } x
  * @typedef { object } MutateRequestDeleteRelationshipsItemX
  * @property { string[] } _uids
  * @typedef { object } MutateRequestDeleteNodePropsItem
- * @property { typeof enums.idsDelete.nodeProps } id
+ * @property { typeof enums.idsDelete.NodeProps } id
  * @property { MutateRequestDeleteNodePropsItemX } x
  * @typedef { object } MutateRequestDeleteNodePropsItemX
  * @property { string[] } props
  * @property { string[] } uids
  * @typedef { object } MutateRequestDeleteRelationshipPropsItem
- * @property { typeof enums.idsDelete.relationshipProps } id
+ * @property { typeof enums.idsDelete.RelationshipProps } id
  * @property { MutateRequestDeleteRelationshipPropsItemX } x
  * @typedef { object } MutateRequestDeleteRelationshipPropsItemX
  * @property { string[] } props

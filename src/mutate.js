@@ -103,20 +103,20 @@ export async function _mutate (passport, request) {
         if (request.delete) {
           for (const requestItem of request.delete) {
             switch (requestItem.id) {
-              case enums.idsDelete.nodes:
+              case enums.idsDelete.Nodes:
                 if (requestItem.x?.uids?.length) {
                   requestItem.x.uids.forEach(uid => deleteSet.add(uid)) // add request uids to the deleteSet
                   
-                  const graphNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
+                  const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
 
-                  for (const graphNode of graphNodes.values()) {
+                  for (const relationshipNode of relationshipNodes.values()) {
                     /** @type { string[] } - Add all relationship uids here so we may call storage once w/ them all */
                     const allRelationshipUids = []
 
-                    for (const prop in graphNode) {
+                    for (const prop in relationshipNode) {
                       if (prop.startsWith(RELATIONSHIP_PREFIX)) {
-                        allRelationshipUids.push(...graphNode[prop])
-                        graphNode[prop].forEach((/** @type { string } */ uid) => deleteSet.add(uid)) // add relationship uids to the deleteSet
+                        allRelationshipUids.push(...relationshipNode[prop])
+                        relationshipNode[prop].forEach((/** @type { string } */ uid) => deleteSet.add(uid)) // add relationship uids to the deleteSet
                       }
                     }
 
@@ -125,7 +125,7 @@ export async function _mutate (passport, request) {
                       const oldRelationshipsMeta = new Map()
 
                       for (const relationship of allRelationshipNodes.values()) {
-                        const relationshipUid = relationship.x.a === graphNode.x.uid ? relationship.x.b : relationship.x.a
+                        const relationshipUid = relationship.x.a === relationshipNode.x.uid ? relationship.x.b : relationship.x.a
                         oldRelationshipsMeta.set(relationshipUid, { id: relationship.id, _uid: relationship.x._uid })
                       }
 
@@ -141,11 +141,24 @@ export async function _mutate (passport, request) {
                   }
                 }
                 break
-              case enums.idsDelete.relationships:
+              case enums.idsDelete.Relationships:
+                if (requestItem.x?._uids?.length) {
+                  requestItem.x._uids.forEach(_uid => deleteSet.add(_uid)) // add request _uids to the deleteSet
+
+                  const relationships = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x._uids }))
+
+                  for (const relationship of relationships.values()) {
+                    const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: [ relationship.x.a, relationship.x.b ] }))
+
+                    for (const relationshipNode of relationshipNodes.values()) {
+                      removeUidFromRelationshipProp(relationshipNode, getRelationshipProp(relationship.id), relationship.x._uid)
+                    }
+                  }
+                }
                 break
-              case enums.idsDelete.nodeProps:
+              case enums.idsDelete.NodeProps:
                 break
-              case enums.idsDelete.relationshipProps:
+              case enums.idsDelete.RelationshipProps:
                 break
             }
           }
