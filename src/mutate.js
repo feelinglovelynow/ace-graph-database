@@ -4,7 +4,7 @@ import { td, enums } from '#manifest'
 import { stamp } from './passport.js'
 import { fetchJSON } from './fetchJSON.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey } from './variables.js'
+import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, RELATIONSHIP_PREFIX } from './variables.js'
 
 
 /**
@@ -56,6 +56,9 @@ export async function _mutate (passport, request) {
     /** @type { Map<string, any> } - The entries we will put */
     const putEntries = new Map()
 
+    /** @type { Set<string> } - The set of uids we will delete */
+    const deleteSet = new Set()
+
     /** @type { { [key: string]: CryptoKey } } - Object that converts stringified jwks into CryptoKey's */
     const privateJWKs = {}
 
@@ -65,7 +68,7 @@ export async function _mutate (passport, request) {
     /** @typedef { Map<string, Map<string, (td.SchemaProp | td.SchemaRelationshipProp | td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp)>> } MustPropsMap */
 
     await setPrivateJWKs()
-    await inup()
+    await deligate()
     throwIfMissingMustProps()
     await addSortIndicesToGraph()
     return conclude()
@@ -80,12 +83,74 @@ export async function _mutate (passport, request) {
     }
 
 
-    async function inup () {
+    async function deligate () {
       for (const action in request) {
-        if (action === 'insert' || action === 'update') {
-          if (action === 'update') await setUpdateRequestItems()
-          await inupNodes(action)
-          await inupRelationships(action)
+        switch (action) {
+          case 'delete':
+            await drop()
+            break
+          case 'insert':
+          case 'update':
+            if (action === 'update') await setUpdateRequestItems()
+            await inupNodes(action)
+            await inupRelationships(action)
+            break
+        }
+      }
+
+
+      async function drop () {
+        if (request.delete) {
+          for (const requestItem of request.delete) {
+            switch (requestItem.id) {
+              case enums.idsDelete.nodes:
+                if (requestItem.x?.uids?.length) {
+                  requestItem.x.uids.forEach(uid => deleteSet.add(uid)) // add request uids to the deleteSet
+                  
+                  const graphNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
+
+                  for (const graphNode of graphNodes.values()) {
+                    /** @type { string[] } - Add all relationship uids here so we may call storage once w/ them all */
+                    const allRelationshipUids = []
+
+                    for (const prop in graphNode) {
+                      if (prop.startsWith(RELATIONSHIP_PREFIX)) {
+                        allRelationshipUids.push(...graphNode[prop])
+                        graphNode[prop].forEach((/** @type { string } */ uid) => deleteSet.add(uid)) // add relationship uids to the deleteSet
+                      }
+                    }
+
+                    if (allRelationshipUids.length) {
+                      const allRelationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: allRelationshipUids }))
+                      const oldRelationshipsMeta = new Map()
+
+                      for (const relationship of allRelationshipNodes.values()) {
+                        const relationshipUid = relationship.x.a === graphNode.x.uid ? relationship.x.b : relationship.x.a
+                        oldRelationshipsMeta.set(relationshipUid, { id: relationship.id, _uid: relationship.x._uid })
+                      }
+
+                      if (oldRelationshipsMeta.size) {
+                        const oldRelationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: [ ...oldRelationshipsMeta.keys() ] }))
+
+                        for (const oldRelationshipNode of oldRelationshipNodes.values()) {
+                          const meta = oldRelationshipsMeta.get(oldRelationshipNode.x.uid)
+                          if (meta) removeUidFromRelationshipProp(oldRelationshipNode, getRelationshipProp(meta.id), meta._uid)
+                        }
+                      }
+                    }
+                  }
+                }
+                break
+              case enums.idsDelete.relationships:
+                break
+              case enums.idsDelete.nodeProps:
+                break
+              case enums.idsDelete.relationshipProps:
+                break
+            }
+          }
+
+          if (deleteSet.size) await passport.storage.delete([ ...deleteSet ])
         }
       }
 
@@ -269,13 +334,11 @@ export async function _mutate (passport, request) {
 
               const aIsDifferent = graphNode.x.a !== requestItem.x.a
               const bIsDifferent = graphNode.x.b !== requestItem.x.b
-              console.log('aIsDifferent', aIsDifferent)
-              console.log('bIsDifferent', bIsDifferent)
+
               if (aIsDifferent) updatePreviousRelationshipNode(aIsDifferent, graphNode.a, requestItem)
               if (bIsDifferent) updatePreviousRelationshipNode(bIsDifferent, graphNode.b, requestItem)
 
               requestItem.x = { ...graphNode.x, ...requestItem.x }
-              console.log('requestItem', requestItem)
             }
 
             await inupRelationship(requestItem, schemaRelationship, graphNode)
@@ -290,24 +353,9 @@ export async function _mutate (passport, request) {
          */
         async function updatePreviousRelationshipNode (isDifferent, pluckedNodeUid, requestItem) {
           if (isDifferent) {
-            const relationshipNode = putEntries.get(pluckedNodeUid) || (await passport.storage.get(pluckedNodeUid))
+            const relationshipNode = await putStorageGet({ uid: pluckedNodeUid })
 
-            if (relationshipNode) {
-              const prop = getRelationshipProp(requestItem.id)
-
-              if (Array.isArray(relationshipNode[prop])) {
-                if (relationshipNode[prop].length === 1 && relationshipNode[prop][0] === requestItem.x._uid) delete relationshipNode[prop]
-                else {
-                  for (let i = 0; i < relationshipNode[prop].length; i++) {
-                    if (requestItem.x._uid === relationshipNode[prop][i]) relationshipNode[prop].splice(i, 1)
-                  }
-
-                  if (!relationshipNode[prop].length) delete relationshipNode[prop]
-                }
-
-                putEntries.set(relationshipNode.uid, relationshipNode)
-              }
-            }
+            if (relationshipNode && requestItem.x._uid) removeUidFromRelationshipProp(relationshipNode, getRelationshipProp(requestItem.id), requestItem.x._uid)
           }
         }
 
@@ -343,7 +391,7 @@ export async function _mutate (passport, request) {
 
           /** @param { 'a' | 'b' } direction */
           async function addRelationshipToNode (direction) {
-            const node = putEntries.get(requestItem.x[direction]) || await passport.storage.get(requestItem.x[direction])
+            const node = await putStorageGet({ uid: requestItem.x[direction] })
 
             if (!node[relationshipProp]) node[relationshipProp] = [ requestItem.x._uid ]
             else node[relationshipProp].push(requestItem.x._uid)
@@ -364,6 +412,27 @@ export async function _mutate (passport, request) {
 
           if (graphUid) /** @type { td.MutateRequestInsertNodeDefaultItem } */ (/** @type { any } */ (requestItem)).x[requestItemKey] = graphUid
           else throw error('mutate__invalid-uid', `The uid ${ requestItemValue } is invalid b/c each uid, with an ace uid prefix, must be defined in a node`, { uid: requestItemValue })
+        }
+      }
+
+
+      /**
+       * @param {*} relationshipNode 
+       * @param { string } prop 
+       * @param { string } _uid 
+       */
+      function removeUidFromRelationshipProp (relationshipNode, prop, _uid) {
+        if (Array.isArray(relationshipNode[prop])) {
+          if (relationshipNode[prop].length === 1 && relationshipNode[prop][0] === _uid) delete relationshipNode[prop]
+          else {
+            for (let i = 0; i < relationshipNode[prop].length; i++) {
+              if (_uid === relationshipNode[prop][i]) relationshipNode[prop].splice(i, 1)
+            }
+
+            if (!relationshipNode[prop].length) delete relationshipNode[prop]
+          }
+
+          putEntries.set(relationshipNode.x.uid, relationshipNode)
         }
       }
     }
@@ -497,6 +566,39 @@ export async function _mutate (passport, request) {
 
           if (!isValid) throw error('mutate__missing-must-defined-relationship', `${propName} is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
         }
+      }
+    }
+
+
+    /**
+     * Get from putEntries OR get from storage
+     * @param { { uid?: string, uids?: string[] } } options
+     */
+    async function putStorageGet (options) {
+      if (options.uid) return putEntries.get(options.uid) || (await passport.storage.get(options.uid))
+      else if (options.uids) {
+        /** @type { string [] } - If there are items we don't find in putEntries, add them to this list, we'll call storage once w/ this list if list.length */
+        const storageUids = []
+
+        /** @type { Map<string, any> } - Map of uids and nodes based on the provided uids */
+        const response = new Map()
+
+        for (const uid of options.uids) {
+          const putNode = putEntries.get(uid)
+
+          if (putNode) response.set(uid, putNode)
+          else storageUids.push(uid)
+        }
+
+        if (storageUids.length) {
+          const rStorage = await passport.storage.get(storageUids)
+
+          rStorage.forEach((/** @type { any } */node, /** @type { string } */uid) => {
+            response.set(uid, node)
+          })
+        }
+
+        return response
       }
     }
 

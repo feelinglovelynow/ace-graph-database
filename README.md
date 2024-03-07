@@ -10,7 +10,7 @@ pnpm add @feelinglovelynow/ace-graph-database
 ## 🙏 JavaScipt's BEST Database!
 * Greetings JavaScript developer! If you are looking for a database, you just found the best one!
 * Thanks to JSDoc comments and TypeScript types that Ace generates based on your JSON schema, autocomplete and pre save errors work beautifully for TypeScript AND JavaScript developers!
-* Ace is a Graph Database... So one to one, one to many AND many to many relationships in your schema may be queried with 0 joins... So (typesafe) queries with relationships that span many levels are fast!
+* Ace is a Graph Database, so one to one, one to many AND many to many relationships in your schema may be queried with 0 joins and typesafe queries that go several relationships deep are fast!
 * Open source (MIT)
 * Data stored as [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/)
 * [$5 monthly to Cloudflare](https://developers.cloudflare.com/durable-objects/platform/pricing/) + ***Ace Graph Database***  provides:
@@ -25,13 +25,13 @@ pnpm add @feelinglovelynow/ace-graph-database
 
 
 ## 🎁 All Our Packages
+1. @feelinglovelynow/ace-graph-database: [NPM](https://www.npmjs.com/package/@feelinglovelynow/ace-graph-database) ⋅ [Github](https://github.com/feelinglovelynow/ace-graph-database)
 1. @feelinglovelynow/datetime-local: [NPM](https://www.npmjs.com/package/@feelinglovelynow/datetime-local) ⋅ [Github](https://github.com/feelinglovelynow/datetime-local)
 1. @feelinglovelynow/dgraph: [NPM](https://www.npmjs.com/package/@feelinglovelynow/dgraph) ⋅ [Github](https://github.com/feelinglovelynow/dgraph)
 1. @feelinglovelynow/env-write: [NPM](https://www.npmjs.com/package/@feelinglovelynow/env-write) ⋅ [Github](https://github.com/feelinglovelynow/env-write)
 1. @feelinglovelynow/get-form-entries: [NPM](https://www.npmjs.com/package/@feelinglovelynow/get-form-entries) ⋅ [Github](https://github.com/feelinglovelynow/get-form-entries)
 1. @feelinglovelynow/get-relative-time: [NPM](https://www.npmjs.com/package/@feelinglovelynow/get-relative-time) ⋅ [Github](https://github.com/feelinglovelynow/get-relative-time)
 1. @feelinglovelynow/global-style: [NPM](https://www.npmjs.com/package/@feelinglovelynow/global-style) ⋅ [Github](https://github.com/feelinglovelynow/global-style)
-1. @feelinglovelynow/graph-database: [NPM](https://www.npmjs.com/package/@feelinglovelynow/graph-database) ⋅ [Github](https://github.com/feelinglovelynow/graph-database)
 1. @feelinglovelynow/jwt: [NPM](https://www.npmjs.com/package/@feelinglovelynow/jwt) ⋅ [Github](https://github.com/feelinglovelynow/jwt)
 1. @feelinglovelynow/loop-backwards: [NPM](https://www.npmjs.com/package/@feelinglovelynow/loop-backwards) ⋅ [Github](https://github.com/feelinglovelynow/loop-backwards)
 1. @feelinglovelynow/slug: [NPM](https://www.npmjs.com/package/@feelinglovelynow/slug) ⋅ [Github](https://github.com/feelinglovelynow/slug)

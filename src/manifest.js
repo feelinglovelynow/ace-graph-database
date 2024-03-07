@@ -6,6 +6,7 @@ import { exec } from 'node:child_process'
 import { dataTypes } from './enums/dataTypes.js'
 import { endpoints } from './enums/endpoints.js'
 import { has } from './enums/has.js'
+import { idsDelete } from './enums/idsDelete.js'
 import { idsQuery } from './enums/idsQuery.js'
 import { idsSchema } from './enums/idsSchema.js'
 import { passportSource } from './enums/passportSource.js'
@@ -87,6 +88,7 @@ import { sortOptions } from './enums/sortOptions.js'
       enumsMap.set('dataTypes', dataTypes)
       enumsMap.set('endpoints', endpoints)
       enumsMap.set('has', has)
+      enumsMap.set('idsDelete', idsDelete)
       enumsMap.set('idsSchema', idsSchema)
       enumsMap.set('idsQuery', idsQuery)
       enumsMap.set('passportSource', passportSource)
@@ -200,19 +202,20 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } MutateRequest
  * @property { {[jwkName: string]: string } } [ privateJWKs ]
  * @property { MutateRequestInsertItem[] } [ insert ]
- * @property { MutateRequestUpsertItem[] } [ update ]
+ * @property { MutateRequestUpdateItem[] } [ update ]
+ * @property { MutateRequestDeleteItem[] } [ delete ]
  *
  * @typedef { object } MutateRequestInsertNodeDefaultItem
- * @property { string } id
- * @property { { [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
- *
- * @typedef { object } MutateRequestUpsertNodeDefaultItem
  * @property { string } id
  * @property { { [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
  *
  * @typedef { object } MutateRequestInsertRelationshipDefaultItem
  * @property { string } id
  * @property { { a: string, b: string, [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
+ *
+ * @typedef { object } MutateRequestUpdateNodeDefaultItem
+ * @property { string } id
+ * @property { { [propertyName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x
  *
  * @typedef { object } MutateRequestUpdateRelationshipDefaultItem
  * @property { string } id
@@ -221,6 +224,30 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } MutateRequestPrivateJWKOption
  * @property { 'PrivateJWK' } id
  * @property { { name: string} } x
+ *
+ * @typedef { MutateRequestDeleteNodesItem | MutateRequestDeleteRelationshipsItem | MutateRequestDeleteNodePropsItem | MutateRequestDeleteRelationshipPropsItem } MutateRequestDeleteItem
+ * @typedef { object } MutateRequestDeleteNodesItem
+ * @property { typeof enums.idsDelete.nodes } id
+ * @property { MutateRequestDeleteNodesItemX } x
+ * @typedef { object } MutateRequestDeleteNodesItemX
+ * @property { string[] } uids
+ * @typedef { object } MutateRequestDeleteRelationshipsItem
+ * @property { typeof enums.idsDelete.relationships } id
+ * @property { MutateRequestDeleteRelationshipsItemX } x
+ * @typedef { object } MutateRequestDeleteRelationshipsItemX
+ * @property { string[] } _uids
+ * @typedef { object } MutateRequestDeleteNodePropsItem
+ * @property { typeof enums.idsDelete.nodeProps } id
+ * @property { MutateRequestDeleteNodePropsItemX } x
+ * @typedef { object } MutateRequestDeleteNodePropsItemX
+ * @property { string[] } props
+ * @property { string[] } uids
+ * @typedef { object } MutateRequestDeleteRelationshipPropsItem
+ * @property { typeof enums.idsDelete.relationshipProps } id
+ * @property { MutateRequestDeleteRelationshipPropsItemX } x
+ * @typedef { object } MutateRequestDeleteRelationshipPropsItemX
+ * @property { string[] } props
+ * @property { string[] } _uids
  *
  * @typedef { { identity: { [k: string]: string } } } MutateResponse
  */
@@ -611,13 +638,13 @@ export const ${ enumStr } =  ''\n\n\n`
       let typedefs = ''
       let queryResultDefault = ''
       let mutateRequestInsertItem = ''
-      let mutateRequestUpsertItem = ''
+      let mutateRequestUpdateItem = ''
       let nodeNames = /** @type { string[] } */ ([])
 
       if (schema?.relationships) {
         for (const relationshipName in schema.relationships) {
           mutateRequestInsertItem += `${ relationshipName }MutateRequestInsertItem | `
-          mutateRequestUpsertItem += `${ relationshipName }MutateRequestUpsertItem | `
+          mutateRequestUpdateItem += `${ relationshipName }MutateRequestUpdateItem | `
 
           const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ relationshipName }\` => \`_:node2\``
 
@@ -630,10 +657,10 @@ export const ${ enumStr } =  ''\n\n\n`
  * @property { string } a - ${ abDescription }
  * @property { string } b - ${ abDescription }`
 
-          let mutateUpsertRelationship = ` * @typedef { object } ${ relationshipName }MutateRequestUpsertItem
- * @property { '${ relationshipName }' } id - Upsert \`${ relationshipName }\` relationship
- * @property { ${ relationshipName }MutateRequestUpsertItemX } x
- * @typedef { object } ${ relationshipName }MutateRequestUpsertItemX
+          let mutateUpdateRelationship = ` * @typedef { object } ${ relationshipName }MutateRequestUpdateItem
+ * @property { '${ relationshipName }' } id - Update \`${ relationshipName }\` relationship
+ * @property { ${ relationshipName }MutateRequestUpdateItemX } x
+ * @typedef { object } ${ relationshipName }MutateRequestUpdateItemX
  * @property { string } _uid - Relationship uid
  * @property { string } [ a ] - ${ abDescription }
  * @property { string } [ b ] - ${ abDescription }`
@@ -644,13 +671,13 @@ export const ${ enumStr } =  ''\n\n\n`
               const dataType = getDataType(schemaProp.x.dataType)
               const description = `Set to a ${ dataType } value if you would love to update this relationship property, \`${ propName }\`, in the graph`
 
-              mutateUpsertRelationship += `\n * @property { ${ dataType } } ${ '[ ' + propName + ' ]' } - ${ description }`
+              mutateUpdateRelationship += `\n * @property { ${ dataType } } ${ '[ ' + propName + ' ]' } - ${ description }`
               mutateInsertRelationship += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? propName : '[ ' + propName + ' ]' } - ${ description }`
             }
           }
 
 
-          typedefs += (mutateInsertRelationship + '\n *\n' + mutateUpsertRelationship + '\n */\n\n\n')
+          typedefs += (mutateInsertRelationship + '\n *\n' + mutateUpdateRelationship + '\n */\n\n\n')
         }
       }
 
@@ -663,7 +690,7 @@ export const ${ enumStr } =  ''\n\n\n`
           formatPipes += `${ nodeName }Format | `
           queryFormatNodes += `${ nodeName }Format | `
           mutateRequestInsertItem += `${ nodeName }MutateRequestInsertItem | `
-          mutateRequestUpsertItem += `${ nodeName }MutateRequestUpsertItem | `
+          mutateRequestUpdateItem += `${ nodeName }MutateRequestUpdateItem | `
 
           let mutateInsertNode = `/** MUTATE: ${ nodeName }
  * 
@@ -674,10 +701,10 @@ export const ${ enumStr } =  ''\n\n\n`
  * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
  * @property { string } uid - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
 
-          let mutateUpsertNode = `@typedef { object } ${ nodeName }MutateRequestUpsertItem
- * @property { '${ nodeName }' } id - Upsert \`${ nodeName }\` node
- * @property { ${ nodeName }MutateRequestUpsertItemX } x
- * @typedef { object } ${ nodeName }MutateRequestUpsertItemX
+          let mutateUpdateNode = `@typedef { object } ${ nodeName }MutateRequestUpdateItem
+ * @property { '${ nodeName }' } id - Update \`${ nodeName }\` node
+ * @property { ${ nodeName }MutateRequestUpdateItemX } x
+ * @typedef { object } ${ nodeName }MutateRequestUpdateItemX
  * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
  * @property { string } uid - The node's unique identifier`
 
@@ -690,7 +717,7 @@ export const ${ enumStr } =  ''\n\n\n`
             switch (schemaProp.id) {
               case 'Prop':
                 const dataType = getDataType(schemaProp.x.dataType)
-                mutateUpsertNode += `\n * @property { ${ dataType } } [ ${ propName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ propName }\` property in the graph for this node (\`${ nodeName }\`). ${ schemaProp.x.description || '' }`
+                mutateUpdateNode += `\n * @property { ${ dataType } } [ ${ propName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ propName }\` property in the graph for this node (\`${ nodeName }\`). ${ schemaProp.x.description || '' }`
                 mutateInsertNode += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? propName : '[ ' + propName + ' ]'} - Set to a value with a \`${ dataType }\` data type to set the current \`${ propName }\` property in the graph for this node (\`${ nodeName }\`). ${ schemaProp.x.description || '' }`
                 nodeQueryFormatProps += `\n * @property { boolean | QueryAliasProperty } [ ${ propName } ] - ${ getQueryPropDescription({ propName, nodeName, schemaPropDescription: schemaProp.x.description }) }`
                 break
@@ -725,7 +752,7 @@ export const ${ enumStr } =  ''\n\n\n`
             }
           }
 
-          mutateUpsertNode += '\n */\n\n\n'
+          mutateUpdateNode += '\n */\n\n\n'
 
           typedefs += `/** QUERY: ${ nodeName }Format
  * 
@@ -740,7 +767,7 @@ ${ nodeQueryFormatProps }
 
 ${ mutateInsertNode }
  * 
- * ${ mutateUpsertNode }${ queryRelationshipProps }`
+ * ${ mutateUpdateNode }${ queryRelationshipProps }`
         }
 
         if (formatPipes) formatPipes = formatPipes.slice(0, -2) // remove trailing pipe
@@ -761,9 +788,9 @@ ${ mutateInsertNode }
  * `
       }
 
-      if (mutateRequestUpsertItem) mutateRequestUpsertItem = mutateRequestUpsertItem.slice(0, -3) // remove trailing pipe
-      else mutateRequestUpsertItem = '(MutateRequestUpsertNodeDefaultItem | MutateRequestUpdateRelationshipDefaultItem)'
-      
+      if (mutateRequestUpdateItem) mutateRequestUpdateItem = mutateRequestUpdateItem.slice(0, -3) // remove trailing pipe
+      else mutateRequestUpdateItem = '(MutateRequestUpdateNodeDefaultItem | MutateRequestUpdateRelationshipDefaultItem)'
+
       if (mutateRequestInsertItem) mutateRequestInsertItem = mutateRequestInsertItem.slice(0, -3) // remove trailing pipe
       else mutateRequestInsertItem = '(MutateRequestInsertNodeDefaultItem | MutateRequestInsertRelationshipDefaultItem)'
 
@@ -773,7 +800,7 @@ ${ mutateInsertNode }
  * @typedef { QueryRequestDefault[] } QueryRequestArray
  * ${ queryResultDefault }
  * @typedef { ${ mutateRequestInsertItem } } MutateRequestInsertItem
- * @typedef { ${ mutateRequestUpsertItem } } MutateRequestUpsertItem
+ * @typedef { ${ mutateRequestUpdateItem } } MutateRequestUpdateItem
  */`
 
       return typedefs
