@@ -6,12 +6,11 @@ import { fetchJSON } from './fetchJSON.js'
 
 /**
  * Removes all data and the schema from your Ace Graph Database
- * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
- * @param { string | null } token 
+ * @param { td.AceCore } core
  * @returns { Promise<void> }
  */
-export async function deleteDataAndSchema (url, token) {
-  return fetchJSON(url + enums.endpoints.deleteDataAndSchema, token, { method: 'DELETE' })
+export async function deleteDataAndSchema (core) {
+  return fetchJSON(core.url + enums.endpoints.deleteDataAndSchema, core.token, { method: 'DELETE' })
 }
 
 

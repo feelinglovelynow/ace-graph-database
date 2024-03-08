@@ -126,6 +126,14 @@ import { sortOptions } from './enums/sortOptions.js'
         fs.writeFile(`${ files.dir }/${ files.src }/${ files.jsTypedefs }`, `import * as enums from './${ files.enums }'
 
 
+/** CORE
+ *
+ * @typedef { object } AceCore
+ * @property { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @property { string | null } token - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling \`/start\`
+ */
+
+
 /** PASSPORT
  *
  * @typedef { object } AcePassport
@@ -137,7 +145,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { AcePassportUser } [ user ]
  * @property { boolean } [ isEnforcePermissionsOn ]
  * @property { Map<string, any> } [ revokesAcePermissions ]
- * 
+ *
  * @typedef { { uid: string, password: string, role?: { uid: string, revokesAcePermissions: { uid: string, action: string, nodeName?: string, relationshipName?: string, propName?: string, schema?: string, allowPropName?: string, allowNewInsert?: boolean } } } } AcePassportUser
  */
 
@@ -146,7 +154,7 @@ import { sortOptions } from './enums/sortOptions.js'
  *
  * @typedef { { nodes: { [nodeName: string]: SchemaNodeValue }, relationships: { [relationshipName: string]: SchemaRelationshipValue } } } Schema
  * @typedef { { [nodePropName: string]: SchemaProp | SchemaForwardRelationshipProp | SchemaReverseRelationshipProp | SchemaBidirectionalRelationshipProp } } SchemaNodeValue
- * 
+ *
  * @typedef { SchemaRelationshipValueOneToOne | SchemaRelationshipValueOneToMany | SchemaRelationshipValueManyToMany } SchemaRelationshipValue
  * @typedef { object } SchemaRelationshipValueOneToOne
  * @property { typeof enums.idsSchema.OneToOne  } id - This is a one to one relationship
@@ -260,7 +268,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { { id: typeof enums.idsQuery.Limit, x: { skip?: number, count?: number } } } QueryLimit
  * @typedef { { id: typeof enums.idsQuery.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
  * @typedef { { id: typeof enums.idsQuery.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
- * 
+ *
  * @typedef { object } QueryFind
  * @property { typeof enums.idsQuery.Find } id
  * @property { QueryFindX } x
@@ -290,7 +298,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } QueryFilterGroupX
  * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
  * @property { (QueryFilter | QueryFilterDefined | QueryFilterUndefined | QueryFilterGroup)[] } items - The items you'd love to do an (and / or) operand on
- * 
+ *
  * @typedef { object } QueryFindGroup
  * @property { typeof enums.idsQuery.FindGroup } id - Do an (and / or) operand on a group of filters
  * @property { QueryFindGroupX } x
@@ -315,7 +323,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { QueryFilterUndefinedX } x
  * @typedef { object } QueryFilterUndefinedX
  * @property { QueryProperty } property - Loop the items and only return the items that are undefined at this property
- * 
+ *
  * @typedef { object } QueryFilterDefined
  * @property { typeof enums.idsQuery.FilterDefined } id - Loop the items and only return the items that are defined at a specific property
  * @property { QueryFilterDefinedX } x
@@ -342,7 +350,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { QueryFilterBy_UidsX } x
  * @typedef { object } QueryFilterBy_UidsX
  * @property { string[] } _uids - With this array of _uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
- * 
+ *
  * @typedef { object } QueryFindByUnique
  * @property { typeof enums.idsQuery.FindByUnique } id - Find node by a prop that has a unique index
  * @property { QueryFindByUniqueX } x
@@ -364,13 +372,13 @@ import { sortOptions } from './enums/sortOptions.js'
  *
  * @typedef { object } QueryCountAsResponse
  * @property { typeof enums.idsQuery.CountAsResponse } id - Set the count for the number of items in the response as the response
- * 
+ *
  * @typedef { object } QueryMinAmountAsResponse
  * @property { typeof enums.idsQuery.MinAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
  * @property { QueryMinAmountAsResponseX } x
  * @typedef { object } QueryMinAmountAsResponseX
  * @property { string } property - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
- * 
+ *
  * @typedef { object } QueryMaxAmountAsResponse
  * @property { typeof enums.idsQuery.MaxAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
  * @property { QueryMaxAmountAsResponseX } x
@@ -395,7 +403,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } QueryCountAsPropertyX
  * @property { string } newProperty - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
- * 
+ *
  * @typedef { object } QuerySumAsProperty
  * @property { typeof enums.idsQuery.SumAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
  * @property { QuerySumAsPropertyX } x
@@ -410,7 +418,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } QueryPropertyAsResponseX
  * @property { string } property - String that is the prop name that you would love to show as the response
  * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ format: { role: { uid: true } } }\`
- * 
+ *
  * @typedef { object } QueryPropertyAdjacentToResponse
  * @property { typeof enums.idsQuery.PropertyAdjacentToResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
  * @property { QueryPropertyAdjacentToResponseX } x
@@ -442,13 +450,13 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { string } computeProperty - Find the largest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProperty - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
- * 
+ *
  * @typedef { object } QueryMinNodeAsResponse
  * @property { typeof enums.idsQuery.MinNodeAsResponse } id - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  * @property { QueryMinNodeAsResponseX } x
  * @typedef { object } QueryMinNodeAsResponseX
  * @property { string } property - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
- * 
+ *
  * @typedef { object } QueryMaxNodeAsResponse
  * @property { typeof enums.idsQuery.MaxNodeAsResponse } id - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  * @property { QueryMaxNodeAsResponseX } x
@@ -465,13 +473,13 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  *
  * @typedef { { [key: string]: CryptoKey } } QueryPublicJWKs
- * 
+ *
  * @typedef { { current: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
  *
  * @typedef { { id: string,   x: QueryRequestFormatX } } QueryRequestFormat
  * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty,   $options?: QueryRequestFormatOptions } } QueryRequestFormatX
  * @typedef ${ queryRequestFormatOptions } QueryRequestFormatOptions
- * 
+ *
  * @typedef { object } QueryRequestFormatGenerated
  * @property { string } property
  * @property { string } schemaProperty
@@ -649,7 +657,7 @@ export const ${ enumStr } =  ''\n\n\n`
           const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ relationshipName }\` => \`_:node2\``
 
           let mutateInsertRelationship = `/** MUTATE: ${ relationshipName }
- * 
+ *
  * @typedef { object } ${ relationshipName }MutateRequestInsertItem
  * @property { '${ relationshipName }' } id - Insert \`${ relationshipName }\` relationship
  * @property { ${ relationshipName }MutateRequestInsertItemX } x
@@ -693,7 +701,7 @@ export const ${ enumStr } =  ''\n\n\n`
           mutateRequestUpdateItem += `${ nodeName }MutateRequestUpdateItem | `
 
           let mutateInsertNode = `/** MUTATE: ${ nodeName }
- * 
+ *
  * @typedef { object } ${ nodeName }MutateRequestInsertItem
  * @property { '${ nodeName }' } id - Insert \`${ nodeName }\` node
  * @property { ${ nodeName }MutateRequestInsertItemX } x
@@ -747,7 +755,7 @@ export const ${ enumStr } =  ''\n\n\n`
                 }
 
                 queryRelationshipProps += `/** QUERY: ${ relationshipPropName }
- * 
+ *
  * @typedef { object } ${ relationshipPropName }
  * @property { '${ relationshipPropName }' } id
  * @property { ${ relationshipPropName }X } x
@@ -845,7 +853,7 @@ ${ mutateInsertNode }
      * @property { string } [ nodeName ]
      * @property { string } [ relationshipName ]
      * @property { string } [ schemaPropDescription ]
-     * 
+     *
      * @param { GetPropDescriptionOptions } options 
      * @returns { string }
      */

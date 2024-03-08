@@ -11,11 +11,11 @@ import { NODE_UIDS_KEY, SCHEMA_KEY, getRevokesKey } from './variables.js'
 
 /**
  * Start Ace Graph Database
- * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @param { td.AceCore } core
  * @returns { Promise<td.AceStartResponse> }
  */
-export async function start (url) {
-  return fetchJSON(url + enums.endpoints.start, null, { method: 'GET' })
+export async function start(core) {
+  return fetchJSON(core.url + enums.endpoints.start, core.token, { method: 'GET' })
 }
 
 

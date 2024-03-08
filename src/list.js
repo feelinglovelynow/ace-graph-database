@@ -6,13 +6,12 @@ import { fetchJSON } from './fetchJSON.js'
 
 /**
  * Returns all keys and values (array of objects) in Ace Database, in ascending sorted order based on the keys’ UTF-8 encodings.
- * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
- * @param { string | null } token 
+ * @param { td.AceCore } core
  * @param { td.CF_DO_StorageListOptions } [ options ]
  * @returns { Promise<{ [k: string]: any }[]> }
  */
-export async function list (url, token, options) {
-  return fetchJSON(url + enums.endpoints.list, token, { body: JSON.stringify(options || {}) })
+export async function list (core, options) {
+  return fetchJSON(core.url + enums.endpoints.list, core.token, { body: JSON.stringify(options || {}) })
 }
 
 

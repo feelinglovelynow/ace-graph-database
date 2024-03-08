@@ -7,12 +7,11 @@ import { SCHEMA_KEY, getRevokesKey } from './variables.js'
 
 /**
  * Get Ace Graph Database Schema
- * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
- * @param { string | null } token
+ * @param { td.AceCore } core
  * @returns { Promise<td.Schema> }
  */
-export async function getSchema (url, token) {
-  return fetchJSON(url + enums.endpoints.getSchema, token, { method: 'GET' })
+export async function getSchema(core) {
+  return fetchJSON(core.url + enums.endpoints.getSchema, core.token, { method: 'GET' })
 }
 
 
@@ -36,13 +35,12 @@ export async function _getSchema (passport) {
 
 
 /**
- * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
- * @param { string | null } token
+ * @param { td.AceCore } core
  * @param { td.Schema } schema - Ace Graph Database schema
  * @returns { Promise<td.Schema> }
  */
-export async function addToSchema (url, token, schema) {
-  return fetchJSON(url + enums.endpoints.addToSchema, token, { body: JSON.stringify(schema) })
+export async function addToSchema (core, schema) {
+  return fetchJSON(core.url + enums.endpoints.addToSchema, core.token, { body: JSON.stringify(schema) })
 }
 
 

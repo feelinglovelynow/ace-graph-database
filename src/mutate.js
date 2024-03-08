@@ -9,13 +9,12 @@ import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, ADD_NOW_DATE, DELIMITER,
 
 /**
  * Mutate Ace Graph Database
- * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
- * @param { string | null } token
+ * @param { td.AceCore } core
  * @param { td.MutateRequest } request
  * @returns { Promise<td.MutateResponse> }
  */
-export async function mutate (url, token, request) {
-  return fetchJSON(url + enums.endpoints.mutate, token, { body: JSON.stringify(request) })
+export async function mutate (core, request) {
+  return fetchJSON(core.url + enums.endpoints.mutate, core.token, { body: JSON.stringify(request) })
 }
 
 

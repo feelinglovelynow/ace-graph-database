@@ -9,13 +9,12 @@ import { getGeneratedQueryFormatSectionByParent, getGeneratedQueryFormatSectionB
 
 
 /**
- * @param { string } url 
- * @param { string | null } token 
+ * @param { td.AceCore } core
  * @param { td.QueryRequest } request 
  * @returns { Promise<any> }
  */
-export async function query (url, token, request) {
-  return fetchJSON(url + enums.endpoints.query, token, { body: JSON.stringify(request) })
+export async function query (core, request) {
+  return fetchJSON(core.url + enums.endpoints.query, core.token, { body: JSON.stringify(request) })
 }
 
 
