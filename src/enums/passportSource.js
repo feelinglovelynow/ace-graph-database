@@ -2,7 +2,7 @@ export const passportSource = new Set([
   'enforcePermissions',
   'mutate',
   'query',
-  'setSchema',
+  'addToSchema',
   'getSchema',
   'start',
   'stamp',

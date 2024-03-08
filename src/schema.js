@@ -36,31 +36,45 @@ export async function _getSchema (passport) {
 
 
 /**
- * Set Ace Graph Database Schema. This function overwrites any existing schema values. Example:
  * @param { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
  * @param { string | null } token
  * @param { td.Schema } schema - Ace Graph Database schema
  * @returns { Promise<td.Schema> }
  */
-export async function setSchema (url, token, schema) {
-  return fetchJSON(url + enums.endpoints.setSchema, token, { body: JSON.stringify(schema) })
+export async function addToSchema (url, token, schema) {
+  return fetchJSON(url + enums.endpoints.addToSchema, token, { body: JSON.stringify(schema) })
 }
 
 
 /**
- * Set Ace Graph Database Schema. This function overwrites any existing schema values.
  * @param { td.AcePassport } passport
- * @param { td.Schema } schema - Ace Graph Database schema
+ * @param { td.Schema } schemaAdditions - Ace Graph Database schema
  * @returns { Promise<td.Schema> }
  */
-export async function _setSchema (passport, schema) {
+export async function _addToSchema (passport, schemaAdditions) {
   try {
     await stamp(passport)
 
     if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', schema: true }))) throw error('auth__write-schema', 'Because the permission write schema is revoked from your AcePermission\'s, you cannot do this', { token: passport.token, source: passport.source } )
+    if (!passport.schema?.nodes) throw error('add-to-schema__falsy-nodes', '/add-to-schema should be called after calling /start, please call /start before calling /add-to-schema', {})
+    if (!passport.schema?.relationships) throw error('add-to-schema__falsy-relationships', '/add-to-schema should be called after calling /start, please call /start before calling /add-to-schema', {})
 
-    passport.storage.put(SCHEMA_KEY, validateSchema(schema))
-    return schema
+    if (schemaAdditions.nodes) {
+      for (const node in schemaAdditions.nodes) {
+        if (passport.schema?.nodes[node]) throw error('add-to-schema__overwrite-node', `The node \`${ node }\` is already in your schema, please only include nodes in /add-to-schema that are not already in your schema`, { node })
+        passport.schema.nodes[node] = schemaAdditions.nodes[node]
+      }
+    }
+
+    if (schemaAdditions.relationships) {
+      for (const relationship in schemaAdditions.relationships) {
+        if (passport.schema?.relationships[relationship]) throw error('add-to-schema__overwrite-relationship', `The relationship \`${ relationship }\` is already in your schema, please only include relationships in /add-to-schema that are not already in your schema`, { relationship })
+        passport.schema.relationships[relationship] = schemaAdditions.relationships[relationship]
+      }
+    }
+
+    passport.storage.put(SCHEMA_KEY, validateSchema(passport.schema))
+    return passport.schema
   } catch (e) {
     console.log('error', e)
     throw e
@@ -72,7 +86,7 @@ export async function _setSchema (passport, schema) {
  * Validate Schema
  * @param { td.Schema } schema
  */
-function validateSchema (schema) {
+export function validateSchema (schema) {
   if (!schema.nodes || typeof schema.nodes !== 'object' || Array.isArray(schema.nodes)) throw error('schema__invalid-nodes', 'The provided schema requires a nodes object please', { schema })
   if (schema.relationships && (typeof schema.relationships !== 'object' || Array.isArray(schema.relationships))) throw error('schema__invalid-relationships', 'If you would love to provide relationships with your schema, please pass it as an object', { schema })
 

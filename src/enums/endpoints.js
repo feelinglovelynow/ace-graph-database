@@ -1,7 +1,7 @@
 export const endpoints = new Map([
   ['start', '/start'],
-  ['setSchema', '/set-schema'],
   ['getSchema', '/get-schema'],
+  ['addToSchema', '/add-to-schema'],
   ['mutate', '/mutate'],
   ['query', '/query'],
   ['list', '/list'],

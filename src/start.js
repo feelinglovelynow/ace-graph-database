@@ -5,8 +5,8 @@ import { _mutate } from './mutate.js'
 import { stamp } from './passport.js'
 import { fetchJSON } from './fetchJSON.js'
 import { createJWKs } from './createJWKs.js'
-import { NODE_UIDS_KEY } from './variables.js'
-import { _setSchema, _getSchema } from './schema.js'
+import { _getSchema, validateSchema } from './schema.js'
+import { NODE_UIDS_KEY, SCHEMA_KEY, getRevokesKey } from './variables.js'
 
 
 /**
@@ -64,10 +64,13 @@ export async function _start (passport) {
       if (relationshipNodesDefined) throw error('start__schema-relationships-defined', 'Request fails because there are relationships defined in your schema. Start is meant to boot up a graph without relationships. Delete you schema if you would love to start a new graph.', { relationshipsLength: relationshipNodesDefined })
       if (allNodeUids?.length) throw error('start__nodes-found', 'Request fails because there are nodes in your graph. Start is meant to boot up a graph without nodes. Delete your nodes if you would love to start a new graph.', { allNodeUidsLength: allNodeUids.length })
     }
-    
+
 
     async function setSchema () {
-      return _setSchema(passport, {
+      if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'write', schema: true }))) throw error('auth__write-schema', 'Because the permission write schema is revoked from your AcePermission\'s, you cannot do this', { token: passport.token, source: passport.source })
+
+      /** @type { td.Schema } */
+      const schema = {
         nodes: {
           AceSetting: {
             name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
@@ -107,7 +110,11 @@ export async function _start (passport) {
           isTheAceRole: { id: 'OneToMany' },
           revokesAcePermission: { id: 'ManyToMany' },
         }
-      })
+      }
+
+      passport.storage.put(SCHEMA_KEY, validateSchema(schema))
+
+      return schema
     }
 
 

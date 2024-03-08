@@ -3,7 +3,7 @@ import { deleteDataAndSchema } from '../tsc/src/delete.d'
 import { list } from '../tsc/src/list.d'
 import { mutate } from '../tsc/src/mutate.d'
 import { query } from '../tsc/src/query.d'
-import { getSchema, setSchema } from '../tsc/src/schema.d'
+import { getSchema, addToSchema } from '../tsc/src/schema.d'
 import { start } from '../tsc/src/start.d'
 import { ADD_NOW_DATE, REQUEST_UID_PREFIX, REQUEST_TOKEN_HEADER, getNow } from '../tsc/src/variables.d'
 
@@ -15,7 +15,7 @@ export {
   mutate,
   query,
   getSchema,
-  setSchema,
+  addToSchema,
   start,
   ADD_NOW_DATE,
   REQUEST_UID_PREFIX,

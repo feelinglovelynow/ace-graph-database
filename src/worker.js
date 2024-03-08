@@ -7,7 +7,7 @@ import { _mutate } from './mutate.js'
 import { create } from './passport.js'
 import { endpoints } from './enums/endpoints.js'
 import { _deleteDataAndSchema } from './delete.js'
-import { _setSchema, _getSchema } from './schema.js'
+import { _addToSchema, _getSchema } from './schema.js'
 import { _enforcePermissions } from './enforcePermissions.js'
 
 
@@ -27,8 +27,8 @@ async function getResponse (storage, request) {
 
 
     // schema
-    case enums.endpoints.setSchema:
-      return new Response(JSON.stringify(await _setSchema(create(storage, request, enums.passportSource.setSchema), await request.json())), { headers: getHeaders('json') })
+    case enums.endpoints.addToSchema:
+      return new Response(JSON.stringify(await _addToSchema(create(storage, request, enums.passportSource.addToSchema), await request.json())), { headers: getHeaders('json') })
     case enums.endpoints.getSchema:
       return new Response(JSON.stringify(await _getSchema(create(storage, request, enums.passportSource.getSchema))), { headers: getHeaders('json') })
 
