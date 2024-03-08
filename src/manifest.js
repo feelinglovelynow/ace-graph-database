@@ -636,7 +636,7 @@ export const ${ enumStr } =  ''\n\n\n`
      */
     function getSchemaTypedefs () {
       let typedefs = ''
-      let queryResultDefault = ''
+      let queryRequestDefault = ''
       let mutateRequestInsertItem = ''
       let mutateRequestUpdateItem = ''
       let nodeNames = /** @type { string[] } */ ([])
@@ -738,6 +738,14 @@ export const ${ enumStr } =  ''\n\n\n`
                     `\n * @property { ${ getRelationshipQueryFormatProp(schemaProp.x.nodeName, relationshipNodePropName) }X } [ ${ relationshipNodePropName } ] - Return object to see node name: \`${ schemaProp.x.nodeName }\` and prop name: \`${ relationshipNodePropName }\`, that will provide properties on the \`${ rSchemaProp.x.nodeName }\` node in the response`
                 }
 
+                if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
+                  const props = schema.relationships?.[schemaProp.x.relationshipName].x.props
+
+                  for (const relationshipPropName in props) {
+                    queryProps += `\n * @property { boolean | QueryAliasProperty } [ ${relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationshipName, schemaPropDescription: props[relationshipPropName].x.description })}`
+                  }
+                }
+
                 queryRelationshipProps += `/** QUERY: ${ relationshipPropName }
  * 
  * @typedef { object } ${ relationshipPropName }
@@ -746,7 +754,7 @@ export const ${ enumStr } =  ''\n\n\n`
  * @typedef { object } ${ relationshipPropName }X
  * @property ${ queryRequestFormatOptions } [ $options ]
  * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
- * @property { boolean | QueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${queryProps}
+ * @property { boolean | QueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
  */\n\n\n`
                 break
             }
@@ -755,7 +763,7 @@ export const ${ enumStr } =  ''\n\n\n`
           mutateUpdateNode += '\n */\n\n\n'
 
           typedefs += `/** QUERY: ${ nodeName }Format
- * 
+ *
  * @typedef { object } ${ nodeName }Format
  * @property { '${ nodeName }' } id
  * @property { ${ nodeName }FormatX } x
@@ -766,26 +774,26 @@ ${ nodeQueryFormatProps }
 
 
 ${ mutateInsertNode }
- * 
+ *
  * ${ mutateUpdateNode }${ queryRelationshipProps }`
         }
 
         if (formatPipes) formatPipes = formatPipes.slice(0, -2) // remove trailing pipe
         if (queryFormatNodes) queryFormatNodes = queryFormatNodes.slice(0, -2) // remove trailing |
 
-        queryResultDefault = `
+        queryRequestDefault = `
  * @typedef { object } QueryRequestDefault
  * @property { string } property - The property that this queries results should be placed within
  * @property { ${ queryFormatNodes } } format - The desired format to display the data
  * @property { { [key: string]: string }  } [ publicJWKs ] - Public JWKs that can be used to do a Find or Filter on a property with a \`hash\` data type - For example \`publicJWKs: { passwordPublicJWK }\`
- * `
+ *`
       } else {
-        queryResultDefault = `
+        queryRequestDefault = `
  * @typedef { object } QueryRequestDefault
  * @property { string } property
  * @property { QueryRequestFormat } format
  * @property { { [key: string]: string }  } [ publicJWKs ]
- * `
+ *`
       }
 
       if (mutateRequestUpdateItem) mutateRequestUpdateItem = mutateRequestUpdateItem.slice(0, -3) // remove trailing pipe
@@ -798,7 +806,7 @@ ${ mutateInsertNode }
  *
  * @typedef { QueryRequestDefault | QueryRequestArray } QueryRequest
  * @typedef { QueryRequestDefault[] } QueryRequestArray
- * ${ queryResultDefault }
+ *${ queryRequestDefault }
  * @typedef { ${ mutateRequestInsertItem } } MutateRequestInsertItem
  * @typedef { ${ mutateRequestUpdateItem } } MutateRequestUpdateItem
  */`

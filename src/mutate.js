@@ -157,8 +157,32 @@ export async function _mutate (passport, request) {
                 }
                 break
               case enums.idsDelete.NodeProps:
+                if (requestItem.x?.uids?.length && requestItem.x?.props?.length) {
+                  const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
+
+                  for (const relationshipNode of relationshipNodes.values()) {
+                    for (const prop of requestItem.x.props) {
+                      if (typeof relationshipNode.x[prop] !== 'undefined') {
+                        delete relationshipNode.x[prop]
+                        putEntries.set(relationshipNode.x.uid, relationshipNode)
+                      }
+                    }
+                  }
+                }
                 break
               case enums.idsDelete.RelationshipProps:
+                if (requestItem.x?._uids?.length && requestItem.x?.props?.length) {
+                  const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x._uids }))
+
+                  for (const relationshipNode of relationshipNodes.values()) {
+                    for (const prop of requestItem.x.props) {
+                      if (typeof relationshipNode.x[prop] !== 'undefined') {
+                        delete relationshipNode.x[prop]
+                        putEntries.set(relationshipNode.x._uid, relationshipNode)
+                      }
+                    }
+                  }
+                }
                 break
             }
           }

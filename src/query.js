@@ -182,8 +182,10 @@ export async function _query (passport, request) {
         const responseOriginalNode = graphNode.x
         const responseCurrentNode = /** @type { { [propertyName: string]: any } } */ ({})
 
-        if (graphRelationship?.key) {
-          responseOriginalNode._uid = graphRelationship.key
+        if (graphRelationship?.value) {
+          for (const prop in graphRelationship.value) {
+            if (prop.startsWith('_')) responseOriginalNode[prop] = graphRelationship.value[prop]
+          }
         }
 
         for (const queryFormatPropertyKey in generatedQueryFormatSection.x) { // loop a section of query.format object
@@ -192,7 +194,7 @@ export async function _query (passport, request) {
             const isTruthy = queryFormatPropertyValue === true
             const alias = queryFormatPropertyValue?.id === enums.idsQuery.Alias ? queryFormatPropertyValue.x?.alias : null
             const schemaNodeProp = passport.schema?.nodes[generatedQueryFormatSection.nodeName]?.[queryFormatPropertyKey]
-            const schemaRelationshipProp = generatedQueryFormatSection.relationshipName ? /**@type { any } */ (passport.schema?.relationships)?.[generatedQueryFormatSection.relationshipName]?.props?.[queryFormatPropertyKey] : null
+            const schemaRelationshipProp = generatedQueryFormatSection.relationshipName ? /**@type { any } */ (passport.schema?.relationships)?.[generatedQueryFormatSection.relationshipName]?.x?.props?.[queryFormatPropertyKey] : null
 
             if (queryFormatPropertyKey === 'uid') { // not a prop defined in the schema
               if (isTruthy) responseCurrentNode.uid = uid
@@ -200,7 +202,7 @@ export async function _query (passport, request) {
             } else if (queryFormatPropertyKey === '_uid' && graphRelationship) { // not a prop defined in the schema
               if (isTruthy) responseCurrentNode._uid = graphRelationship.key
               else if (alias) responseCurrentNode[alias] = graphRelationship.key
-            } else if (schemaRelationshipProp?.id === enums.idsSchema.Prop && graphRelationship) { // this prop is defined @ schema.relationships
+            } else if (schemaRelationshipProp?.id === enums.idsSchema.RelationshipProp && typeof graphRelationship?.value[queryFormatPropertyKey] !== 'undefined') { // this prop is defined @ schema.relationships
               if (isTruthy) responseCurrentNode[queryFormatPropertyKey] = graphRelationship.value[queryFormatPropertyKey]
               else if (alias) responseCurrentNode[alias] = graphRelationship?.value[queryFormatPropertyKey]
             } else if (schemaNodeProp?.id === enums.idsSchema.Prop) { // this prop is defined @ schema.nodes and is a SchemaProp        
@@ -278,16 +280,18 @@ export async function _query (passport, request) {
                 if (isValid) await addNodesToResponse(relationshipGeneratedQueryFormatSection, { current: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false, iQuery)
               }
             }
-
           }
         }
 
-        if (response.current[generatedQueryFormatSection.property]?.length) {
-          response.current[generatedQueryFormatSection.property].push(responseCurrentNode)
-          response.original[generatedQueryFormatSection.property].push(responseOriginalNode)
-        } else {
-          response.current[generatedQueryFormatSection.property] = [responseCurrentNode]
-          response.original[generatedQueryFormatSection.property] = [responseOriginalNode]
+        if (Object.keys(responseCurrentNode).length) {
+          console.log('responseCurrentNode', responseCurrentNode)
+          if (response.current[generatedQueryFormatSection.property]?.length) {
+            response.current[generatedQueryFormatSection.property].push(responseCurrentNode)
+            response.original[generatedQueryFormatSection.property].push(responseOriginalNode)
+          } else {
+            response.current[generatedQueryFormatSection.property] = [responseCurrentNode]
+            response.original[generatedQueryFormatSection.property] = [responseOriginalNode]
+          }
         }
       }
     }

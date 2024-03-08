@@ -116,9 +116,6 @@ export async function _start (passport) {
         insert: [
           { id: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', slug: enums.settings.enforcePermissions, isOn: false } },
           { id: 'AceUser', x: { uid: admin.uid, username: admin.username } },
-          { id: 'AceUser', x: { uid: '_:jenny', username: 'jenny' } },
-          { id: 'AceUser', x: { uid: '_:roy', username: 'roy' } },
-          { id: 'AceUser', x: { uid: '_:donna', username: 'donna' } },
           { id: 'AceToken',  x: { uid: admin.token, name: 'Admin', createdAt: 'now' } },
           { id: 'AceRole', x: { uid: admin.role, name: 'Admin', slug: 'admin' } },
           { id: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', slug: 'architect' } },
