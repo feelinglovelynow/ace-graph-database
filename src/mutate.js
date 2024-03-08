@@ -431,6 +431,8 @@ export async function _mutate (passport, request) {
 
             if (!node[relationshipProp]) node[relationshipProp] = [ requestItem.x._uid ]
             else node[relationshipProp].push(requestItem.x._uid)
+
+            putEntries.set(node.x.uid, node)
           }
         }
       }

@@ -283,7 +283,6 @@ export async function _query (passport, request) {
         }
 
         if (Object.keys(responseCurrentNode).length) {
-          console.log('responseCurrentNode', responseCurrentNode)
           if (response.current[generatedQueryFormatSection.property]?.length) {
             response.current[generatedQueryFormatSection.property].push(responseCurrentNode)
             response.original[generatedQueryFormatSection.property].push(responseOriginalNode)
