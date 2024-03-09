@@ -1,5 +1,4 @@
 import { enforcePermissions } from '../tsc/src/enforcePermissions.d'
-import { deleteDataAndSchema } from '../tsc/src/delete.d'
 import { list } from '../tsc/src/list.d'
 import { mutate } from '../tsc/src/mutate.d'
 import { query } from '../tsc/src/query.d'
@@ -10,7 +9,6 @@ import { ADD_NOW_DATE, REQUEST_UID_PREFIX, REQUEST_TOKEN_HEADER, getNow } from '
 
 export {
   enforcePermissions,
-  deleteDataAndSchema,
   list,
   mutate,
   query,

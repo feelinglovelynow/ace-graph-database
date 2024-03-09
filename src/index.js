@@ -1,5 +1,4 @@
 import { enforcePermissions } from './enforcePermissions.js'
-import { deleteDataAndSchema } from './delete.js'
 import { list } from './list.js'
 import { mutate } from './mutate.js'
 import { query } from './query.js'
@@ -10,7 +9,6 @@ import { ADD_NOW_DATE, REQUEST_UID_PREFIX, REQUEST_TOKEN_HEADER, getNow } from '
 
 export {
   enforcePermissions,
-  deleteDataAndSchema,
   list,
   mutate,
   query,

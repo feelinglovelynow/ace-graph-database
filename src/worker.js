@@ -6,7 +6,6 @@ import { td, enums } from '#manifest'
 import { _mutate } from './mutate.js'
 import { create } from './passport.js'
 import { endpoints } from './enums/endpoints.js'
-import { _deleteDataAndSchema } from './delete.js'
 import { _addToSchema, _getSchema } from './schema.js'
 import { _enforcePermissions } from './enforcePermissions.js'
 
@@ -42,12 +41,6 @@ async function getResponse (storage, request) {
       const map = await _list(create(storage, request, enums.passportSource.list), body) // returns a map
       map.forEach((value, key) => rList[key] = value) // convert map to an object b/c we can't stringify a map
       return new Response(JSON.stringify(rList), { headers: getHeaders('json') })
-
-
-    // delete
-    case enums.endpoints.deleteDataAndSchema:
-      await _deleteDataAndSchema(create(storage, request, enums.passportSource.deleteDataAndSchema))
-      return new Response(JSON.stringify({ success: true }), { headers: getHeaders('json') })
 
 
     // mutate

@@ -6,7 +6,8 @@ import { exec } from 'node:child_process'
 import { dataTypes } from './enums/dataTypes.js'
 import { endpoints } from './enums/endpoints.js'
 import { has } from './enums/has.js'
-import { idsDelete } from './enums/idsDelete.js'
+import { idsMutateDelete } from './enums/idsMutateDelete.js'
+import { idsMutateSchema } from './enums/idsMutateSchema.js'
 import { idsQuery } from './enums/idsQuery.js'
 import { idsSchema } from './enums/idsSchema.js'
 import { passportSource } from './enums/passportSource.js'
@@ -88,7 +89,8 @@ import { sortOptions } from './enums/sortOptions.js'
       enumsMap.set('dataTypes', dataTypes)
       enumsMap.set('endpoints', endpoints)
       enumsMap.set('has', has)
-      enumsMap.set('idsDelete', idsDelete)
+      enumsMap.set('idsMutateDelete', idsMutateDelete)
+      enumsMap.set('idsMutateSchema', idsMutateSchema)
       enumsMap.set('idsSchema', idsSchema)
       enumsMap.set('idsQuery', idsQuery)
       enumsMap.set('passportSource', passportSource)
@@ -212,6 +214,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { MutateRequestInsertItem[] } [ insert ]
  * @property { MutateRequestUpdateItem[] } [ update ]
  * @property { MutateRequestDeleteItem[] } [ delete ]
+ * @property { MutateRequestSchemaItem[] } [ schema ]
  *
  * @typedef { object } MutateRequestInsertNodeDefaultItem
  * @property { string } id
@@ -235,27 +238,31 @@ import { sortOptions } from './enums/sortOptions.js'
  *
  * @typedef { MutateRequestDeleteNodesItem | MutateRequestDeleteRelationshipsItem | MutateRequestDeleteNodePropsItem | MutateRequestDeleteRelationshipPropsItem } MutateRequestDeleteItem
  * @typedef { object } MutateRequestDeleteNodesItem
- * @property { typeof enums.idsDelete.Nodes } id
+ * @property { typeof enums.idsMutateDelete.Nodes } id
  * @property { MutateRequestDeleteNodesItemX } x
  * @typedef { object } MutateRequestDeleteNodesItemX
  * @property { string[] } uids
  * @typedef { object } MutateRequestDeleteRelationshipsItem
- * @property { typeof enums.idsDelete.Relationships } id
+ * @property { typeof enums.idsMutateDelete.Relationships } id
  * @property { MutateRequestDeleteRelationshipsItemX } x
  * @typedef { object } MutateRequestDeleteRelationshipsItemX
  * @property { string[] } _uids
  * @typedef { object } MutateRequestDeleteNodePropsItem
- * @property { typeof enums.idsDelete.NodeProps } id
+ * @property { typeof enums.idsMutateDelete.NodeProps } id
  * @property { MutateRequestDeleteNodePropsItemX } x
  * @typedef { object } MutateRequestDeleteNodePropsItemX
  * @property { string[] } props
  * @property { string[] } uids
  * @typedef { object } MutateRequestDeleteRelationshipPropsItem
- * @property { typeof enums.idsDelete.RelationshipProps } id
+ * @property { typeof enums.idsMutateDelete.RelationshipProps } id
  * @property { MutateRequestDeleteRelationshipPropsItemX } x
  * @typedef { object } MutateRequestDeleteRelationshipPropsItemX
  * @property { string[] } props
  * @property { string[] } _uids
+ *
+ * @typedef { MutateRequestSchemaItemReset } MutateRequestSchemaItem
+ * @typedef { object } MutateRequestSchemaItemReset
+ * @property { typeof enums.idsMutateSchema.Reset } id
  *
  * @typedef { { identity: { [k: string]: string } } } MutateResponse
  */
@@ -517,7 +524,7 @@ import { sortOptions } from './enums/sortOptions.js'
  * @typedef { object } CF_DO_Storage
  * @property { (key: string | string[]) => any } get
  * @property { CF_DO_StoragePut } put
- * @property { (options?: CF_DO_StorageListOptions) => Promise<Map<string, any>> } list - Returns all keys and values associated with the current Durable Object in ascending sorted order based on the keys’ UTF-8 encodings.
+ * @property { (options?: CF_DO_StorageListOptions) => Promise<Map<string, any>> } list - Returns all keys and values associated with the current Durable Object in ascending sorted order based on the keys UTF-8 encodings.
  * @property { (key: string | string[]) => Promise<boolean> } delete
  * @property { (options?: CF_DO_StoragePutDeleteOptions) => Promise<void> } deleteAll
  * @property { (callback: (txn: any) => Promise<void>) => Promise<void> } transaction

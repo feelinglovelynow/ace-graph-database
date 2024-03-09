@@ -1,4 +1,4 @@
-export const idsDelete = new Set([
+export const idsMutateDelete = new Set([
   'Nodes',
   'Relationships',
   'NodeProps',

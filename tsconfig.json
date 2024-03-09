@@ -3,7 +3,6 @@
     "src/enums/dataTypes.js",
     "src/enums/endpoints.js",
     "src/createJWKs.js",
-    "src/delete.js",
     "src/fetchJSON.js",
     "src/enforcePermissions.js",
     "src/getDerivedValue.js",

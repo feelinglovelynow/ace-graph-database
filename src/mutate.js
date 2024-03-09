@@ -1,10 +1,11 @@
 import { sign } from './hash.js'
 import { error } from './throw.js'
+import { _start } from './start.js'
 import { td, enums } from '#manifest'
 import { stamp } from './passport.js'
 import { fetchJSON } from './fetchJSON.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, SCHEMA_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, RELATIONSHIP_PREFIX } from './variables.js'
+import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, RELATIONSHIP_PREFIX } from './variables.js'
 
 
 /**
@@ -28,23 +29,17 @@ export async function _mutate (passport, request) {
   try {
     await stamp(passport)
 
-    /** @type { Map<string, any> } - Map with schema and node uids from Ace Graph Database */
-    const getEntries = await passport.storage.get([ SCHEMA_KEY, NODE_UIDS_KEY ])
-
-    /** @type { td.Schema } - Ace Graph Database Schema  */
-    const schema = getEntries.get(SCHEMA_KEY) || {}
-
     /** @type { { [nodeName: string]: string[] } } - Uids of all nodes in graph  */
-    const allNodeUids = getEntries.get(NODE_UIDS_KEY) || {}
+    const allNodeUids = (await passport.storage.get(NODE_UIDS_KEY)) || {}
 
     /** @type { MustPropsMap } - Map of props in schema that must be defined */
     const mustPropsMap = getMustPropMap()
 
     /** @type { Set<string> } - Set of all node names in schema */
-    const nodeNamesSet = new Set(Object.keys(schema?.nodes || {}))
+    const nodeNamesSet = new Set(Object.keys(passport.schema?.nodes || {}))
 
     /** @type { Set<string> } - Set of all relationships in schema */
-    const relationshipNamesSet = new Set(Object.keys(schema?.relationships || {}))
+    const relationshipNamesSet = new Set(Object.keys(passport.schema?.relationships || {}))
 
     /** @type { Map<string, string> } - As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace Graph Database uid as the value. */
     const mapUids = new Map()
@@ -55,7 +50,7 @@ export async function _mutate (passport, request) {
     /** @type { Map<string, any> } - The entries we will put */
     const putEntries = new Map()
 
-    /** @type { Set<string> } - The set of uids we will delete */
+    /** @type { Set<string> } - The set of uids we will delete (delete) */
     const deleteSet = new Set()
 
     /** @type { { [key: string]: CryptoKey } } - Object that converts stringified jwks into CryptoKey's */
@@ -85,8 +80,11 @@ export async function _mutate (passport, request) {
     async function deligate () {
       for (const action in request) {
         switch (action) {
+          case 'schema':
+            await schema()
+            break
           case 'delete':
-            await drop()
+            await _delete()
             break
           case 'insert':
           case 'update':
@@ -98,14 +96,35 @@ export async function _mutate (passport, request) {
       }
 
 
-      async function drop () {
+      async function schema () {
+        if (request.schema) {
+          for (const requestItem of request.schema) {
+            switch (requestItem.id) {
+              case enums.idsMutateSchema.Reset:
+                passport.revokesAcePermissions?.forEach((value) => {
+                  if (value.action === 'write' && value.schema === true) throw error('auth__write-schema', `Because write permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+                  if (value.action === 'write' && value.nodeName) throw error('auth__write-node', `Because write permissions to the node name \`${value.nodeName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+                  if (value.action === 'write' && value.relationshipName) throw error('auth__write-node', `Because write permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+                })
+
+                await passport.storage.deleteAll()
+                passport.schema = undefined
+                await _start(passport)
+                break
+            }
+          }
+        }
+      }
+
+
+      async function _delete () { // delete as a fn name is not allowed in js
         if (request.delete) {
           for (const requestItem of request.delete) {
             switch (requestItem.id) {
-              case enums.idsDelete.Nodes:
+              case enums.idsMutateDelete.Nodes:
                 if (requestItem.x?.uids?.length) {
                   requestItem.x.uids.forEach(uid => deleteSet.add(uid)) // add request uids to the deleteSet
-                  
+
                   const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
 
                   for (const relationshipNode of relationshipNodes.values()) {
@@ -140,7 +159,7 @@ export async function _mutate (passport, request) {
                   }
                 }
                 break
-              case enums.idsDelete.Relationships:
+              case enums.idsMutateDelete.Relationships:
                 if (requestItem.x?._uids?.length) {
                   requestItem.x._uids.forEach(_uid => deleteSet.add(_uid)) // add request _uids to the deleteSet
 
@@ -155,7 +174,7 @@ export async function _mutate (passport, request) {
                   }
                 }
                 break
-              case enums.idsDelete.NodeProps:
+              case enums.idsMutateDelete.NodeProps:
                 if (requestItem.x?.uids?.length && requestItem.x?.props?.length) {
                   const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
 
@@ -169,7 +188,7 @@ export async function _mutate (passport, request) {
                   }
                 }
                 break
-              case enums.idsDelete.RelationshipProps:
+              case enums.idsMutateDelete.RelationshipProps:
                 if (requestItem.x?._uids?.length && requestItem.x?.props?.length) {
                   const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x._uids }))
 
@@ -265,7 +284,7 @@ export async function _mutate (passport, request) {
                 }
 
                 const nodePropValue = requestItem?.x?.[nodePropName]
-                const schemaProp = /** @type { td.SchemaProp } */ (schema.nodes?.[requestItem.id][nodePropName])
+                const schemaProp = /** @type { td.SchemaProp } */ (passport.schema?.nodes?.[requestItem.id][nodePropName])
 
                 if (nodePropName !== '$options' && nodePropName !== 'uid') {
                   if (schemaProp?.id !== 'Prop') throw error('mutate__invalid-schema-prop', `The node name ${requestItem.id} with the prop name ${nodePropName} is invalid because it is not defined in your schema`, { requestItem, nodeName: requestItem.id, nodePropName })
@@ -349,7 +368,7 @@ export async function _mutate (passport, request) {
           const requestItem = /** @type { td.MutateRequestInsertRelationshipDefaultItem } */ (request[action]?.[i])
 
           if (requestItem && relationshipNamesSet.has(requestItem.id)) {
-            const schemaRelationship = schema.relationships?.[requestItem.id]
+            const schemaRelationship = passport.schema?.relationships?.[requestItem.id]
 
             if (!schemaRelationship) throw error('mutate__unknown-relationship-name', `The relationship name ${requestItem.id} is not defined in your schema, please include a relationship name that is defined in your schema`, { relationshipName: requestItem.id })
 
@@ -384,12 +403,12 @@ export async function _mutate (passport, request) {
 
         /**
          * @param { boolean } isDifferent 
-         * @param { string } pluckedNodeUid 
+         * @param { string } deleteedNodeUid 
          * @param { td.MutateRequestUpdateRelationshipDefaultItem } requestItem 
          */
-        async function updatePreviousRelationshipNode (isDifferent, pluckedNodeUid, requestItem) {
+        async function updatePreviousRelationshipNode (isDifferent, deleteedNodeUid, requestItem) {
           if (isDifferent) {
-            const relationshipNode = await putStorageGet({ uid: pluckedNodeUid })
+            const relationshipNode = await putStorageGet({ uid: deleteedNodeUid })
 
             if (relationshipNode && requestItem.x._uid) removeUidFromRelationshipProp(relationshipNode, getRelationshipProp(requestItem.id), requestItem.x._uid)
           }
@@ -503,19 +522,19 @@ export async function _mutate (passport, request) {
     function getMustPropMap () {
       const mustPropsMap = /** @type { MustPropsMap } */ (new Map())
 
-      if (schema) {
-        for (const nodeName in schema.nodes) {
-          for (const nodePropName in schema.nodes[nodeName]) {
-            if (schema.nodes[nodeName][nodePropName]?.x?.mustBeDefined) {
+      if (passport.schema) {
+        for (const nodeName in passport.schema.nodes) {
+          for (const nodePropName in passport.schema.nodes[nodeName]) {
+            if (passport.schema.nodes[nodeName][nodePropName]?.x?.mustBeDefined) {
               const map = mustPropsMap.get(nodeName) || new Map()
-              map.set(nodePropName, schema.nodes[nodeName][nodePropName])
+              map.set(nodePropName, passport.schema.nodes[nodeName][nodePropName])
               mustPropsMap.set(nodeName, map)
             }
           }
         }
 
-        for (const relationshipName in schema.relationships) {
-          const props = schema.relationships[relationshipName]?.x?.props
+        for (const relationshipName in passport.schema.relationships) {
+          const props = passport.schema.relationships[relationshipName]?.x?.props
 
           if (props) {
             for (const propName in props) {

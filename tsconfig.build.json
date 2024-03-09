@@ -1,7 +1,6 @@
 {
   "files": [
     "src/createJWKs.js",
-    "src/delete.js",
     "src/fetchJSON.js",
     "src/enforcePermissions.js",
     "src/getAlgorithmOptions.js",
