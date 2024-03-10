@@ -1,6 +1,6 @@
 import { sign } from './hash.js'
 import { error } from './throw.js'
-import { _start } from './start.js'
+import { start } from './start.js'
 import { td, enums } from '#manifest'
 import { stamp } from './passport.js'
 import { fetchJSON } from './fetchJSON.js'
@@ -95,11 +95,16 @@ export async function _mutate (passport, request) {
         }
       }
 
+      if (deleteSet.size) await passport.storage.delete([ ...deleteSet ])
+
 
       async function schema () {
         if (request.schema) {
           for (const requestItem of request.schema) {
             switch (requestItem.id) {
+              case enums.idsMutateSchema.Start:
+                await start(passport)
+                break
               case enums.idsMutateSchema.Reset:
                 passport.revokesAcePermissions?.forEach((value) => {
                   if (value.action === 'write' && value.schema === true) throw error('auth__write-schema', `Because write permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
@@ -109,7 +114,49 @@ export async function _mutate (passport, request) {
 
                 await passport.storage.deleteAll()
                 passport.schema = undefined
-                await _start(passport)
+                await start(passport)
+                break
+              case enums.idsMutateSchema.DeleteNodes:
+                for (const requestNodeName of requestItem.x.nodes) {
+                  const nodeUids = allNodeUids[requestNodeName]
+
+                  if (!nodeUids?.length) throw error('mutate__delete-nodes__invalid-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName`, { nodeName: requestNodeName, requestItem })
+
+                  await deleteByUids(nodeUids)
+                  schemaDeleteNodes()
+
+                  delete allNodeUids[requestNodeName]
+                  putEntries.set(NODE_UIDS_KEY, allNodeUids)
+
+                  function schemaDeleteNodes () {
+                    if (passport.schema) {
+                      /** @type { Set<string> } - As we flow through nodes, the relationships that need to be deleted will be added here */
+                      const removeRelationshipSet = new Set()
+
+                      /** @type { Map<string, { schemaNodeName: string, propName: string }> } - <schemaNodeName___propName, { schemaNodeName, propName }> */
+                      const deletePropsMap = new Map()
+
+                      for (const schemaNodeName in passport.schema.nodes) {
+                        for (const propName in passport.schema.nodes[schemaNodeName]) {
+                          const schemaPropX = /** @type { td.SchemaNodeRelationshipX } */ (passport.schema.nodes[schemaNodeName][propName].x)
+
+                          if (schemaPropX?.nodeName === requestNodeName) {
+                            removeRelationshipSet.add(schemaPropX.relationshipName)
+                            deletePropsMap.set(schemaNodeName + DELIMITER + propName, { schemaNodeName, propName })
+                          }
+                        }
+                      }
+
+                      for (const relationshipName of removeRelationshipSet) {
+                        delete passport.schema.relationships[relationshipName]
+                      }
+
+                      for (const { schemaNodeName, propName } of deletePropsMap.values()) {
+                        delete passport.schema.nodes[schemaNodeName][propName]
+                      }
+                    }
+                  }
+                }
                 break
             }
           }
@@ -122,42 +169,7 @@ export async function _mutate (passport, request) {
           for (const requestItem of request.delete) {
             switch (requestItem.id) {
               case enums.idsMutateDelete.Nodes:
-                if (requestItem.x?.uids?.length) {
-                  requestItem.x.uids.forEach(uid => deleteSet.add(uid)) // add request uids to the deleteSet
-
-                  const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
-
-                  for (const relationshipNode of relationshipNodes.values()) {
-                    /** @type { string[] } - Add all relationship uids here so we may call storage once w/ them all */
-                    const allRelationshipUids = []
-
-                    for (const prop in relationshipNode) {
-                      if (prop.startsWith(RELATIONSHIP_PREFIX)) {
-                        allRelationshipUids.push(...relationshipNode[prop])
-                        relationshipNode[prop].forEach((/** @type { string } */ uid) => deleteSet.add(uid)) // add relationship uids to the deleteSet
-                      }
-                    }
-
-                    if (allRelationshipUids.length) {
-                      const allRelationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: allRelationshipUids }))
-                      const oldRelationshipsMeta = new Map()
-
-                      for (const relationship of allRelationshipNodes.values()) {
-                        const relationshipUid = relationship.x.a === relationshipNode.x.uid ? relationship.x.b : relationship.x.a
-                        oldRelationshipsMeta.set(relationshipUid, { id: relationship.id, _uid: relationship.x._uid })
-                      }
-
-                      if (oldRelationshipsMeta.size) {
-                        const oldRelationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: [ ...oldRelationshipsMeta.keys() ] }))
-
-                        for (const oldRelationshipNode of oldRelationshipNodes.values()) {
-                          const meta = oldRelationshipsMeta.get(oldRelationshipNode.x.uid)
-                          if (meta) removeUidFromRelationshipProp(oldRelationshipNode, getRelationshipProp(meta.id), meta._uid)
-                        }
-                      }
-                    }
-                  }
-                }
+                if (requestItem.x?.uids?.length) deleteByUids(requestItem.x.uids)
                 break
               case enums.idsMutateDelete.Relationships:
                 if (requestItem.x?._uids?.length) {
@@ -204,8 +216,6 @@ export async function _mutate (passport, request) {
                 break
             }
           }
-
-          if (deleteSet.size) await passport.storage.delete([ ...deleteSet ])
         }
       }
 
@@ -273,6 +283,8 @@ export async function _mutate (passport, request) {
 
                 if (Array.isArray(allNodeUids[requestItem.id])) allNodeUids[requestItem.id].push(graphUid) // IF schema $nodeUids for this uid's node is already an array => push onto it
                 else allNodeUids[requestItem.id] = [graphUid] // IF schema $nodeUids for this uid's node is not an array => set as array w/ uid as first value
+              
+                putEntries.set(NODE_UIDS_KEY, allNodeUids)
               }
 
               for (const nodePropName in requestItem.x) { // loop each request property => validate each property => IF invalid throw errors => IF valid do index things
@@ -403,12 +415,12 @@ export async function _mutate (passport, request) {
 
         /**
          * @param { boolean } isDifferent 
-         * @param { string } deleteedNodeUid 
+         * @param { string } deletedNodeUid 
          * @param { td.MutateRequestUpdateRelationshipDefaultItem } requestItem 
          */
-        async function updatePreviousRelationshipNode (isDifferent, deleteedNodeUid, requestItem) {
+        async function updatePreviousRelationshipNode (isDifferent, deletedNodeUid, requestItem) {
           if (isDifferent) {
-            const relationshipNode = await putStorageGet({ uid: deleteedNodeUid })
+            const relationshipNode = await putStorageGet({ uid: deletedNodeUid })
 
             if (relationshipNode && requestItem.x._uid) removeUidFromRelationshipProp(relationshipNode, getRelationshipProp(requestItem.id), requestItem.x._uid)
           }
@@ -473,6 +485,48 @@ export async function _mutate (passport, request) {
       }
 
 
+      /** @param { string[] } uids */
+      async function deleteByUids (uids) {
+        const nodeEntries = await putStorageGet({ uids })
+
+        for (const node of nodeEntries.values()) {
+          deleteSet.add(node.x.uid) // add request uid to the deleteSet
+
+          /** @type { Map<string, string> } <relationshipUid, relationshipProp> */
+          const relationshipUids = new Map()
+
+          for (const prop in node) {
+            if (prop.startsWith(RELATIONSHIP_PREFIX)) {
+              for (const relationshipUid of node[prop]) {
+                relationshipUids.set(relationshipUid, prop)
+                deleteSet.add(relationshipUid) // add relationship uids to the deleteSet
+              }
+            }
+          }
+
+          /** @type { Map<string, string> } <relationshipNodeUid, relationshipId> */
+          const relationshipNodeUids = new Map()
+          const relationshipEntries = await passport.storage.get([...relationshipUids.keys()])
+
+          for (const relationship of relationshipEntries.values()) {
+            if (relationship.x.a === node.x.uid) relationshipNodeUids.set(relationship.x.b, relationship.x._uid)
+            if (relationship.x.b === node.x.uid) relationshipNodeUids.set(relationship.x.a, relationship.x._uid)
+          }
+
+          const relationshipNodeEntries = await putStorageGet({ uids: [...relationshipNodeUids.keys()] })
+
+          for (const relationshipNode of relationshipNodeEntries.values()) {
+            const _uid = relationshipNodeUids.get(relationshipNode.x.uid)
+
+            if (_uid) {
+              const prop = relationshipUids.get(_uid)
+              if (prop) removeUidFromRelationshipProp(relationshipNode, prop, _uid)
+            }
+          }
+        }
+      }
+
+
       /**
        * @param {*} relationshipNode 
        * @param { string } prop 
@@ -490,6 +544,39 @@ export async function _mutate (passport, request) {
           }
 
           putEntries.set(relationshipNode.x.uid, relationshipNode)
+        }
+      }
+
+
+      /**
+       * Get from putEntries OR get from storage
+       * @param { { uid?: string, uids?: string[] } } options
+       */
+      async function putStorageGet (options) {
+        if (options.uid) return putEntries.get(options.uid) || (await passport.storage.get(options.uid))
+        else if (options.uids) {
+          /** @type { string [] } - If there are items we don't find in putEntries, add them to this list, we'll call storage once w/ this list if list.length */
+          const storageUids = []
+
+          /** @type { Map<string, any> } - Map of uids and nodes based on the provided uids */
+          const response = new Map()
+
+          for (const uid of options.uids) {
+            const putNode = putEntries.get(uid)
+
+            if (putNode) response.set(uid, putNode)
+            else storageUids.push(uid)
+          }
+
+          if (storageUids.length) {
+            const rStorage = await passport.storage.get(storageUids)
+
+            rStorage.forEach((/** @type { any } */node, /** @type { string } */uid) => {
+              response.set(uid, node)
+            })
+          }
+
+          return response
         }
       }
     }
@@ -623,39 +710,6 @@ export async function _mutate (passport, request) {
 
           if (!isValid) throw error('mutate__missing-must-defined-relationship', `${propName} is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
         }
-      }
-    }
-
-
-    /**
-     * Get from putEntries OR get from storage
-     * @param { { uid?: string, uids?: string[] } } options
-     */
-    async function putStorageGet (options) {
-      if (options.uid) return putEntries.get(options.uid) || (await passport.storage.get(options.uid))
-      else if (options.uids) {
-        /** @type { string [] } - If there are items we don't find in putEntries, add them to this list, we'll call storage once w/ this list if list.length */
-        const storageUids = []
-
-        /** @type { Map<string, any> } - Map of uids and nodes based on the provided uids */
-        const response = new Map()
-
-        for (const uid of options.uids) {
-          const putNode = putEntries.get(uid)
-
-          if (putNode) response.set(uid, putNode)
-          else storageUids.push(uid)
-        }
-
-        if (storageUids.length) {
-          const rStorage = await passport.storage.get(storageUids)
-
-          rStorage.forEach((/** @type { any } */node, /** @type { string } */uid) => {
-            response.set(uid, node)
-          })
-        }
-
-        return response
       }
     }
 

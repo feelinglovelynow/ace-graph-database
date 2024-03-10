@@ -1,7 +1,6 @@
 import { _list } from './list.js'
 import { error } from './throw.js'
 import { _query } from './query.js'
-import { _start } from './start.js'
 import { td, enums } from '#manifest'
 import { _mutate } from './mutate.js'
 import { create } from './passport.js'
@@ -20,11 +19,6 @@ async function getResponse (storage, request) {
   const url = new URL(request.url)
 
   switch (url.pathname) {
-    // start
-    case enums.endpoints.start:
-      return new Response(JSON.stringify(await _start(create(storage, request, enums.passportSource.start))), { headers: getHeaders('json') })
-
-
     // schema
     case enums.endpoints.addToSchema:
       return new Response(JSON.stringify(await _addToSchema(create(storage, request, enums.passportSource.addToSchema), await request.json())), { headers: getHeaders('json') })

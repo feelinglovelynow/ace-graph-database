@@ -1,4 +1,5 @@
 export const idsMutateSchema = new Set([
+  'Start',
   'Reset',
   'DeleteNodes',
   'DeleteRelationships',

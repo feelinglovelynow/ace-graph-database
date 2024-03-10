@@ -260,9 +260,16 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { string[] } props
  * @property { string[] } _uids
  *
- * @typedef { MutateRequestSchemaItemReset } MutateRequestSchemaItem
+ * @typedef { MutateRequestSchemaItemStart | MutateRequestSchemaItemReset | MutateRequestSchemaItemDeleteNodes } MutateRequestSchemaItem
+ * @typedef { object } MutateRequestSchemaItemStart
+ * @property { typeof enums.idsMutateSchema.Start } id
  * @typedef { object } MutateRequestSchemaItemReset
  * @property { typeof enums.idsMutateSchema.Reset } id
+ * @typedef { object } MutateRequestSchemaItemDeleteNodes
+ * @property { typeof enums.idsMutateSchema.DeleteNodes } id
+ * @property { MutateRequestSchemaItemDeleteNodesX } x
+ * @typedef { object } MutateRequestSchemaItemDeleteNodesX
+ * @property { string[] } nodes
  *
  * @typedef { { identity: { [k: string]: string } } } MutateResponse
  */
