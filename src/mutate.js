@@ -5,7 +5,7 @@ import { td, enums } from '#manifest'
 import { stamp } from './passport.js'
 import { fetchJSON } from './fetchJSON.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, RELATIONSHIP_PREFIX } from './variables.js'
+import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, RELATIONSHIP_PREFIX, SCHEMA_KEY } from './variables.js'
 
 
 /**
@@ -128,10 +128,12 @@ export async function _mutate (passport, request) {
                   delete allNodeUids[requestNodeName]
                   putEntries.set(NODE_UIDS_KEY, allNodeUids)
 
+                  delete passport.schema?.nodes[requestNodeName]
+
                   function schemaDeleteNodes () {
                     if (passport.schema) {
                       /** @type { Set<string> } - As we flow through nodes, the relationships that need to be deleted will be added here */
-                      const removeRelationshipSet = new Set()
+                      const deleteRelationshipSet = new Set()
 
                       /** @type { Map<string, { schemaNodeName: string, propName: string }> } - <schemaNodeName___propName, { schemaNodeName, propName }> */
                       const deletePropsMap = new Map()
@@ -141,13 +143,13 @@ export async function _mutate (passport, request) {
                           const schemaPropX = /** @type { td.SchemaNodeRelationshipX } */ (passport.schema.nodes[schemaNodeName][propName].x)
 
                           if (schemaPropX?.nodeName === requestNodeName) {
-                            removeRelationshipSet.add(schemaPropX.relationshipName)
+                            deleteRelationshipSet.add(schemaPropX.relationshipName)
                             deletePropsMap.set(schemaNodeName + DELIMITER + propName, { schemaNodeName, propName })
                           }
                         }
                       }
 
-                      for (const relationshipName of removeRelationshipSet) {
+                      for (const relationshipName of deleteRelationshipSet) {
                         delete passport.schema.relationships[relationshipName]
                       }
 
@@ -157,6 +159,8 @@ export async function _mutate (passport, request) {
                     }
                   }
                 }
+
+                putEntries.set(SCHEMA_KEY, passport.schema)
                 break
             }
           }

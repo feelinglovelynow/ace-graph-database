@@ -143,16 +143,15 @@ export async function _query (passport, request) {
       const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', nodeName: generatedQueryFormatSection.nodeName, propName: '*' }))
 
       if (permission && !permission.allowPropName) throw error('auth__read-node', `Because the read node name \`${ generatedQueryFormatSection.nodeName }\` permission is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
-      else {
-        const rGetPutCache = await getPutCache(uids)
 
-        for (let i = 0; i < uids.length; i++) {
-          const node = rGetPutCache.get(uids[i])
-          if (isRevokesAllowed(node.x, { permission })) await addPropsToResponse(generatedQueryFormatSection, response, { node }, graphRelationships?.[i] || null, iQuery) // call desired function on each node
-        }
+      const rGetPutCache = await getPutCache(uids)
 
-        await implementQueryOptions(generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs[iQuery], passport)
+      for (let i = 0; i < uids.length; i++) {
+        const node = rGetPutCache.get(uids[i])
+        if (isRevokesAllowed(node.x, { permission })) await addPropsToResponse(generatedQueryFormatSection, response, { node }, graphRelationships?.[i] || null, iQuery) // call desired function on each node
       }
+
+      await implementQueryOptions(generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs[iQuery], passport)
     }
 
 
