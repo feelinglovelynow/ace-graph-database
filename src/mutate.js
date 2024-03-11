@@ -53,6 +53,9 @@ export async function _mutate (passport, request) {
     /** @type { Set<string> } - The set of uids we will delete (delete) */
     const deleteSet = new Set()
 
+    /** @type { string[] } - The deleteSet converted into an array */
+    const deleteArray = []
+
     /** @type { { [key: string]: CryptoKey } } - Object that converts stringified jwks into CryptoKey's */
     const privateJWKs = {}
 
@@ -80,6 +83,12 @@ export async function _mutate (passport, request) {
     async function deligate () {
       for (const action in request) {
         switch (action) {
+          case 'start':
+            await start(passport)
+            break
+          case 'restart':
+            await restart()
+            break
           case 'schema':
             await schema()
             break
@@ -95,27 +104,29 @@ export async function _mutate (passport, request) {
         }
       }
 
-      if (deleteSet.size) await passport.storage.delete([ ...deleteSet ])
+      if (deleteSet.size) {
+        deleteSet.forEach(uid => deleteArray.push(uid))
+        await passport.storage.delete(deleteArray)
+      }
 
 
+      async function restart () {
+        passport.revokesAcePermissions?.forEach((value) => {
+          if (value.action === 'write' && value.schema === true) throw error('auth__write-schema', `Because write permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+          if (value.action === 'write' && value.nodeName) throw error('auth__write-node', `Because write permissions to the node name \`${value.nodeName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+          if (value.action === 'write' && value.relationshipName) throw error('auth__write-node', `Because write permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+        })
+
+        await passport.storage.deleteAll()
+        passport.schema = undefined
+        await start(passport)
+      }
+      
+      
       async function schema () {
         if (request.schema) {
           for (const requestItem of request.schema) {
             switch (requestItem.id) {
-              case enums.idsMutateSchema.Start:
-                await start(passport)
-                break
-              case enums.idsMutateSchema.Reset:
-                passport.revokesAcePermissions?.forEach((value) => {
-                  if (value.action === 'write' && value.schema === true) throw error('auth__write-schema', `Because write permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
-                  if (value.action === 'write' && value.nodeName) throw error('auth__write-node', `Because write permissions to the node name \`${value.nodeName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
-                  if (value.action === 'write' && value.relationshipName) throw error('auth__write-node', `Because write permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
-                })
-
-                await passport.storage.deleteAll()
-                passport.schema = undefined
-                await start(passport)
-                break
               case enums.idsMutateSchema.DeleteNodes:
                 for (const requestNodeName of requestItem.x.nodes) {
                   const nodeUids = allNodeUids[requestNodeName]
@@ -724,13 +735,15 @@ export async function _mutate (passport, request) {
       let storagePutEntries = /** @type { { [k: string]: any } } */ ({})
 
       if (putEntries.size) { // convert from map to object for do storage
-        putEntries.forEach((v, k) => storagePutEntries[k] = v)
+        putEntries.forEach((v, k) => {
+          if (!deleteSet.has(k)) storagePutEntries[k] = v // ensure this put is not being deleted
+        })
         passport.storage.put(storagePutEntries)
       }
 
       if (mapUids.size) mapUids.forEach((v, k) => identityUidMap[k] = v) // convert from map to object for response
 
-      return { identity: identityUidMap }
+      return { identity: identityUidMap, deleted: deleteArray }
     }
   } catch (e) {
     console.log('error', e)

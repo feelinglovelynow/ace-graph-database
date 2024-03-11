@@ -215,6 +215,8 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { MutateRequestUpdateItem[] } [ update ]
  * @property { MutateRequestDeleteItem[] } [ delete ]
  * @property { MutateRequestSchemaItem[] } [ schema ]
+ * @property { boolean } [ start ]
+ * @property { boolean } [ restart ]
  *
  * @typedef { object } MutateRequestInsertNodeDefaultItem
  * @property { string } id
@@ -260,18 +262,16 @@ import { sortOptions } from './enums/sortOptions.js'
  * @property { string[] } props
  * @property { string[] } _uids
  *
- * @typedef { MutateRequestSchemaItemStart | MutateRequestSchemaItemReset | MutateRequestSchemaItemDeleteNodes } MutateRequestSchemaItem
- * @typedef { object } MutateRequestSchemaItemStart
- * @property { typeof enums.idsMutateSchema.Start } id
- * @typedef { object } MutateRequestSchemaItemReset
- * @property { typeof enums.idsMutateSchema.Reset } id
+ * @typedef { MutateRequestSchemaItemDeleteNodes } MutateRequestSchemaItem
  * @typedef { object } MutateRequestSchemaItemDeleteNodes
  * @property { typeof enums.idsMutateSchema.DeleteNodes } id
  * @property { MutateRequestSchemaItemDeleteNodesX } x
  * @typedef { object } MutateRequestSchemaItemDeleteNodesX
  * @property { string[] } nodes
  *
- * @typedef { { identity: { [k: string]: string } } } MutateResponse
+ * @typedef { object } MutateResponse
+ * @property { { [uid: string]: string } } identity
+ * @property { string[] } deleted
  */
 
 
