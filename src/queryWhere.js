@@ -24,7 +24,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
       else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
 
       if (!spliced && ($where.id === enums.idsQueryOptions.Find || $where.id === enums.idsQueryOptions.FindDefined || $where.id === enums.idsQueryOptions.FindUndefined)) {
-        response.current[generatedXQuerySection.property] = [ response.current[generatedXQuerySection.property][iOrignal] ]
+        response.now[generatedXQuerySection.property] = [response.now[generatedXQuerySection.property][iOrignal] ]
         response.original[generatedXQuerySection.property] = [ response.original[generatedXQuerySection.property][iOrignal] ]
         break
       }
@@ -33,7 +33,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
     }
 
     if (Array.isArray(response.original[generatedXQuerySection.property]) && !response.original[generatedXQuerySection.property].length) {
-      response.current[generatedXQuerySection.property] = null
+      response.now[generatedXQuerySection.property] = null
       response.original[generatedXQuerySection.property] = null
     }
   }
@@ -124,7 +124,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
    * @param { number } i 
    */
   function splice (i) {
-    response.current[generatedXQuerySection.property].splice(i, 1)
+    response.now[generatedXQuerySection.property].splice(i, 1)
     response.original[generatedXQuerySection.property].splice(i, 1)
   }
 

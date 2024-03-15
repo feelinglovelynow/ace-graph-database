@@ -100,7 +100,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
   }
 
   if (generatedXQuerySection.has === enums.has.one || generatedXQuerySection.hasOptionsFind || generatedXQuerySection.hasValueAsResponse || generatedXQuerySection.hasCountOne) {
-    response.current[generatedXQuerySection.property] = typeof response.current[generatedXQuerySection.property]?.[0] === 'undefined' ? null : response.current[generatedXQuerySection.property][0]
+    response.now[generatedXQuerySection.property] = typeof response.now[generatedXQuerySection.property]?.[0] === 'undefined' ? null : response.now[generatedXQuerySection.property][0]
     response.original[generatedXQuerySection.property] = typeof response.original[generatedXQuerySection.property]?.[0] === 'undefined' ? null : response.original[generatedXQuerySection.property][0]
   }
 
@@ -108,13 +108,13 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
   /** @param { td.QueryLimit } option */
   function doLimit (option) {
     if (option.x.skip && option.x.count) {
-      response.current[generatedXQuerySection.property] = response.current[generatedXQuerySection.property].slice(option.x.skip, option.x.skip + option.x.count)
+      response.now[generatedXQuerySection.property] = response.now[generatedXQuerySection.property].slice(option.x.skip, option.x.skip + option.x.count)
       response.original[generatedXQuerySection.property] = response.original[generatedXQuerySection.property].slice(option.x.skip, option.x.skip + option.x.count)
     } else if (option.x.skip) {
-      response.current[generatedXQuerySection.property] = response.current[generatedXQuerySection.property].slice(option.x.skip)
+      response.now[generatedXQuerySection.property] = response.now[generatedXQuerySection.property].slice(option.x.skip)
       response.original[generatedXQuerySection.property] = response.original[generatedXQuerySection.property].slice(option.x.skip)
     } else if (option.x.count) {
-      response.current[generatedXQuerySection.property] = response.current[generatedXQuerySection.property].slice(0, option.x.count)
+      response.now[generatedXQuerySection.property] = response.now[generatedXQuerySection.property].slice(0, option.x.count)
       response.original[generatedXQuerySection.property] = response.original[generatedXQuerySection.property].slice(0, option.x.count)
     }
   }
@@ -129,7 +129,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
       for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
         combined.push({
-          current: response.current[generatedXQuerySection.property][i],
+          now: response.now[generatedXQuerySection.property][i],
           original: response.original[generatedXQuerySection.property][i],
         })
       }
@@ -145,7 +145,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
         return rSort
       })
 
-      response.current = combined.map((value) => value.current)
+      response.now = combined.map((value) => value.now)
       response.original = combined.map((value) => value.original)
     }
   }
@@ -157,7 +157,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
       const derivedValue = getDerivedValue(generatedXQuerySection, response.original[generatedXQuerySection.property][i], option.x.symbol, option.x.items, passport)
 
       response.original[generatedXQuerySection.property][i][option.x.newProperty] = derivedValue
-      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = derivedValue
+      if (!option.x.isResponseHidden) response.now[generatedXQuerySection.property][i][option.x.newProperty] = derivedValue
     }
   }
 
@@ -172,7 +172,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
     for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
       response.original[generatedXQuerySection.property][i][option.x.newProperty] = sum
-      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = sum
+      if (!option.x.isResponseHidden) response.now[generatedXQuerySection.property][i][option.x.newProperty] = sum
     }
   }
 
@@ -185,7 +185,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
       sum += arrayItem[option.x.property]
     }
 
-    response.current[generatedXQuerySection.property] = [sum]
+    response.now[generatedXQuerySection.property] = [sum]
     response.original[generatedXQuerySection.property] = [sum]
   }
 
@@ -204,7 +204,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
     for (let i = 0; i < original.length; i++) {
       original[i][option.x.newProperty] = average
-      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = average
+      if (!option.x.isResponseHidden) response.now[generatedXQuerySection.property][i][option.x.newProperty] = average
     }
   }
 
@@ -221,7 +221,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
     const average = original.length ? sum / original.length : 0
 
-    response.current[generatedXQuerySection.property] = [average]
+    response.now[generatedXQuerySection.property] = [average]
     response.original[generatedXQuerySection.property] = [average]
   }
 
@@ -238,7 +238,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
     for (let i = 0; i < original.length; i++) {
       original[i][option.x.newProperty] = amount
-      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = amount
+      if (!option.x.isResponseHidden) response.now[generatedXQuerySection.property][i][option.x.newProperty] = amount
     }
   }
 
@@ -253,7 +253,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
       if (!amount || arrayItem[option.x.property] < amount) amount = arrayItem[option.x.property]
     }
 
-    response.current[generatedXQuerySection.property] = [amount]
+    response.now[generatedXQuerySection.property] = [amount]
     response.original[generatedXQuerySection.property] = [amount]
   }
 
@@ -268,11 +268,11 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
     for (let i = 0; i < original.length; i++) {
       if (!node || original[i][option.x.property] < amount) {
         amount = original[i][option.x.property]
-        node = response.current[generatedXQuerySection.property][i]
+        node = response.now[generatedXQuerySection.property][i]
       }
     }
 
-    response.current[generatedXQuerySection.property] = [node]
+    response.now[generatedXQuerySection.property] = [node]
     response.original[generatedXQuerySection.property] = [node]
   }
 
@@ -287,11 +287,11 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
     for (let i = 0; i < original.length; i++) {
       if (!node || original[i][option.x.property] > amount) {
         amount = original[i][option.x.property]
-        node = response.current[generatedXQuerySection.property][i]
+        node = response.now[generatedXQuerySection.property][i]
       }
     }
 
-    response.current[generatedXQuerySection.property] = [node]
+    response.now[generatedXQuerySection.property] = [node]
     response.original[generatedXQuerySection.property] = [node]
   }
 
@@ -308,7 +308,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
     for (let i = 0; i < original.length; i++) {
       original[i][option.x.newProperty] = amount
-      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = amount
+      if (!option.x.isResponseHidden) response.now[generatedXQuerySection.property][i][option.x.newProperty] = amount
     }
   }
 
@@ -323,7 +323,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
       if (!amount || arrayItem[option.x.property] > amount) amount = arrayItem[option.x.property]
     }
 
-    response.current[generatedXQuerySection.property] = [amount]
+    response.now[generatedXQuerySection.property] = [amount]
     response.original[generatedXQuerySection.property] = [amount]
   }
 
@@ -333,7 +333,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
     const count = response.original[generatedXQuerySection.property].length
 
     for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
-      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = count
+      if (!option.x.isResponseHidden) response.now[generatedXQuerySection.property][i][option.x.newProperty] = count
       response.original[generatedXQuerySection.property][i][option.x.newProperty] = count
     }
   }
@@ -341,7 +341,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
 
   function doCountAsResponse () {
     if (response.original[generatedXQuerySection.property].length) {
-      response.current[generatedXQuerySection.property] = [response.original[generatedXQuerySection.property].length]
+      response.now[generatedXQuerySection.property] = [response.original[generatedXQuerySection.property].length]
       response.original[generatedXQuerySection.property] = [response.original[generatedXQuerySection.property].length]
     }
   }
@@ -360,7 +360,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
     }
 
     if (typeof value !== 'undefined') {
-      response.current[generatedXQuerySection.property] = [ value ]
+      response.now[generatedXQuerySection.property] = [ value ]
       original = [ value ]
     }
   }
@@ -379,7 +379,7 @@ export async function implementQueryOptions (generatedXQuerySection, response, i
     }
 
     if (typeof value !== 'undefined') {
-      response.current[option.x.adjacentProperty] = value
+      response.now[option.x.adjacentProperty] = value
       response.original[option.x.adjacentProperty] = value
     }
   }

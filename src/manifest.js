@@ -479,7 +479,7 @@ ${ typedefs.queryRequest.NodeType }
  *
  * @typedef { { [key: string]: CryptoKey } } QueryPublicJWKs
  *
- * @typedef { { current: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
+ * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
 */${ typedefs.queryRequest.Node } ${ typedefs.queryRequest.RelationshipPropTypes }
 
 

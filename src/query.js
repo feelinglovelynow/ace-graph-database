@@ -36,8 +36,8 @@ export async function _query (passport, body) {
     /** @type { td.QueryPublicJWKs[] } - Converts `JSON.stringify()` jwks into `CryptoKey` jwks */
     const publicJWKs = []
 
-    /** @type { td.QueryResponse } - Nodes with all properties will be in original, nodes with requested properties from `query.x` will be in current. */
-    const response = { current: {}, original: {} }
+    /** @type { td.QueryResponse } - Nodes with all properties will be in original, nodes with requested properties from `query.x` will be in now. */
+    const response = { now: {}, original: {} }
 
     /**
      * @typedef { Map<string, any> } QueryCache
@@ -65,13 +65,13 @@ export async function _query (passport, body) {
             rList[key] = value
           })
 
-          response.current[queryRequestItemAceBackup.property] = rList
+          response.now[queryRequestItemAceBackup.property] = rList
           break
         case enums.idsQuery.AceSchema:
           const queryRequestItemAceSchema = /** @type { td.QueryRequestItemAceSchema } */ (request[i])
 
           if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw error('auth__read-schema', 'Because the read schema permission is revoked from your AcePermission\'s, you cannot do this', { token: passport.token, source: passport.source })
-          response.current[queryRequestItemAceSchema.property] = passport.schema
+          response.now[queryRequestItemAceSchema.property] = passport.schema
           break
         default:
           const queryRequestItemNode =  /** @type { td.QueryRequestItemNode } */ (request[i])
@@ -82,7 +82,7 @@ export async function _query (passport, body) {
       }
     }
 
-    return response.current
+    return response.now
 
 
 
@@ -200,7 +200,7 @@ export async function _query (passport, body) {
       }
 
       if (!graphNode) {
-        response.current[ generatedXQuerySection.property ] = null
+        response.now[ generatedXQuerySection.property ] = null
         response.original[ generatedXQuerySection.property ] = null
       } else {
         const responseOriginalNode = graphNode.x
@@ -301,18 +301,18 @@ export async function _query (passport, body) {
                   else isValid = false
                 }
 
-                if (isValid) await addNodesToResponse(relationshipGeneratedQueryXSection, { current: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false, iQuery)
+                if (isValid) await addNodesToResponse(relationshipGeneratedQueryXSection, { now: responseCurrentNode, original: responseOriginalNode }, nodeUids, graphRelationships, false, iQuery)
               }
             }
           }
         }
 
         if (Object.keys(responseCurrentNode).length) {
-          if (response.current[generatedXQuerySection.property]?.length) {
-            response.current[generatedXQuerySection.property].push(responseCurrentNode)
+          if (response.now[generatedXQuerySection.property]?.length) {
+            response.now[generatedXQuerySection.property].push(responseCurrentNode)
             response.original[generatedXQuerySection.property].push(responseOriginalNode)
           } else {
-            response.current[generatedXQuerySection.property] = [responseCurrentNode]
+            response.now[generatedXQuerySection.property] = [responseCurrentNode]
             response.original[generatedXQuerySection.property] = [responseOriginalNode]
           }
         }
