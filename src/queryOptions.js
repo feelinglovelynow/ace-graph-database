@@ -1,97 +1,98 @@
 import { td, enums } from '#manifest'
+import { Passport } from './Passport.js'
 import { queryWhere } from './queryWhere.js'
 import { getDerivedValue } from './getDerivedValue.js'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
  * @param { td.QueryResponse } response 
  * @param { boolean } isUsingSortIndexNodes 
  * @param { td.QueryPublicJWKs | null } publicJWKs 
- * @param { td.AcePassport } passport 
+ * @param { Passport } passport 
  * @returns { Promise<void> }
  */
 export async function implementQueryOptions (generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, passport) {
   if (generatedQueryFormatSection.x.$options) {
     for (let option of generatedQueryFormatSection.x.$options) {
       switch (option.id) {
-        case enums.idsQuery.Find:
-        case enums.idsQuery.Filter:
-        case enums.idsQuery.FindGroup:
-        case enums.idsQuery.FilterGroup:
-        case enums.idsQuery.FindDefined:
-        case enums.idsQuery.FindUndefined:
-        case enums.idsQuery.FilterDefined:
-        case enums.idsQuery.FilterUndefined:
+        case enums.idsQueryFormat.Find:
+        case enums.idsQueryFormat.Filter:
+        case enums.idsQueryFormat.FindGroup:
+        case enums.idsQueryFormat.FilterGroup:
+        case enums.idsQueryFormat.FindDefined:
+        case enums.idsQueryFormat.FindUndefined:
+        case enums.idsQueryFormat.FilterDefined:
+        case enums.idsQueryFormat.FilterUndefined:
           await queryWhere(generatedQueryFormatSection, response, option, publicJWKs, passport)
           break
 
-        case enums.idsQuery.Limit:
+        case enums.idsQueryFormat.Limit:
           doLimit(option)
           break
 
-        case enums.idsQuery.Sort:
+        case enums.idsQueryFormat.Sort:
           doSort(option)
           break
 
-        case enums.idsQuery.DerivedProperty:
+        case enums.idsQueryFormat.DerivedProperty:
           doDerivedProperty(option)
           break
 
-        case enums.idsQuery.SumAsProperty:
+        case enums.idsQueryFormat.SumAsProperty:
           doSumAsProperty(option) 
           break
 
-        case enums.idsQuery.AverageAsProperty:
+        case enums.idsQueryFormat.AverageAsProperty:
           doAverageAsProperty(option)
           break
 
-        case enums.idsQuery.AverageAsResponse:
+        case enums.idsQueryFormat.AverageAsResponse:
           doAverageAsResponse(option)
           break
 
-        case enums.idsQuery.MinAmountAsProperty:
+        case enums.idsQueryFormat.MinAmountAsProperty:
           doMinAmountAsProperty(option)
           break
 
-        case enums.idsQuery.MinAmountAsResponse:
+        case enums.idsQueryFormat.MinAmountAsResponse:
           doMinAmountAsResponse(option)
           break
 
-        case enums.idsQuery.MinNodeAsResponse:
+        case enums.idsQueryFormat.MinNodeAsResponse:
           doMinNodeAsResponse(option)
           break
 
-        case enums.idsQuery.MaxAmountAsProperty:
+        case enums.idsQueryFormat.MaxAmountAsProperty:
           doMaxAmountAsProperty(option)
           break
 
-        case enums.idsQuery.MaxAmountAsResponse:
+        case enums.idsQueryFormat.MaxAmountAsResponse:
           doMaxAmountAsResponse(option)
           break
 
-        case enums.idsQuery.MaxNodeAsResponse:
+        case enums.idsQueryFormat.MaxNodeAsResponse:
           doMaxNodeAsResponse(option)
           break
 
-        case enums.idsQuery.CountAsProperty:
+        case enums.idsQueryFormat.CountAsProperty:
           doCountAsProperty(option)
           break
 
-        case enums.idsQuery.CountAsResponse:
+        case enums.idsQueryFormat.CountAsResponse:
           doCountAsResponse()
           break
 
-        case enums.idsQuery.PropertyAsResponse:
+        case enums.idsQueryFormat.PropertyAsResponse:
           doPropertyAsResponse(option)
           break
 
-        case enums.idsQuery.SumAsResponse:
+        case enums.idsQueryFormat.SumAsResponse:
           doSumAsResponse(option)
           break
 
-        case enums.idsQuery.PropertyAdjacentToResponse:
+        case enums.idsQueryFormat.PropertyAdjacentToResponse:
           doPropertyAdjacentToResponse(option)
           break
       }

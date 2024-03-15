@@ -1,14 +1,15 @@
 import { td } from '#manifest'
 import { error } from './throw.js'
+import { Passport } from './Passport.js'
 import { getGeneratedQueryFormatSectionByParent } from './getGeneratedQueryFormatSection.js'
 
 
 /**
- * @typedef { { node: any, generatedQueryFormatSection: null | td.QueryRequestFormatGenerated } } GetRelationshipNodeResponse
+ * @typedef { { node: any, generatedQueryFormatSection: null | td.QueryRequestItemFormatGenerated } } GetRelationshipNodeResponse
  * 
- * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
  * @param { any } startingNode
- * @param { td.AcePassport } passport 
+ * @param { Passport } passport 
  * @param { string[] } relationships 
  * @returns { GetRelationshipNodeResponse }
  */
@@ -24,7 +25,7 @@ export function getRelationshipNode (generatedQueryFormatSection, startingNode, 
     if (!schemaRelationshipProp) throw error('get-relationship-node__falsy-relationship', `The relationships array is invalid because one of it's items: ${ relationshipPropName } is not a valid relationship prop according to your schema, please align each item in the relationships array with valid schema props`, { relationships })
     else {
       if (iRelationships === 0) {
-        response.generatedQueryFormatSection = /** @type { td.QueryRequestFormatGenerated } */ (generatedQueryFormatSection.x[relationshipPropName])
+        response.generatedQueryFormatSection = /** @type { td.QueryRequestItemFormatGenerated } */ (generatedQueryFormatSection.x[relationshipPropName])
       } else if (response.generatedQueryFormatSection) {
         const relationshipGeneratedQueryFormatSection = getGeneratedQueryFormatSectionByParent(generatedQueryFormatSection.x, relationshipPropName, passport, generatedQueryFormatSection)
         response.generatedQueryFormatSection = relationshipGeneratedQueryFormatSection

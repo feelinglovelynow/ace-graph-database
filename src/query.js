@@ -1,7 +1,7 @@
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
-import { stamp } from './passport.js'
-import { fetchJSON } from './fetchJSON.js'
+import { Passport } from './Passport.js'
+import { aceFetch } from './aceFetch.js'
 import { implementQueryOptions } from './queryOptions.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
 import { NODE_UIDS_KEY, getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey } from './variables.js'
@@ -14,21 +14,19 @@ import { getGeneratedQueryFormatSectionByParent, getGeneratedQueryFormatSectionB
  * @returns { Promise<any> }
  */
 export async function query (core, request) {
-  return fetchJSON(core.url + enums.endpoints.query, core.token, { body: JSON.stringify(request) })
+  return aceFetch(core, enums.pathnames.query, { body: { request, publicJWKs: core.publicJWKs } })
 }
 
 
 /**
- * @param { td.AcePassport } passport
- * @param { td.QueryRequest } request
+ * @param { Passport } passport
+ * @param { { request: td.QueryRequest, publicJWKs?: { [keyName: string]: string } } } body - Query request
  * @returns { Promise<any> }
  */
-export async function _query (passport, request) {
-  try {
-    await stamp(passport)
-
-    /** @type { td.QueryRequestArray } - Ensure we are always dealing with an array */
-    const arrayRequests = Array.isArray(request) ? request : [ request ]
+export async function _query (passport, body) {
+  return passport.tsa(async () => {
+    /** @type { td.QueryRequestItem[] } - Ensure we are always dealing with an array */
+    const request = Array.isArray(body.request) ? body.request : [ body.request ]
 
     /** @type { QueryCache } - Store nodes we look up in this cache map, so if the nodes are requested again (w/in a relationship), we can retrieve the nodes from this cache map */
     const cache = new Map()
@@ -44,46 +42,72 @@ export async function _query (passport, request) {
      * @typedef { Map<string, { relationshipName: string, nodePropName: string }> } SchemaRelationshipsMap
      */
 
-    for (let iQuery = 0; iQuery < arrayRequests.length; iQuery++) {
-      const query = arrayRequests[iQuery]
-      await setPublicJWKs(query, iQuery)
-      const { uids, generatedQueryFormatSection, isUsingSortIndexNodes } = await getInitialUids(query)
-      await addNodesToResponse(generatedQueryFormatSection, response, uids, null, isUsingSortIndexNodes, iQuery)
+    await setPublicJWKs()
+
+    for (let i = 0; i < request.length; i++) {
+      switch (request[i].id) {
+        case enums.idsQuery.AceBackup:
+          const queryRequestItemAceBackup = /** @type { td.QueryRequestItemAceBackup } */ (request[i])
+
+          passport.revokesAcePermissions?.forEach((value) => { 
+            if (value.action === 'read' && value.schema === true) throw error('auth__read-schema', `Because read permissions to the schema is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+            if (value.action === 'read' && value.nodeName) throw error('auth__read-node', `Because read permissions to the node name \`${value.nodeName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+            if (value.action === 'read' && value.relationshipName) throw error('auth__read-relationship', `Because read permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+          })
+
+          /** @type { { [k: string]: any } } - We'll turn the map into this object */
+          const rList = {}
+          const listEntries = await passport.storage.list()
+
+          listEntries.forEach((value, key) => {
+            rList[key] = value
+          })
+
+          response.current[queryRequestItemAceBackup.property] = rList
+          break
+        case enums.idsQuery.AceSchema:
+          const queryRequestItemAceSchema = /** @type { td.QueryRequestItemAceSchema } */ (request[i])
+
+          if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw error('auth__read-schema', 'Because the read schema permission is revoked from your AcePermission\'s, you cannot do this', { token: passport.token, source: passport.source })
+          response.current[queryRequestItemAceSchema.property] = passport.schema
+          break
+        default:
+          const queryRequestItemNode =  /** @type { td.QueryRequestItemNode } */ (request[i])
+          const { uids, generatedQueryFormatSection, isUsingSortIndexNodes } = await getInitialUids(queryRequestItemNode)
+
+          await addNodesToResponse(generatedQueryFormatSection, response, uids, null, isUsingSortIndexNodes, i)
+          break
+      }
     }
 
     return response.current
 
 
-    /**
-     * @param { td.QueryRequestDefault } query
-     * @param { number } iQuery
-     */
-    async function setPublicJWKs (query, iQuery) {
-      if (query.publicJWKs) {
+
+    async function setPublicJWKs () {
+      if (body.publicJWKs) {
         const jwks = /** @type { td.QueryPublicJWKs } */ ({})
 
-        for (const key in query.publicJWKs) {
-          jwks[key] = await crypto.subtle.importKey('jwk', JSON.parse(query.publicJWKs[key]), getAlgorithmOptions('import'), true, ['verify'])
+        for (const key in body.publicJWKs) {
+          jwks[key] = await crypto.subtle.importKey('jwk', JSON.parse(body.publicJWKs[key]), getAlgorithmOptions('import'), true, ['verify'])
         }
-
-        publicJWKs[iQuery] = jwks
       }
     }
 
 
     /**
-     * @param { td.QueryRequestDefault } query
+     * @param { td.QueryRequestItemNode } query
      * @returns { Promise<{ uids: any, isUsingSortIndexNodes: any, generatedQueryFormatSection: any }> }
      */
     async function getInitialUids (query) {
       let uids
 
-      const generatedQueryFormatSection = getGeneratedQueryFormatSectionById(query.format, query.property, passport)
-      const sortOptions = /** @type { td.QuerySort } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.Sort))
-      const findByUid = /** @type { td.QueryFindByUid } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUid))
-      const findByUnique = /** @type { td.QueryFindByUnique } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUnique))
-      const filterByUids = /** @type { td.QueryFilterByUids } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUids))
-      const filterByUniques = /** @type { td.QueryFilterByUniques } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUniques))
+      const generatedQueryFormatSection = getGeneratedQueryFormatSectionById(query, query.property, passport)
+      const sortOptions = /** @type { td.QuerySort } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.Sort))
+      const findByUid = /** @type { td.QueryFindByUid } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FindByUid))
+      const findByUnique = /** @type { td.QueryFindByUnique } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FindByUnique))
+      const filterByUids = /** @type { td.QueryFilterByUids } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FilterByUids))
+      const filterByUniques = /** @type { td.QueryFilterByUniques } */ (generatedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FilterByUniques))
 
       if (sortOptions) {
         const indexKey = getSortIndexKey(generatedQueryFormatSection.nodeName, sortOptions.x.property) // IF sorting by an property requested => see if property is a sort index
@@ -131,7 +155,7 @@ export async function _query (passport, request) {
 
 
     /**
-     * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+     * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
      * @param { td.QueryResponse } response 
      * @param { string[] } uids 
      * @param { any[] | null } graphRelationships
@@ -156,7 +180,7 @@ export async function _query (passport, request) {
 
 
     /**
-     * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+     * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
      * @param { td.QueryResponse } response 
      * @param { { node?: any, uid?: string } } item 
      * @param { { key: string, value: any } | null } graphRelationship
@@ -190,7 +214,7 @@ export async function _query (passport, request) {
           if (isRevokesAllowed(responseOriginalNode, { key: getRevokesKey({ action: 'read', nodeName: generatedQueryFormatSection.nodeName, propName: queryFormatPropertyKey }) })) {
             const queryFormatPropertyValue = generatedQueryFormatSection.x[queryFormatPropertyKey]
             const isTruthy = queryFormatPropertyValue === true
-            const alias = queryFormatPropertyValue?.id === enums.idsQuery.Alias ? queryFormatPropertyValue.x?.alias : null
+            const alias = queryFormatPropertyValue?.id === enums.idsQueryFormat.Alias ? queryFormatPropertyValue.x?.alias : null
             const schemaNodeProp = passport.schema?.nodes[generatedQueryFormatSection.nodeName]?.[queryFormatPropertyKey]
             const schemaRelationshipProp = generatedQueryFormatSection.relationshipName ? /**@type { any } */ (passport.schema?.relationships)?.[generatedQueryFormatSection.relationshipName]?.x?.props?.[queryFormatPropertyKey] : null
 
@@ -217,10 +241,10 @@ export async function _query (passport, request) {
                 let nodeUids = /** @type { string[] } */ ([])
                 const graphRelationships = /** @type { any[] } */ ([])
 
-                const findByUid = /** @type { td.QueryFindByUid } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUid))
-                const findBy_Uid = /** @type { td.QueryFindBy_Uid } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindBy_Uid))
-                const findByUnique = /** @type { td.QueryFindByUnique } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FindByUnique))
-                const filterByUniques = /** @type { td.QueryFilterByUniques } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUniques))
+                const findByUid = /** @type { td.QueryFindByUid } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FindByUid))
+                const findBy_Uid = /** @type { td.QueryFindBy_Uid } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FindBy_Uid))
+                const findByUnique = /** @type { td.QueryFindByUnique } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FindByUnique))
+                const filterByUniques = /** @type { td.QueryFilterByUniques } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FilterByUniques))
                 
                 const uniqueKeys = /** @type { string[] } */ ([])
 
@@ -295,7 +319,7 @@ export async function _query (passport, request) {
 
 
     /**
-     * @param { td.QueryRequestFormatGenerated } relationshipGeneratedQueryFormatSection 
+     * @param { td.QueryRequestItemFormatGenerated } relationshipGeneratedQueryFormatSection 
      * @param { string } uid 
      * @param { any[] } graphRelationships 
      * @param { any } graphRelationship 
@@ -311,12 +335,12 @@ export async function _query (passport, request) {
      * @param { boolean } findBy_UidFound 
      */
     function validateAndPushUids (relationshipGeneratedQueryFormatSection, uid, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound) {
-      const filterByUids = /** @type { td.QueryFilterByUids } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterByUids))
-      const filterBy_Uids = /** @type { td.QueryFilterBy_Uids } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQuery.FilterBy_Uids))
+      const filterByUids = /** @type { td.QueryFilterByUids } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FilterByUids))
+      const filterBy_Uids = /** @type { td.QueryFilterBy_Uids } */ (relationshipGeneratedQueryFormatSection.priorityOptions.get(enums.idsQueryFormat.FilterBy_Uids))
 
-      if (!filterByUids || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQuery.FilterByUids)?.has(uid)) {
-        if (!filterBy_Uids || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQuery.FilterBy_Uids)?.has(graphRelationshipKey)) {
-          if (!filterByUniques || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQuery.FilterByUniques)?.has(uid)) {
+      if (!filterByUids || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQueryFormat.FilterByUids)?.has(uid)) {
+        if (!filterBy_Uids || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQueryFormat.FilterBy_Uids)?.has(graphRelationshipKey)) {
+          if (!filterByUniques || relationshipGeneratedQueryFormatSection.sets.get(enums.idsQueryFormat.FilterByUniques)?.has(uid)) {
             nodeUids.push(uid)
             graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
 
@@ -375,8 +399,5 @@ export async function _query (passport, request) {
 
       return isAllowed
     }
-  } catch (e) {
-    console.log('error', e)
-    throw e
-  }
+  })
 }

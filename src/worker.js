@@ -1,12 +1,8 @@
-import { _list } from './list.js'
 import { error } from './throw.js'
 import { _query } from './query.js'
 import { td, enums } from '#manifest'
 import { _mutate } from './mutate.js'
-import { create } from './passport.js'
-import { endpoints } from './enums/endpoints.js'
-import { _addToSchema, _getSchema } from './schema.js'
-import { _enforcePermissions } from './enforcePermissions.js'
+import { Passport } from './Passport.js'
 
 
 /**
@@ -15,46 +11,23 @@ import { _enforcePermissions } from './enforcePermissions.js'
  * @returns { Promise<Response> }
  */
 async function getResponse (storage, request) {
-  let body
   const url = new URL(request.url)
 
   switch (url.pathname) {
-    // schema
-    case enums.endpoints.addToSchema:
-      return new Response(JSON.stringify(await _addToSchema(create(storage, request, enums.passportSource.addToSchema), await request.json())), { headers: getHeaders('json') })
-    case enums.endpoints.getSchema:
-      return new Response(JSON.stringify(await _getSchema(create(storage, request, enums.passportSource.getSchema))), { headers: getHeaders('json') })
-
-
-    // list
-    case enums.endpoints.list:
-      /** @type { { [k: string]: any } } */
-      const rList = {}
-      body = await request.text() // might be undefined
-      body = body ? JSON.parse(body) : {} // if defined => parse body to get options
-      const map = await _list(create(storage, request, enums.passportSource.list), body) // returns a map
-      map.forEach((value, key) => rList[key] = value) // convert map to an object b/c we can't stringify a map
-      return new Response(JSON.stringify(rList), { headers: getHeaders('json') })
-
-
     // mutate
-    case enums.endpoints.mutate:
-      return new Response(JSON.stringify(await _mutate(create(storage, request, enums.passportSource.mutate), await request.json())), { headers: getHeaders('json') })
+    case enums.pathnames.mutate:
+      
+      return new Response(JSON.stringify(await _mutate(new Passport({ storage, request, source: enums.passportSource.mutate }), await request.json())), { headers: getHeaders('json') })
 
 
     // query
-    case enums.endpoints.query:
-      return new Response(JSON.stringify(await _query(create(storage, request, enums.passportSource.query), await request.json())), { headers: getHeaders('json') })
-
-
-    // enforcePermissions
-    case enums.endpoints.enforcePermissions:
-      return new Response(JSON.stringify(await _enforcePermissions(create(storage, request, enums.passportSource.enforcePermissions), await request.json())), { headers: getHeaders('json') })
+    case enums.pathnames.query:
+      return new Response(JSON.stringify(await _query(new Passport({ storage, request, source: enums.passportSource.query }), await request.json())), { headers: getHeaders('json') })
 
 
     // throw b/c unknown pathname provided
     default:
-      throw error('ace__invalid-url', `The request is invalid b/c the url pathname ${ url.pathname } is invalid, please call with a valid url pathname`, { pathname: url.pathname, validPathnames: endpoints.keys() })
+      throw error('ace__invalid-url', `The request is invalid b/c the url pathname ${ url.pathname } is invalid, please call with a valid url pathname`, { pathname: url.pathname, validPathnames: enums.pathnames })
   }
 }
 

@@ -1,46 +1,44 @@
 import { td, enums } from '#manifest'
+import { Passport } from './Passport.js'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
  * @param { { [k: string]: any } } graphNode 
  * @param { enums.queryDerivedSymbol } symbol 
  * @param { (td.QueryDerivedGroup | td.QueryProperty | td.QueryValue)[] } items 
- * @param { td.AcePassport } passport 
+ * @param { Passport } passport 
  * @returns { number | string | undefined }
  */
 export function getDerivedValue (generatedQueryFormatSection, graphNode, symbol, items, passport) {
   const request = /** @type { any } */ ({ value: undefined, using: undefined })
-  main()
-  return request.value
 
+  for (const item of items) {
+    switch (item.id) {
+      case enums.idsQueryFormat.DerivedGroup:
+        const queryDerivedGroup = /** @type { td.QueryDerivedGroup } */ (item)
+        const v = getDerivedValue(generatedQueryFormatSection, graphNode, queryDerivedGroup.x.symbol, queryDerivedGroup.x.items, passport)
+        setDerivedValueAndUsing(queryDerivedGroup.x.symbol, v)
+        break
+      case enums.idsQueryFormat.Value:
+        const queryValue = /** @type { td.QueryValue } */ (item)
+        setDerivedValueAndUsing(symbol, queryValue.x.value)
+        break
+      case enums.idsQueryFormat.Property:
+        const queryProperty = /** @type { td.QueryProperty } */ (item)
 
-  function main () {
-    for (const item of items) {
-      switch (item.id) {
-        case enums.idsQuery.DerivedGroup:
-          const queryDerivedGroup = /** @type { td.QueryDerivedGroup } */ (item)
-          const v = getDerivedValue(generatedQueryFormatSection, graphNode, queryDerivedGroup.x.symbol, queryDerivedGroup.x.items, passport)
-          setDerivedValueAndUsing(queryDerivedGroup.x.symbol, v)
-          break
-        case enums.idsQuery.Value:
-          const queryValue = /** @type { td.QueryValue } */ (item)
-          setDerivedValueAndUsing(symbol, queryValue.x.value)
-          break
-        case enums.idsQuery.Property:
-          const queryProperty = /** @type { td.QueryProperty } */ (item)
+        if (!queryProperty.x.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProperty.x.property])
+        else {
+          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, passport, queryProperty.x.relationships)
+          if (rRelationshipNode.node?.[queryProperty.x.property]) setDerivedValueAndUsing(symbol, rRelationshipNode.node[queryProperty.x.property])
+        }
 
-          if (!queryProperty.x.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProperty.x.property])
-          else {
-            const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, passport, queryProperty.x.relationships)
-            if (rRelationshipNode.node?.[queryProperty.x.property]) setDerivedValueAndUsing(symbol, rRelationshipNode.node[queryProperty.x.property])
-          }
-
-          break
-      }
+        break
     }
   }
+
+  return request.value
 
 
   /**
@@ -61,6 +59,3 @@ export function getDerivedValue (generatedQueryFormatSection, graphNode, symbol,
     }
   }
 }
-
-
-

@@ -1,15 +1,16 @@
 import { verify } from './hash.js'
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
+import { Passport } from './Passport.js'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
  * @param { td.QueryResponse } response 
  * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } $where 
  * @param { td.QueryPublicJWKs | null } publicJWKs 
- * @param { td.AcePassport } passport 
+ * @param { Passport } passport 
  */
 export async function queryWhere (generatedQueryFormatSection, response, $where, publicJWKs, passport) {
   if (Array.isArray(response.original[generatedQueryFormatSection.property])) {
@@ -19,10 +20,10 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
     for (let iClone = 0; iClone < clone.length; iClone++) {
       let spliced = false
 
-      if ($where.id === enums.idsQuery.FindGroup || $where.id === enums.idsQuery.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
+      if ($where.id === enums.idsQueryFormat.FindGroup || $where.id === enums.idsQueryFormat.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
       else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
 
-      if (!spliced && ($where.id === enums.idsQuery.Find || $where.id === enums.idsQuery.FindDefined || $where.id === enums.idsQuery.FindUndefined)) {
+      if (!spliced && ($where.id === enums.idsQueryFormat.Find || $where.id === enums.idsQueryFormat.FindDefined || $where.id === enums.idsQueryFormat.FindUndefined)) {
         response.current[generatedQueryFormatSection.property] = [ response.current[generatedQueryFormatSection.property][iOrignal] ]
         response.original[generatedQueryFormatSection.property] = [ response.original[generatedQueryFormatSection.property][iOrignal] ]
         break
@@ -42,7 +43,7 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
    * @typedef { object } GetValueResponse
    * @property { null | 'QueryValue' | 'QueryProperty' } type
    * @property { any } value
-   * @property { null | td.QueryRequestFormatGenerated } generatedQueryFormatSection
+   * @property { null | td.QueryRequestItemFormatGenerated } generatedQueryFormatSection
    */
 
 
@@ -98,16 +99,16 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
       let r
 
       switch (query.id) {
-        case enums.idsQuery.Find:
-        case enums.idsQuery.Filter:
-        case enums.idsQuery.FindDefined:
-        case enums.idsQuery.FindUndefined:
-        case enums.idsQuery.FilterDefined:
-        case enums.idsQuery.FilterUndefined:
+        case enums.idsQueryFormat.Find:
+        case enums.idsQueryFormat.Filter:
+        case enums.idsQueryFormat.FindDefined:
+        case enums.idsQueryFormat.FindUndefined:
+        case enums.idsQueryFormat.FilterDefined:
+        case enums.idsQueryFormat.FilterUndefined:
           r = await verifySplice(query, i, response.original[generatedQueryFormatSection.property][i], false)
           break
-        case enums.idsQuery.FindGroup:
-        case enums.idsQuery.FilterGroup:
+        case enums.idsQueryFormat.FindGroup:
+        case enums.idsQueryFormat.FilterGroup:
           r = loopGroupQueries(query, i, false)
           break
       }
@@ -143,9 +144,9 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
       spliced = true
     }
 
-    if ($where.id === enums.idsQuery.FilterDefined || $where.id === enums.idsQuery.FindDefined) {
+    if ($where.id === enums.idsQueryFormat.FilterDefined || $where.id === enums.idsQueryFormat.FindDefined) {
       if (typeof getValue($where.x.property, graphNode).value === 'undefined') bye()
-    } else if ($where.id === enums.idsQuery.FilterUndefined || $where.id === enums.idsQuery.FindUndefined) {
+    } else if ($where.id === enums.idsQueryFormat.FilterUndefined || $where.id === enums.idsQueryFormat.FindUndefined) {
       if (typeof getValue($where.x.property, graphNode).value !== 'undefined') bye()
     } else {
       const qw = /** @type { td.QueryFilter | td.QueryFind } */ ($where)
@@ -214,14 +215,14 @@ export async function queryWhere (generatedQueryFormatSection, response, $where,
     })
 
     switch (propertyOrValue.id) {
-      case enums.idsQuery.Value:
+      case enums.idsQueryFormat.Value:
         const queryValue = /** @type { td.QueryValue } */ (propertyOrValue)
 
         response.value = queryValue.x.value
         response.type = 'QueryValue'
         response.generatedQueryFormatSection = generatedQueryFormatSection
         break
-      case enums.idsQuery.Property:
+      case enums.idsQueryFormat.Property:
         const queryProperty = /** @type { td.QueryProperty } */ (propertyOrValue)
 
         if (!queryProperty.x.relationships?.length) {

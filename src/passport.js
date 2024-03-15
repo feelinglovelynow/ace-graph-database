@@ -1,78 +1,107 @@
 import { error } from './throw.js'
 import { _query } from './query.js'
 import { td, enums } from '#manifest'
-import { _getSchema } from './schema.js'
 import { REQUEST_TOKEN_HEADER, SCHEMA_KEY, getRevokesKey, getUniqueIndexKey } from './variables.js'
 
 
-/**
- * @param { td.AcePassport } passport
- * @returns { Promise<td.AcePassport> }
- */
-export async function stamp (passport) {
-  /** @type { td.AcePassport } - Internal passport */
-  const _passport = { ...passport, ...{ type: enums.passportType.internal, source: enums.passportSource.stamp } }
+export class Passport {
+  source
+  storage
+  user
+  token
+  schema
+  revokesAcePermissions
+  isEnforcePermissionsOn
 
-  switch (passport.type) {
-    case enums.passportType.internal:
-      if (!passport.revokesAcePermissions) passport.revokesAcePermissions = new Map()
-      break
-    case enums.passportType.external:
-      if (!passport.schema) passport.schema = _passport.schema = await passport.storage.get(SCHEMA_KEY) // _getSchema() calls stamp so if we call _getSchema() here it's circular
-
-      if (!passport.user) {
-        const [ user, isEnforcePermissionsOn ] = await Promise.all([ getUser(), getIsEnforcePermissionsOn() ])
-        passport.user = user
-        passport.isEnforcePermissionsOn = isEnforcePermissionsOn
-        passport.revokesAcePermissions = getRevokesAcePermissions(user, isEnforcePermissionsOn)
-      }
-      break
+  /**
+   * @typedef { object } PassportOptions
+   * @property { enums.passportSource } source - The source function that created this passport
+   * @property { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Graph Database)
+   * @property { td.AcePassportUser } [ user ]
+   * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling mutate > Start
+   * @property { td.Schema } [ schema ]
+   * @property { Request } [ request ]
+   * @property { Map<string, any> } [ revokesAcePermissions ]
+   * @property { boolean } [ isEnforcePermissionsOn ]
+   * @param { PassportOptions } options 
+   */
+  constructor (options) {
+    this.source = options.source
+    this.storage = options.storage
+    if (options.user) this.user = options.user
+    if (options.token) this.token = options.token
+    if (options.schema) this.schema = options.schema
+    if (options.request) this.token = options.request.headers.get(REQUEST_TOKEN_HEADER)
+    if (options.revokesAcePermissions) this.revokesAcePermissions = options.revokesAcePermissions
+    if (typeof options.isEnforcePermissionsOn === 'boolean') this.isEnforcePermissionsOn = options.isEnforcePermissionsOn
   }
 
-  if (passport.isEnforcePermissionsOn) {
-    if (!passport.user) throw error('auth__invalid-user', `The request is invalid b/c passport.user is falsy, please ensure the provided token \`${ passport.token }\` aligns with a user`, { token: passport.token, source: passport.source })
-    if (!passport.user?.role) throw error('auth__invalid-role', `The request is invalid b/c passport.user.role is falsy, please ensure the provided token \`${ passport.token }\` aligns with a user and the user has a role`, { token: passport.token, source: passport.source })
+
+  /**
+   * @param { () => Promise<any> } callback 
+   * @returns { Promise<any> }
+   */
+  async tsa (callback) {
+    try {
+      await this.stamp()
+      return callback()
+    } catch (e) {
+      console.log('error', e)
+      throw e
+    }
   }
 
-  return passport
+  
+  async stamp () {
+    const _passport = new Passport({
+      storage: this.storage,
+      source: enums.passportSource.stamp,
+      token: this.token,
+      schema: this.schema,
+      user: this.user,
+      isEnforcePermissionsOn: this.isEnforcePermissionsOn,
+      revokesAcePermissions: this.revokesAcePermissions,
+    })
 
 
-  /** @returns { Promise<boolean> } */
-  async function getIsEnforcePermissionsOn () {
-    const key = getUniqueIndexKey('AceSetting', 'slug', enums.settings.enforcePermissions)
-    const uid = await passport.storage.get(key)
+    switch (this.source) {
+      case enums.passportSource.stamp:
+        if (!this.revokesAcePermissions) this.revokesAcePermissions = new Map()
+        break
+      default:
+        if (!this.schema) this.schema = _passport.schema = await this.storage.get(SCHEMA_KEY) // _getSchema() calls stamp so if we call _getSchema() here it's circular
 
-    if (!uid) return false
-    else {
-      const { isOn } = await _query(_passport, {
-        property: 'isOn',
-        format: {
-          id: 'AceSetting',
-          x: {
-            $options: [
-              { id: 'FindByUid', x: { uid } },
-              { id: 'PropertyAsResponse', x: { property: 'isOn' } }
-            ]
-          }
+        if (!this.user) {
+          const [user, isEnforcePermissionsOn] = await Promise.all([this.#getUser(_passport), this.#getIsEnforcePermissionsOn(_passport)])
+          this.user = user
+          this.isEnforcePermissionsOn = isEnforcePermissionsOn
+          this.revokesAcePermissions = this.#getRevokesAcePermissions(isEnforcePermissionsOn, user)
         }
-      })
+        break
+    }
 
-      return Boolean(isOn)
+    if (this.isEnforcePermissionsOn) {
+      if (!this.user) throw error('auth__invalid-user', `The request is invalid b/c passport.user is falsy, please ensure the provided token \`${this.token}\` aligns with a user`, { token: this.token, source: this.source })
+      if (!this.user?.role) throw error('auth__invalid-role', `The request is invalid b/c passport.user.role is falsy, please ensure the provided token \`${this.token}\` aligns with a user and the user has a role`, { token: this.token, source: this.source })
     }
   }
 
 
-  /** @returns { Promise<any> } */
-  async function getUser () {
-    let user = null
+  /**
+   * @param { Passport } _passport 
+   * @returns { Promise<td.AcePassportUser | undefined>}
+   */
+  async #getUser (_passport) {
+    let user
 
     if (_passport.token) {
       const { token } = await _query(_passport, {
-        property: 'token',
-        format: {
+        request: {
           id: 'AceToken',
+          property: 'token',
           x: {
             $options: [
+              { id: 'Alias', x: { alias: 'token' } },
               { id: 'FindByUid', x: { uid: _passport.token } }
             ],
             user: {
@@ -104,15 +133,15 @@ export async function stamp (passport) {
 
 
   /**
-   * @param {{ role: { revokesAcePermissions: any } } } user
-   * @param { boolean } enforcePermissions
+   * @param { boolean } isEnforcePermissionsOn
+   * @param { td.AcePassportUser } [ user ] 
    * @returns { Map<string, any> }
    */
-  function getRevokesAcePermissions (user, enforcePermissions) {
+  #getRevokesAcePermissions(isEnforcePermissionsOn, user)  {
     /** @type { Map<string, any> } - Converts an array of permissions into a map where each key represents the permission (limit includes lookups) and each value is the permission */
     const revokesAcePermissions = new Map()
 
-    if (enforcePermissions) {
+    if (isEnforcePermissionsOn) {
       if (user?.role?.revokesAcePermissions) {
         for (const permission of user.role.revokesAcePermissions) {
           revokesAcePermissions.set(getRevokesKey(permission), permission)
@@ -122,20 +151,31 @@ export async function stamp (passport) {
 
     return revokesAcePermissions
   }
-}
 
 
-/**
- * @param { td.CF_DO_Storage } storage
- * @param { Request } request
- * @param { enums.passportSource } source
- * @returns { td.AcePassport }
- */
-export function create (storage, request, source) {
-  return {
-    source,
-    storage,
-    type: enums.passportType.external,
-    token: request.headers.get(REQUEST_TOKEN_HEADER),
+  /**
+   * @param { Passport } _passport 
+   * @returns { Promise<boolean>}
+   */
+  async #getIsEnforcePermissionsOn (_passport) {
+    const key = getUniqueIndexKey('AceSetting', 'slug', enums.settings.enforcePermissions)
+    const uid = await this.storage.get(key)
+
+    if (!uid) return false
+
+    const { isOn } = await _query(_passport, {
+      request: {
+        id: 'AceSetting',
+        property: 'isOn',
+        x: {
+          $options: [
+            { id: 'FindByUid', x: { uid } },
+            { id: 'PropertyAsResponse', x: { property: 'isOn' } }
+          ]
+        }
+      }
+    })
+
+    return Boolean(isOn)
   }
 }

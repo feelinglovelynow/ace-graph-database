@@ -1,13 +1,14 @@
 import { error } from './throw.js'
 import { td, enums } from '#manifest'
+import { Passport } from './Passport.js'
 
 
 /** 
- * @param { td.QueryRequestFormatX } x
+ * @param { td.QueryRequestItemNodeX } x
  * @param { string } schemaPropName
- * @param { td.AcePassport } passport
- * @param { td.QueryRequestFormatGenerated | null } generatedParent
- * @returns { td.QueryRequestFormatGenerated }
+ * @param { Passport } passport
+ * @param { td.QueryRequestItemFormatGenerated | null } generatedParent
+ * @returns { td.QueryRequestItemFormatGenerated }
  */
 export function getGeneratedQueryFormatSectionByParent(x, schemaPropName, passport, generatedParent) {
   const schemaPropValue = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[generatedParent?.nodeName || '']?.[schemaPropName])
@@ -35,10 +36,10 @@ export function getGeneratedQueryFormatSectionByParent(x, schemaPropName, passpo
 
 
 /**
- * @param { td.QueryRequestFormat } queryFormatSection
+ * @param { td.QueryRequestItemNodeX } queryFormatSection
  * @param { string } schemaProperty
- * @param { td.AcePassport } passport
- * @returns { td.QueryRequestFormatGenerated }
+ * @param { Passport } passport
+ * @returns { td.QueryRequestItemFormatGenerated }
  */
 export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaProperty, passport) {
   if (typeof queryFormatSection?.id !== 'string' || !queryFormatSection.id) throw error('query__format-section-id-falsy', 'This request is failing b/c request.format.id is not a truthy string', { queryFormatSection })
@@ -58,8 +59,8 @@ export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaPr
 
 
 /**
- * @param { td.QueryRequestFormatX } x
- * @returns { { sets: Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>>, hasCountOne: boolean, hasOptionsFind: boolean, hasValueAsResponse: boolean, priorityOptions: td.QueryRequestFormatGeneratedPriorityOptions, aliasProperty?: string } }
+ * @param { td.QueryRequestItemNodeX } x
+ * @returns { { sets: Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>>, hasCountOne: boolean, hasOptionsFind: boolean, hasValueAsResponse: boolean, priorityOptions: td.QueryRequestItemFormatGeneratedPriorityOptions, aliasProperty?: string } }
  */ 
 function loopOptions (x) {
   let aliasProperty
