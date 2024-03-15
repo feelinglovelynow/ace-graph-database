@@ -6,116 +6,116 @@ import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryRequestItemGeneratedXSection } generatedXQuerySection 
  * @param { td.QueryResponse } response 
  * @param { boolean } isUsingSortIndexNodes 
  * @param { td.QueryPublicJWKs | null } publicJWKs 
  * @param { Passport } passport 
  * @returns { Promise<void> }
  */
-export async function implementQueryOptions (generatedQueryFormatSection, response, isUsingSortIndexNodes, publicJWKs, passport) {
-  if (generatedQueryFormatSection.x.$options) {
-    for (let option of generatedQueryFormatSection.x.$options) {
+export async function implementQueryOptions (generatedXQuerySection, response, isUsingSortIndexNodes, publicJWKs, passport) {
+  if (generatedXQuerySection.x.$options) {
+    for (let option of generatedXQuerySection.x.$options) {
       switch (option.id) {
-        case enums.idsQueryFormat.Find:
-        case enums.idsQueryFormat.Filter:
-        case enums.idsQueryFormat.FindGroup:
-        case enums.idsQueryFormat.FilterGroup:
-        case enums.idsQueryFormat.FindDefined:
-        case enums.idsQueryFormat.FindUndefined:
-        case enums.idsQueryFormat.FilterDefined:
-        case enums.idsQueryFormat.FilterUndefined:
-          await queryWhere(generatedQueryFormatSection, response, option, publicJWKs, passport)
+        case enums.idsQueryOptions.Find:
+        case enums.idsQueryOptions.Filter:
+        case enums.idsQueryOptions.FindGroup:
+        case enums.idsQueryOptions.FilterGroup:
+        case enums.idsQueryOptions.FindDefined:
+        case enums.idsQueryOptions.FindUndefined:
+        case enums.idsQueryOptions.FilterDefined:
+        case enums.idsQueryOptions.FilterUndefined:
+          await queryWhere(generatedXQuerySection, response, option, publicJWKs, passport)
           break
 
-        case enums.idsQueryFormat.Limit:
+        case enums.idsQueryOptions.Limit:
           doLimit(option)
           break
 
-        case enums.idsQueryFormat.Sort:
+        case enums.idsQueryOptions.Sort:
           doSort(option)
           break
 
-        case enums.idsQueryFormat.DerivedProperty:
+        case enums.idsQueryOptions.DerivedProperty:
           doDerivedProperty(option)
           break
 
-        case enums.idsQueryFormat.SumAsProperty:
+        case enums.idsQueryOptions.SumAsProperty:
           doSumAsProperty(option) 
           break
 
-        case enums.idsQueryFormat.AverageAsProperty:
+        case enums.idsQueryOptions.AverageAsProperty:
           doAverageAsProperty(option)
           break
 
-        case enums.idsQueryFormat.AverageAsResponse:
+        case enums.idsQueryOptions.AverageAsResponse:
           doAverageAsResponse(option)
           break
 
-        case enums.idsQueryFormat.MinAmountAsProperty:
+        case enums.idsQueryOptions.MinAmountAsProperty:
           doMinAmountAsProperty(option)
           break
 
-        case enums.idsQueryFormat.MinAmountAsResponse:
+        case enums.idsQueryOptions.MinAmountAsResponse:
           doMinAmountAsResponse(option)
           break
 
-        case enums.idsQueryFormat.MinNodeAsResponse:
+        case enums.idsQueryOptions.MinNodeAsResponse:
           doMinNodeAsResponse(option)
           break
 
-        case enums.idsQueryFormat.MaxAmountAsProperty:
+        case enums.idsQueryOptions.MaxAmountAsProperty:
           doMaxAmountAsProperty(option)
           break
 
-        case enums.idsQueryFormat.MaxAmountAsResponse:
+        case enums.idsQueryOptions.MaxAmountAsResponse:
           doMaxAmountAsResponse(option)
           break
 
-        case enums.idsQueryFormat.MaxNodeAsResponse:
+        case enums.idsQueryOptions.MaxNodeAsResponse:
           doMaxNodeAsResponse(option)
           break
 
-        case enums.idsQueryFormat.CountAsProperty:
+        case enums.idsQueryOptions.CountAsProperty:
           doCountAsProperty(option)
           break
 
-        case enums.idsQueryFormat.CountAsResponse:
+        case enums.idsQueryOptions.CountAsResponse:
           doCountAsResponse()
           break
 
-        case enums.idsQueryFormat.PropertyAsResponse:
+        case enums.idsQueryOptions.PropertyAsResponse:
           doPropertyAsResponse(option)
           break
 
-        case enums.idsQueryFormat.SumAsResponse:
+        case enums.idsQueryOptions.SumAsResponse:
           doSumAsResponse(option)
           break
 
-        case enums.idsQueryFormat.PropertyAdjacentToResponse:
+        case enums.idsQueryOptions.PropertyAdjacentToResponse:
           doPropertyAdjacentToResponse(option)
           break
       }
     }
   }
 
-  if (generatedQueryFormatSection.has === enums.has.one || generatedQueryFormatSection.hasOptionsFind || generatedQueryFormatSection.hasValueAsResponse || generatedQueryFormatSection.hasCountOne) {
-    response.current[generatedQueryFormatSection.property] = typeof response.current[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.current[generatedQueryFormatSection.property][0]
-    response.original[generatedQueryFormatSection.property] = typeof response.original[generatedQueryFormatSection.property]?.[0] === 'undefined' ? null : response.original[generatedQueryFormatSection.property][0]
+  if (generatedXQuerySection.has === enums.has.one || generatedXQuerySection.hasOptionsFind || generatedXQuerySection.hasValueAsResponse || generatedXQuerySection.hasCountOne) {
+    response.current[generatedXQuerySection.property] = typeof response.current[generatedXQuerySection.property]?.[0] === 'undefined' ? null : response.current[generatedXQuerySection.property][0]
+    response.original[generatedXQuerySection.property] = typeof response.original[generatedXQuerySection.property]?.[0] === 'undefined' ? null : response.original[generatedXQuerySection.property][0]
   }
 
 
   /** @param { td.QueryLimit } option */
   function doLimit (option) {
     if (option.x.skip && option.x.count) {
-      response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(option.x.skip, option.x.skip + option.x.count)
-      response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(option.x.skip, option.x.skip + option.x.count)
+      response.current[generatedXQuerySection.property] = response.current[generatedXQuerySection.property].slice(option.x.skip, option.x.skip + option.x.count)
+      response.original[generatedXQuerySection.property] = response.original[generatedXQuerySection.property].slice(option.x.skip, option.x.skip + option.x.count)
     } else if (option.x.skip) {
-      response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(option.x.skip)
-      response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(option.x.skip)
+      response.current[generatedXQuerySection.property] = response.current[generatedXQuerySection.property].slice(option.x.skip)
+      response.original[generatedXQuerySection.property] = response.original[generatedXQuerySection.property].slice(option.x.skip)
     } else if (option.x.count) {
-      response.current[generatedQueryFormatSection.property] = response.current[generatedQueryFormatSection.property].slice(0, option.x.count)
-      response.original[generatedQueryFormatSection.property] = response.original[generatedQueryFormatSection.property].slice(0, option.x.count)
+      response.current[generatedXQuerySection.property] = response.current[generatedXQuerySection.property].slice(0, option.x.count)
+      response.original[generatedXQuerySection.property] = response.original[generatedXQuerySection.property].slice(0, option.x.count)
     }
   }
 
@@ -127,10 +127,10 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
       const combined = []
 
-      for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
+      for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
         combined.push({
-          current: response.current[generatedQueryFormatSection.property][i],
-          original: response.original[generatedQueryFormatSection.property][i],
+          current: response.current[generatedXQuerySection.property][i],
+          original: response.original[generatedXQuerySection.property][i],
         })
       }
 
@@ -153,11 +153,11 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
   /** @param { td.QueryDerivedProperty } option */
   function doDerivedProperty (option) {
-    for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-      const derivedValue = getDerivedValue(generatedQueryFormatSection, response.original[generatedQueryFormatSection.property][i], option.x.symbol, option.x.items, passport)
+    for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
+      const derivedValue = getDerivedValue(generatedXQuerySection, response.original[generatedXQuerySection.property][i], option.x.symbol, option.x.items, passport)
 
-      response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = derivedValue
-      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = derivedValue
+      response.original[generatedXQuerySection.property][i][option.x.newProperty] = derivedValue
+      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = derivedValue
     }
   }
 
@@ -166,13 +166,13 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doSumAsProperty (option) {
     let sum = 0
 
-    for (let arrayItem of response.original[generatedQueryFormatSection.property]) {
+    for (let arrayItem of response.original[generatedXQuerySection.property]) {
       sum += arrayItem[option.x.computeProperty]
     }
 
-    for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-      response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = sum
-      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = sum
+    for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
+      response.original[generatedXQuerySection.property][i][option.x.newProperty] = sum
+      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = sum
     }
   }
 
@@ -181,12 +181,12 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doSumAsResponse (option) {
     let sum = 0
 
-    for (let arrayItem of response.original[generatedQueryFormatSection.property]) {
+    for (let arrayItem of response.original[generatedXQuerySection.property]) {
       sum += arrayItem[option.x.property]
     }
 
-    response.current[generatedQueryFormatSection.property] = [sum]
-    response.original[generatedQueryFormatSection.property] = [sum]
+    response.current[generatedXQuerySection.property] = [sum]
+    response.original[generatedXQuerySection.property] = [sum]
   }
 
 
@@ -194,7 +194,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doAverageAsProperty (option) {
     let sum = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let arrayItem of original) {
       sum += arrayItem[option.x.computeProperty]
@@ -204,7 +204,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
     for (let i = 0; i < original.length; i++) {
       original[i][option.x.newProperty] = average
-      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = average
+      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = average
     }
   }
 
@@ -213,7 +213,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doAverageAsResponse (option) {
     let sum = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let arrayItem of original) {
       sum += arrayItem[option.x.property]
@@ -221,8 +221,8 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
     const average = original.length ? sum / original.length : 0
 
-    response.current[generatedQueryFormatSection.property] = [average]
-    response.original[generatedQueryFormatSection.property] = [average]
+    response.current[generatedXQuerySection.property] = [average]
+    response.original[generatedXQuerySection.property] = [average]
   }
 
 
@@ -230,7 +230,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doMinAmountAsProperty (option) {
     let amount = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let arrayItem of original) {
       if (!amount || arrayItem[option.x.computeProperty] < amount) amount = arrayItem[option.x.computeProperty]
@@ -238,7 +238,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
     for (let i = 0; i < original.length; i++) {
       original[i][option.x.newProperty] = amount
-      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = amount
+      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = amount
     }
   }
 
@@ -247,14 +247,14 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doMinAmountAsResponse (option) {
     let amount = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let arrayItem of original) {
       if (!amount || arrayItem[option.x.property] < amount) amount = arrayItem[option.x.property]
     }
 
-    response.current[generatedQueryFormatSection.property] = [amount]
-    response.original[generatedQueryFormatSection.property] = [amount]
+    response.current[generatedXQuerySection.property] = [amount]
+    response.original[generatedXQuerySection.property] = [amount]
   }
 
 
@@ -263,17 +263,17 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
     let node = null
     let amount = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let i = 0; i < original.length; i++) {
       if (!node || original[i][option.x.property] < amount) {
         amount = original[i][option.x.property]
-        node = response.current[generatedQueryFormatSection.property][i]
+        node = response.current[generatedXQuerySection.property][i]
       }
     }
 
-    response.current[generatedQueryFormatSection.property] = [node]
-    response.original[generatedQueryFormatSection.property] = [node]
+    response.current[generatedXQuerySection.property] = [node]
+    response.original[generatedXQuerySection.property] = [node]
   }
 
 
@@ -282,17 +282,17 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
     let node = null
     let amount = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let i = 0; i < original.length; i++) {
       if (!node || original[i][option.x.property] > amount) {
         amount = original[i][option.x.property]
-        node = response.current[generatedQueryFormatSection.property][i]
+        node = response.current[generatedXQuerySection.property][i]
       }
     }
 
-    response.current[generatedQueryFormatSection.property] = [node]
-    response.original[generatedQueryFormatSection.property] = [node]
+    response.current[generatedXQuerySection.property] = [node]
+    response.original[generatedXQuerySection.property] = [node]
   }
 
 
@@ -300,7 +300,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doMaxAmountAsProperty (option) {
     let amount = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let arrayItem of original) {
       if (!amount || arrayItem[option.x.computeProperty] > amount) amount = arrayItem[option.x.computeProperty]
@@ -308,7 +308,7 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
 
     for (let i = 0; i < original.length; i++) {
       original[i][option.x.newProperty] = amount
-      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = amount
+      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = amount
     }
   }
 
@@ -317,32 +317,32 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doMaxAmountAsResponse (option) {
     let amount = 0
 
-    const original = response.original[generatedQueryFormatSection.property]
+    const original = response.original[generatedXQuerySection.property]
 
     for (let arrayItem of original) {
       if (!amount || arrayItem[option.x.property] > amount) amount = arrayItem[option.x.property]
     }
 
-    response.current[generatedQueryFormatSection.property] = [amount]
-    response.original[generatedQueryFormatSection.property] = [amount]
+    response.current[generatedXQuerySection.property] = [amount]
+    response.original[generatedXQuerySection.property] = [amount]
   }
 
 
   /** @param { td.QueryCountAsProperty } option */
   function doCountAsProperty (option) {
-    const count = response.original[generatedQueryFormatSection.property].length
+    const count = response.original[generatedXQuerySection.property].length
 
-    for (let i = 0; i < response.original[generatedQueryFormatSection.property].length; i++) {
-      if (!option.x.isResponseHidden) response.current[generatedQueryFormatSection.property][i][option.x.newProperty] = count
-      response.original[generatedQueryFormatSection.property][i][option.x.newProperty] = count
+    for (let i = 0; i < response.original[generatedXQuerySection.property].length; i++) {
+      if (!option.x.isResponseHidden) response.current[generatedXQuerySection.property][i][option.x.newProperty] = count
+      response.original[generatedXQuerySection.property][i][option.x.newProperty] = count
     }
   }
 
 
   function doCountAsResponse () {
-    if (response.original[generatedQueryFormatSection.property].length) {
-      response.current[generatedQueryFormatSection.property] = [response.original[generatedQueryFormatSection.property].length]
-      response.original[generatedQueryFormatSection.property] = [response.original[generatedQueryFormatSection.property].length]
+    if (response.original[generatedXQuerySection.property].length) {
+      response.current[generatedXQuerySection.property] = [response.original[generatedXQuerySection.property].length]
+      response.original[generatedXQuerySection.property] = [response.original[generatedXQuerySection.property].length]
     }
   }
 
@@ -351,16 +351,16 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doPropertyAsResponse (option) {
     let value
 
-    let original = response.original[generatedQueryFormatSection.property]
+    let original = response.original[generatedXQuerySection.property]
 
     if (!option.x.relationships?.length) value = original?.[0]?.[option.x.property]
     else {
-      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], passport, option.x.relationships)
+      const rRelationshipNode = getRelationshipNode(generatedXQuerySection, original[0], passport, option.x.relationships)
       value = rRelationshipNode?.node?.[option.x.property]
     }
 
     if (typeof value !== 'undefined') {
-      response.current[generatedQueryFormatSection.property] = [ value ]
+      response.current[generatedXQuerySection.property] = [ value ]
       original = [ value ]
     }
   }
@@ -370,11 +370,11 @@ export async function implementQueryOptions (generatedQueryFormatSection, respon
   function doPropertyAdjacentToResponse (option) {
     let value
 
-    let original = response.original[generatedQueryFormatSection.property]
+    let original = response.original[generatedXQuerySection.property]
 
     if (!option.x.relationships?.length) value = original?.[0]?.[option.x.sourceProperty]
     else {
-      const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, original[0], passport, option.x.relationships)
+      const rRelationshipNode = getRelationshipNode(generatedXQuerySection, original[0], passport, option.x.relationships)
       value = rRelationshipNode?.node?.[option.x.sourceProperty]
     }
 

@@ -9,7 +9,7 @@ import { has } from './enums/has.js'
 import { idsMutateDelete } from './enums/idsMutateDelete.js'
 import { idsMutate } from './enums/idsMutate.js'
 import { idsQuery } from './enums/idsQuery.js'
-import { idsQueryFormat } from './enums/idsQueryFormat.js'
+import { idsQueryOptions } from './enums/idsQueryOptions.js'
 import { idsSchema } from './enums/idsSchema.js'
 import { passportSource } from './enums/passportSource.js'
 import { queryDerivedSymbol } from './enums/queryDerivedSymbol.js'
@@ -34,7 +34,7 @@ import { DELIMITER } from './variables.js'
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
-    const queryRequestFormatOptions = '{ (QueryPropertyAsResponse | QueryPropertyAdjacentToResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
+    const queryRequestItemOptions = '{ (QueryPropertyAsResponse | QueryPropertyAdjacentToResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
 
     const files = {
       dir: '.manifest',
@@ -73,7 +73,7 @@ import { DELIMITER } from './variables.js'
       enumsMap.set('idsMutate', idsMutate)
       enumsMap.set('idsSchema', idsSchema)
       enumsMap.set('idsQuery', idsQuery)
-      enumsMap.set('idsQueryFormat', idsQueryFormat)
+      enumsMap.set('idsQueryOptions', idsQueryOptions)
       enumsMap.set('passportSource', passportSource)
       enumsMap.set('queryDerivedSymbol', queryDerivedSymbol)
       enumsMap.set('queryWhereGroupSymbol', queryWhereGroupSymbol)
@@ -189,6 +189,8 @@ import { DELIMITER } from './variables.js'
  * @typedef { object } MutateRequestItemRestart
  * @property { typeof enums.idsMutate.Restart } id${ typedefs.mutateRequestItem.InsertNodeType }${ typedefs.mutateRequestItem.InsertRelationshipType }${ typedefs.mutateRequestItem.UpdateNodeType }${ typedefs.mutateRequestItem.UpdateRelationshipType }
  * 
+ * @typedef { MutateRequestItemUpdateNode & { [relationshipProp: string]: string[] } } MutateRequestItemNodeWithRelationships
+ * 
  * @typedef { object } MutateRequestItemDataDeleteNodes
  * @property { typeof enums.idsMutate.DataDeleteNodes } id
  * @property { { uids: string[] } } x
@@ -220,7 +222,8 @@ import { DELIMITER } from './variables.js'
  * @typedef { object } MutateResponse
  * @property { { [uid: string]: string } } identity
  * @property { string[] } deleted
- * 
+ * @property { AceStartResponse } [ start ]
+ *
  * @typedef { { [propName: string]: any } } MutateRequestItemInsertRelationshipX
  */${ typedefs.mutateRequestItem.InsertNodeTypes}${typedefs.mutateRequestItem.UpdateNodeTypes }${ typedefs.mutateRequestItem.InsertRelationshipTypes }${ typedefs.mutateRequestItem.UpdateRelationshipTypes }
 
@@ -233,8 +236,8 @@ import { DELIMITER } from './variables.js'
  *
 ${ typedefs.queryRequest.NodeType }
  *
- * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty, $options?: QueryRequestItemFormatOptions } } QueryRequestItemNodeX
- * @typedef ${ queryRequestFormatOptions } QueryRequestItemFormatOptions
+ * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty, $options?: QueryRequestItemOptions } } QueryRequestItemNodeX
+ * @typedef ${ queryRequestItemOptions } QueryRequestItemOptions
  * 
  * @typedef { object } QueryRequestItemRelationship
  * @property { string } id
@@ -251,9 +254,9 @@ ${ typedefs.queryRequest.NodeType }
  * @typedef { object } QueryRequestItemAceBackupX
  * @property { boolean } save
  *
- * @typedef { Map<enums.idsQueryFormat, (QuerySort | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques)> } QueryRequestItemFormatGeneratedPriorityOptions
+ * @typedef { Map<enums.idsQueryOptions, (QuerySort | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques)> } QueryRequestItemGeneratedXSectionPriorityOptions
  *
- * @typedef { object } QueryRequestItemFormatGenerated
+ * @typedef { object } QueryRequestItemGeneratedXSection
  * @property { string } property
  * @property { string } schemaProperty
  * @property { string } [ aliasProperty ]
@@ -265,16 +268,16 @@ ${ typedefs.queryRequest.NodeType }
  * @property { boolean } hasValueAsResponse
  * @property { boolean } hasCountOne
  * @property { Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>> } sets - Allow us to not have to call Set.has() rather then [].includes()
- * @property { QueryRequestItemFormatGeneratedPriorityOptions } priorityOptions *
+ * @property { QueryRequestItemGeneratedXSectionPriorityOptions } priorityOptions *
  * 
- * @typedef { { id: typeof enums.idsQueryFormat.Value, x: { value: any } } } QueryValue
- * @typedef { { id: typeof enums.idsQueryFormat.Alias, x: { alias: string } } } QueryAliasProperty
- * @typedef { { id: typeof enums.idsQueryFormat.Limit, x: { skip?: number, count?: number } } } QueryLimit
- * @typedef { { id: typeof enums.idsQueryFormat.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
- * @typedef { { id: typeof enums.idsQueryFormat.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
+ * @typedef { { id: typeof enums.idsQueryOptions.Value, x: { value: any } } } QueryValue
+ * @typedef { { id: typeof enums.idsQueryOptions.Alias, x: { alias: string } } } QueryAliasProperty
+ * @typedef { { id: typeof enums.idsQueryOptions.Limit, x: { skip?: number, count?: number } } } QueryLimit
+ * @typedef { { id: typeof enums.idsQueryOptions.Sort, x: { direction: 'asc' | 'dsc', property: string } } } QuerySort
+ * @typedef { { id: typeof enums.idsQueryOptions.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (QueryProperty | QueryValue | QueryDerivedGroup)[] } } } QueryDerivedGroup
  *
  * @typedef { object } QueryFind
- * @property { typeof enums.idsQueryFormat.Find } id
+ * @property { typeof enums.idsQueryOptions.Find } id
  * @property { QueryFindX } x
  * @typedef { object } QueryFindX
  * @property { enums.queryWhereSymbol } symbol
@@ -282,7 +285,7 @@ ${ typedefs.queryRequest.NodeType }
  * @property { string } [ publicJWK ]
  *
  * @typedef { object } QueryFilter
- * @property { typeof enums.idsQueryFormat.Filter } id
+ * @property { typeof enums.idsQueryOptions.Filter } id
  * @property { QueryFilterX } x
  * @typedef { object } QueryFilterX
  * @property { enums.queryWhereSymbol } symbol
@@ -290,58 +293,58 @@ ${ typedefs.queryRequest.NodeType }
  * @property { string } [ publicJWK ]
  *
  * @typedef { object } QueryProperty
- * @property { typeof enums.idsQueryFormat.Property } id - Define a property
+ * @property { typeof enums.idsQueryOptions.Property } id - Define a property
  * @property { QueryPropertyX } x
  * @typedef { object } QueryPropertyX
  * @property { string } property - String property name
  * @property { string[] } [ relationships ] - If this property is not on the node, list the relationship properties to get to the desired nodes
  *
  * @typedef { object } QueryFilterGroup
- * @property { typeof enums.idsQueryFormat.FilterGroup } id - Do an (and / or) operand on a group of filters
+ * @property { typeof enums.idsQueryOptions.FilterGroup } id - Do an (and / or) operand on a group of filters
  * @property { QueryFilterGroupX } x
  * @typedef { object } QueryFilterGroupX
  * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
  * @property { (QueryFilter | QueryFilterDefined | QueryFilterUndefined | QueryFilterGroup)[] } items - The items you'd love to do an (and / or) operand on
  *
  * @typedef { object } QueryFindGroup
- * @property { typeof enums.idsQueryFormat.FindGroup } id - Do an (and / or) operand on a group of filters
+ * @property { typeof enums.idsQueryOptions.FindGroup } id - Do an (and / or) operand on a group of filters
  * @property { QueryFindGroupX } x
  * @typedef { object } QueryFindGroupX
  * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
  * @property { (QueryFind | QueryFindDefined | QueryFindUndefined | QueryFindGroup)[] } items - The items you'd love to do an (and / or) operand on
  *
  * @typedef { object } QueryFindUndefined
- * @property { typeof enums.idsQueryFormat.FindUndefined } id - Loop the items and return the first item that is undefined at a specific property
+ * @property { typeof enums.idsQueryOptions.FindUndefined } id - Loop the items and return the first item that is undefined at a specific property
  * @property { QueryFindUndefinedX } x
  * @typedef { object } QueryFindUndefinedX
  * @property { QueryProperty } property - Loop the items and return the first item that is undefined at this property
  *
  * @typedef { object } QueryFindDefined
- * @property { typeof enums.idsQueryFormat.FindDefined } id - Loop the items and return the first item that is defined at a specific property
+ * @property { typeof enums.idsQueryOptions.FindDefined } id - Loop the items and return the first item that is defined at a specific property
  * @property { QueryFindDefinedX } x
  * @typedef { object } QueryFindDefinedX
  * @property { QueryProperty } property - Loop the items and return the first item that is defined at this property
  *
  * @typedef { object } QueryFilterUndefined
- * @property { typeof enums.idsQueryFormat.FilterUndefined } id - Loop the items and only return the items that are undefined at a specific property
+ * @property { typeof enums.idsQueryOptions.FilterUndefined } id - Loop the items and only return the items that are undefined at a specific property
  * @property { QueryFilterUndefinedX } x
  * @typedef { object } QueryFilterUndefinedX
  * @property { QueryProperty } property - Loop the items and only return the items that are undefined at this property
  *
  * @typedef { object } QueryFilterDefined
- * @property { typeof enums.idsQueryFormat.FilterDefined } id - Loop the items and only return the items that are defined at a specific property
+ * @property { typeof enums.idsQueryOptions.FilterDefined } id - Loop the items and only return the items that are defined at a specific property
  * @property { QueryFilterDefinedX } x
  * @typedef { object } QueryFilterDefinedX
  * @property { QueryProperty } property - Loop the items and only return the items that are defined at this property
  *
  * @typedef { object } QueryFilterByUids
- * @property { typeof enums.idsQueryFormat.FilterByUids } id - Recieves an array of uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { typeof enums.idsQueryOptions.FilterByUids } id - Recieves an array of uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
  * @property { QueryFilterByUidsX } x
  * @typedef { object } QueryFilterByUidsX
  * @property { string[] } uids - With this array of uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
  *
  * @typedef { object } QueryFilterByUniques
- * @property { typeof enums.idsQueryFormat.FilterByUniques } id - Recieves an array of unique values and returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
+ * @property { typeof enums.idsQueryOptions.FilterByUniques } id - Recieves an array of unique values and returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
  * @property { QueryFilterByUniquesX } x
  * @typedef { object } QueryFilterByUniquesX
  * @property { QueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
@@ -350,66 +353,66 @@ ${ typedefs.queryRequest.NodeType }
  * @property { string } property - Find node by this prop that has a unique index
  *
  * @typedef { object } QueryFilterBy_Uids
- * @property { typeof enums.idsQueryFormat.FilterBy_Uids } id - Recieves an array of _uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { typeof enums.idsQueryOptions.FilterBy_Uids } id - Recieves an array of _uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
  * @property { QueryFilterBy_UidsX } x
  * @typedef { object } QueryFilterBy_UidsX
  * @property { string[] } _uids - With this array of _uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
  *
  * @typedef { object } QueryFindByUnique
- * @property { typeof enums.idsQueryFormat.FindByUnique } id - Find node by a prop that has a unique index
+ * @property { typeof enums.idsQueryOptions.FindByUnique } id - Find node by a prop that has a unique index
  * @property { QueryFindByUniqueX } x
  * @typedef { object } QueryFindByUniqueX
  * @property { string } value - The value Ace will query to find a unique match for
  * @property { string } property - Find node by this prop that has a unique index
  *
  * @typedef { object } QueryFindByUid
- * @property { typeof enums.idsQueryFormat.FindByUid } id - Find node by a uid
+ * @property { typeof enums.idsQueryOptions.FindByUid } id - Find node by a uid
  * @property { QueryFindByUidX } x
  * @typedef { object } QueryFindByUidX
  * @property { string } uid - Find node by this uid
  *
  * @typedef { object } QueryFindBy_Uid
- * @property { typeof enums.idsQueryFormat.FindBy_Uid } id - Find relationship by a _uid
+ * @property { typeof enums.idsQueryOptions.FindBy_Uid } id - Find relationship by a _uid
  * @property { QueryFindBy_UidX } x
  * @typedef { object } QueryFindBy_UidX
  * @property { string } _uid - Find relationship by this _uid
  *
  * @typedef { object } QueryCountAsResponse
- * @property { typeof enums.idsQueryFormat.CountAsResponse } id - Set the count for the number of items in the response as the response
+ * @property { typeof enums.idsQueryOptions.CountAsResponse } id - Set the count for the number of items in the response as the response
  *
  * @typedef { object } QueryMinAmountAsResponse
- * @property { typeof enums.idsQueryFormat.MinAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
+ * @property { typeof enums.idsQueryOptions.MinAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
  * @property { QueryMinAmountAsResponseX } x
  * @typedef { object } QueryMinAmountAsResponseX
  * @property { string } property - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
  *
  * @typedef { object } QueryMaxAmountAsResponse
- * @property { typeof enums.idsQueryFormat.MaxAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
+ * @property { typeof enums.idsQueryOptions.MaxAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
  * @property { QueryMaxAmountAsResponseX } x
  * @typedef { object } QueryMaxAmountAsResponseX
  * @property { string } property - Loop the items in the response, find the max amount of this property, amongst all response items and set it as the response
  *
  * @typedef { object } QuerySumAsResponse
- * @property { typeof enums.idsQueryFormat.SumAsResponse } id - Loop the items in the response, calculate the sum of the provided property and set it as the response
+ * @property { typeof enums.idsQueryOptions.SumAsResponse } id - Loop the items in the response, calculate the sum of the provided property and set it as the response
  * @property { QuerySumAsResponseX } x
  * @typedef { object } QuerySumAsResponseX
  * @property { string } property - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
  *
  * @typedef { object } QueryAverageAsResponse
- * @property { typeof enums.idsQueryFormat.AverageAsResponse } id - Loop the items in the response, calculate the average of the provided property and set it as the response
+ * @property { typeof enums.idsQueryOptions.AverageAsResponse } id - Loop the items in the response, calculate the average of the provided property and set it as the response
  * @property { QueryAverageAsResponseX } x
  * @typedef { object } QueryAverageAsResponseX
  * @property { string } property - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
  *
  * @typedef { object } QueryCountAsProperty
- * @property { typeof enums.idsQueryFormat.CountAsProperty } id - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { typeof enums.idsQueryOptions.CountAsProperty } id - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { QueryCountAsPropertyX } x
  * @typedef { object } QueryCountAsPropertyX
  * @property { string } newProperty - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  *
  * @typedef { object } QuerySumAsProperty
- * @property { typeof enums.idsQueryFormat.SumAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
+ * @property { typeof enums.idsQueryOptions.SumAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
  * @property { QuerySumAsPropertyX } x
  * @typedef { object } QuerySumAsPropertyX
  * @property { string } computeProperty - Add the sum of the \`computeProperty\` of each node in the response
@@ -417,22 +420,22 @@ ${ typedefs.queryRequest.NodeType }
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  *
  * @typedef { object } QueryPropertyAsResponse
- * @property { typeof enums.idsQueryFormat.PropertyAsResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
+ * @property { typeof enums.idsQueryOptions.PropertyAsResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
  * @property { QueryPropertyAsResponseX } x
  * @typedef { object } QueryPropertyAsResponseX
  * @property { string } property - String that is the prop name that you would love to show as the response
- * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ format: { role: { uid: true } } }\`
+ * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
  *
  * @typedef { object } QueryPropertyAdjacentToResponse
- * @property { typeof enums.idsQueryFormat.PropertyAdjacentToResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
+ * @property { typeof enums.idsQueryOptions.PropertyAdjacentToResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
  * @property { QueryPropertyAdjacentToResponseX } x
  * @typedef { object } QueryPropertyAdjacentToResponseX
  * @property { string } sourceProperty
  * @property { string } adjacentProperty
- * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ format: { role: { uid: true } } }\`
+ * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
  *
  * @typedef { object } QueryAverageAsProperty
- * @property { typeof enums.idsQueryFormat.AverageAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
+ * @property { typeof enums.idsQueryOptions.AverageAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
  * @property { QueryAverageAsPropertyX } x
  * @typedef { object } QueryAverageAsPropertyX
  * @property { string } computeProperty - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response
@@ -440,7 +443,7 @@ ${ typedefs.queryRequest.NodeType }
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  *
  * @typedef { object } QueryMinAmountAsProperty
- * @property { typeof enums.idsQueryFormat.MinAmountAsProperty } id - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { typeof enums.idsQueryOptions.MinAmountAsProperty } id - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { QueryMinAmountAsPropertyX } x
  * @typedef { object } QueryMinAmountAsPropertyX
  * @property { string } computeProperty - Find the smallest numerical value of each node's \`computeProperty\` in the response
@@ -448,7 +451,7 @@ ${ typedefs.queryRequest.NodeType }
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  *
  * @typedef { object } QueryMaxAmountAsProperty
- * @property { typeof enums.idsQueryFormat.MaxAmountAsProperty } id - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
+ * @property { typeof enums.idsQueryOptions.MaxAmountAsProperty } id - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { QueryMaxAmountAsPropertyX } x
  * @typedef { object } QueryMaxAmountAsPropertyX
  * @property { string } computeProperty - Find the largest numerical value of each node's \`computeProperty\` in the response
@@ -456,19 +459,19 @@ ${ typedefs.queryRequest.NodeType }
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
  *
  * @typedef { object } QueryMinNodeAsResponse
- * @property { typeof enums.idsQueryFormat.MinNodeAsResponse } id - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * @property { typeof enums.idsQueryOptions.MinNodeAsResponse } id - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  * @property { QueryMinNodeAsResponseX } x
  * @typedef { object } QueryMinNodeAsResponseX
  * @property { string } property - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  *
  * @typedef { object } QueryMaxNodeAsResponse
- * @property { typeof enums.idsQueryFormat.MaxNodeAsResponse } id - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * @property { typeof enums.idsQueryOptions.MaxNodeAsResponse } id - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  * @property { QueryMaxNodeAsResponseX } x
  * @typedef { object } QueryMaxNodeAsResponseX
  * @property { string } property - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  *
  * @typedef { object } QueryDerivedProperty
- * @property { typeof enums.idsQueryFormat.DerivedProperty } id - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
+ * @property { typeof enums.idsQueryOptions.DerivedProperty } id - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
  * @property { QueryDerivedPropertyX } x
  * @typedef { object } QueryDerivedPropertyX
  * @property { string } newProperty - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
@@ -479,7 +482,7 @@ ${ typedefs.queryRequest.NodeType }
  * @typedef { { [key: string]: CryptoKey } } QueryPublicJWKs
  *
  * @typedef { { current: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
-*/${ typedefs.queryRequest.NodeFormat } ${ typedefs.queryRequest.RelationshipPropTypes }
+*/${ typedefs.queryRequest.Node } ${ typedefs.queryRequest.RelationshipPropTypes }
 
 
 /** Cloudflare
@@ -529,6 +532,7 @@ ${ typedefs.queryRequest.NodeType }
  * @typedef { object } AceStartResponse
  * @property { string } publicJWK
  * @property { string } privateJWK
+ * @property { { [uid: string]: string } } identity
  * @property { AceStartResponseAdmin } admin
  * @typedef { object } AceStartResponseAdmin
  * @property { string } uid
@@ -567,9 +571,9 @@ ${ typedefs.queryRequest.NodeType }
       const typedefs = {
         queryRequest: {
           NodeType: '',
-          NodeFormat: '',
-          FormatPipes: '',
-          NodeFormatProps: '',
+          Node: '',
+          NodePipes: '',
+          NodeProps: '',
           RelationshipPropTypes: '',
         },
         mutateRequestItem: {
@@ -648,7 +652,9 @@ ${ typedefs.queryRequest.NodeType }
         typedefs.mutateRequestItem.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
 
         for (const schemaNodeName in schema.nodes) {
-          typedefs.queryRequest.FormatPipes += `${ schemaNodeName }Format | `
+          typedefs.queryRequest.NodeProps = '' // clear previous loop props
+
+          typedefs.queryRequest.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
 
           typedefs.mutateRequestItem.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
 
@@ -684,7 +690,7 @@ ${ typedefs.queryRequest.NodeType }
                 const dataType = getDataType(schemaProp.x.dataType)
                 typedefs.mutateRequestItem.InsertNodeTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
                 typedefs.mutateRequestItem.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.queryRequest.NodeFormatProps += `\n * @property { boolean | QueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
+                typedefs.queryRequest.NodeProps += `\n * @property { boolean | QueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
                 break
               case 'ForwardRelationshipProp':
               case 'ReverseRelationshipProp':
@@ -697,7 +703,7 @@ ${ typedefs.queryRequest.NodeType }
 
                   queryProps += rSchemaProp.id === 'Prop' ?
                     `\n * @property { boolean | QueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.nodeName, schemaPropDescription: rSchemaProp.x.description }) }` :
-                    `\n * @property { ${ getRelationshipQueryFormatProp(schemaProp.x.nodeName, relationshipNodePropName) }X } [ ${ relationshipNodePropName } ] - Return object to see node name: \`${ schemaProp.x.nodeName }\` and prop name: \`${ relationshipNodePropName }\`, that will provide properties on the \`${ rSchemaProp.x.nodeName }\` node in the response`
+                    `\n * @property { ${ getNodePropXPropName(schemaProp.x.nodeName, relationshipNodePropName) } } [ ${ relationshipNodePropName } ] - Return object to see node name: \`${ schemaProp.x.nodeName }\` and prop name: \`${ relationshipNodePropName }\`, that will provide properties on the \`${ rSchemaProp.x.nodeName }\` node in the response`
                 }
 
                 if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
@@ -708,18 +714,15 @@ ${ typedefs.queryRequest.NodeType }
                   }
                 }
 
-                const relationshipPropName = getRelationshipQueryFormatProp(schemaNodeName, schemaNodePropName)
+                const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
 
-                typedefs.queryRequest.NodeFormatProps += `\n * @property { ${relationshipPropName}X } [ ${ schemaNodePropName } ] - Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
+                typedefs.queryRequest.NodeProps += `\n * @property { ${ relationshipPropName } } [ ${ schemaNodePropName } ] - Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
 
-                if (!typedefs.queryRequest.RelationshipPropTypes) typedefs.queryRequest.RelationshipPropTypes += '\n\n\n/** Query: Node relationship format (from schema)\n *'
+                if (!typedefs.queryRequest.RelationshipPropTypes) typedefs.queryRequest.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
 
                 typedefs.queryRequest.RelationshipPropTypes += `
  * @typedef { object } ${ relationshipPropName }
- * @property { '${ relationshipPropName }' } id
- * @property { ${ relationshipPropName }X } x
- * @typedef { object } ${ relationshipPropName }X
- * @property ${ queryRequestFormatOptions } [ $options ]
+ * @property ${ queryRequestItemOptions } [ $options ]
  * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
  * @property { boolean | QueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
  *`
@@ -727,20 +730,20 @@ ${ typedefs.queryRequest.NodeType }
             }
           }
 
-          if (!typedefs.queryRequest.NodeFormat) typedefs.queryRequest.NodeFormat += `\n\n\n/** Query: Node Format (from schema)\n`
+          if (!typedefs.queryRequest.Node) typedefs.queryRequest.Node += `\n\n\n/** Query: Node's (from schema)\n`
 
-          typedefs.queryRequest.NodeFormat +=` *
- * @typedef { object } ${ schemaNodeName }Format
+          typedefs.queryRequest.Node +=` *
+ * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
  * @property { '${ schemaNodeName }' } id
  * @property { string } property
- * @property { ${ schemaNodeName }FormatX } x
- * @typedef { object } ${ schemaNodeName }FormatX
- * @property ${ queryRequestFormatOptions } [ $options ]${ typedefs.queryRequest.NodeFormatProps }
+ * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
+ * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
+ * @property ${ queryRequestItemOptions } [ $options ]${ typedefs.queryRequest.NodeProps }
  *`
         }
       }
 
-      if (typedefs.queryRequest.NodeFormat) typedefs.queryRequest.NodeFormat += '/'
+      if (typedefs.queryRequest.Node) typedefs.queryRequest.Node += '/'
       if (typedefs.queryRequest.RelationshipPropTypes) typedefs.queryRequest.RelationshipPropTypes += '/'
       if (typedefs.mutateRequestItem.InsertNodeTypes) typedefs.mutateRequestItem.InsertNodeTypes += '\n */'
       if (typedefs.mutateRequestItem.UpdateNodeTypes) typedefs.mutateRequestItem.UpdateNodeTypes += '\n */'
@@ -751,7 +754,7 @@ ${ typedefs.queryRequest.NodeType }
       if (typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType) typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType = typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType.slice(0, -3)
 
       typedefs.queryRequest.NodeType = plop({
-        now: typedefs.queryRequest.FormatPipes,
+        now: typedefs.queryRequest.NodePipes,
         left: ' * @typedef { ',
         right: ` } QueryRequestItemNode`,
         default: ` * @typedef { object } QueryRequestItemNode
@@ -909,8 +912,8 @@ export const ${ enumStr } =  ''\n\n\n`
      * @param { string } propName
      * @returns { string }
      */
-    function getRelationshipQueryFormatProp (nodeName, propName) {
-      return nodeName + DELIMITER + propName + DELIMITER + 'Format'
+    function getNodePropXPropName (nodeName, propName) {
+      return nodeName + DELIMITER + propName + DELIMITER + 'X'
     }
 
 

@@ -1,4 +1,4 @@
-export const idsQueryFormat = new Set([
+export const idsQueryOptions = new Set([
   'Find',
   'Sort',
   'Limit',

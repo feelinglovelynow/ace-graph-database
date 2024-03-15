@@ -36,6 +36,7 @@ export async function start (passport) {
 
   return {
     publicJWK: jwks.publicJWK,
+    identity: rMutate.identity,
     privateJWK: jwks.privateJWK,
     admin: {
       uid: rMutate.identity[admin.uid],

@@ -5,7 +5,7 @@
     "src/aceFetch.js",
     "src/createJWKs.js",
     "src/getDerivedValue.js",
-    "src/getGeneratedQueryFormatSection.js",
+    "src/getGeneratedXQuerySection.js",
     "src/getRelationshipNode.js",
     "src/index.js",
     "src/mutate.js",

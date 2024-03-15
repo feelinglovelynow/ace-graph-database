@@ -36,21 +36,6 @@ export class Passport {
     if (typeof options.isEnforcePermissionsOn === 'boolean') this.isEnforcePermissionsOn = options.isEnforcePermissionsOn
   }
 
-
-  /**
-   * @param { () => Promise<any> } callback 
-   * @returns { Promise<any> }
-   */
-  async tsa (callback) {
-    try {
-      await this.stamp()
-      return callback()
-    } catch (e) {
-      console.log('error', e)
-      throw e
-    }
-  }
-
   
   async stamp () {
     const _passport = new Passport({

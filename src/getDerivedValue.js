@@ -4,33 +4,33 @@ import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestItemFormatGenerated } generatedQueryFormatSection 
+ * @param { td.QueryRequestItemGeneratedXSection } generatedXQuerySection 
  * @param { { [k: string]: any } } graphNode 
  * @param { enums.queryDerivedSymbol } symbol 
  * @param { (td.QueryDerivedGroup | td.QueryProperty | td.QueryValue)[] } items 
  * @param { Passport } passport 
  * @returns { number | string | undefined }
  */
-export function getDerivedValue (generatedQueryFormatSection, graphNode, symbol, items, passport) {
+export function getDerivedValue (generatedXQuerySection, graphNode, symbol, items, passport) {
   const request = /** @type { any } */ ({ value: undefined, using: undefined })
 
   for (const item of items) {
     switch (item.id) {
-      case enums.idsQueryFormat.DerivedGroup:
+      case enums.idsQueryOptions.DerivedGroup:
         const queryDerivedGroup = /** @type { td.QueryDerivedGroup } */ (item)
-        const v = getDerivedValue(generatedQueryFormatSection, graphNode, queryDerivedGroup.x.symbol, queryDerivedGroup.x.items, passport)
+        const v = getDerivedValue(generatedXQuerySection, graphNode, queryDerivedGroup.x.symbol, queryDerivedGroup.x.items, passport)
         setDerivedValueAndUsing(queryDerivedGroup.x.symbol, v)
         break
-      case enums.idsQueryFormat.Value:
+      case enums.idsQueryOptions.Value:
         const queryValue = /** @type { td.QueryValue } */ (item)
         setDerivedValueAndUsing(symbol, queryValue.x.value)
         break
-      case enums.idsQueryFormat.Property:
+      case enums.idsQueryOptions.Property:
         const queryProperty = /** @type { td.QueryProperty } */ (item)
 
         if (!queryProperty.x.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProperty.x.property])
         else {
-          const rRelationshipNode = getRelationshipNode(generatedQueryFormatSection, graphNode, passport, queryProperty.x.relationships)
+          const rRelationshipNode = getRelationshipNode(generatedXQuerySection, graphNode, passport, queryProperty.x.relationships)
           if (rRelationshipNode.node?.[queryProperty.x.property]) setDerivedValueAndUsing(symbol, rRelationshipNode.node[queryProperty.x.property])
         }
 

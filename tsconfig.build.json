@@ -4,7 +4,7 @@
     "src/createJWKs.js",
     "src/getAlgorithmOptions.js",
     "src/getDerivedValue.js",
-    "src/getGeneratedQueryFormatSection.js",
+    "src/getGeneratedXQuerySection.js",
     "src/getRelationshipNode.js",
     "src/hash.js",
     "src/index.js",

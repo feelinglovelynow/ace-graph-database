@@ -7,18 +7,18 @@ import { Passport } from './Passport.js'
  * @param { td.QueryRequestItemNodeX } x
  * @param { string } schemaPropName
  * @param { Passport } passport
- * @param { td.QueryRequestItemFormatGenerated | null } generatedParent
- * @returns { td.QueryRequestItemFormatGenerated }
+ * @param { td.QueryRequestItemGeneratedXSection | null } generatedParent
+ * @returns { td.QueryRequestItemGeneratedXSection }
  */
-export function getGeneratedQueryFormatSectionByParent(x, schemaPropName, passport, generatedParent) {
+export function getGeneratedXQuerySectionByParent (x, schemaPropName, passport, generatedParent) {
   const schemaPropValue = /** @type { td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[generatedParent?.nodeName || '']?.[schemaPropName])
 
-  if (!schemaPropValue) throw error('query__falsy-query-format-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is not defined in your schema`, { queryFormatKey: schemaPropName, nodeName: generatedParent?.nodeName })
+  if (!schemaPropValue) throw error('query__falsy-query-x-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is not defined in your schema`, { schemaPropName, nodeName: generatedParent?.nodeName })
   
   const id = schemaPropValue.id // var out to help w/ ts
 
   if (id !== enums.idsSchema.ForwardRelationshipProp && id !== enums.idsSchema.ReverseRelationshipProp && id !== enums.idsSchema.BidirectionalRelationshipProp) {
-    throw error('query__invalid-query-format-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is defined in your schema but not as a "ForwardRelationshipProp", "ReverseRelationshipProp" or "BidirectionalRelationshipProp" but as a "${ id }"`, { queryFormatKey: schemaPropName, nodeName: generatedParent?.nodeName })
+    throw error('query__invalid-query-x-key', `This request is failing b/c node name "${ generatedParent?.nodeName }" with property name "${ schemaPropName }" is defined in your schema but not as a "ForwardRelationshipProp", "ReverseRelationshipProp" or "BidirectionalRelationshipProp" but as a "${ id }"`, { schemaPropName, nodeName: generatedParent?.nodeName })
   }
 
   const rLoop = loopOptions(x)
@@ -36,23 +36,23 @@ export function getGeneratedQueryFormatSectionByParent(x, schemaPropName, passpo
 
 
 /**
- * @param { td.QueryRequestItemNodeX } queryFormatSection
+ * @param { td.QueryRequestItemNodeX } xQuerySection
  * @param { string } schemaProperty
  * @param { Passport } passport
- * @returns { td.QueryRequestItemFormatGenerated }
+ * @returns { td.QueryRequestItemGeneratedXSection }
  */
-export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaProperty, passport) {
-  if (typeof queryFormatSection?.id !== 'string' || !queryFormatSection.id) throw error('query__format-section-id-falsy', 'This request is failing b/c request.format.id is not a truthy string', { queryFormatSection })
-  if (!passport.schema?.nodes[queryFormatSection.id]) throw error('query__format-section-id-node-invalid', 'This request is failing b/c request.format.id is not a node in your schema', { queryFormatSection })
+export function getGeneratedXQuerySectionById (xQuerySection, schemaProperty, passport) {
+  if (typeof xQuerySection?.id !== 'string' || !xQuerySection.id) throw error('query__x-section-id-falsy', 'This request is failing b/c request.x.id is not a truthy string', { xQuerySection })
+  if (!passport.schema?.nodes[xQuerySection.id]) throw error('query__x-section-id-node-invalid', 'This request is failing b/c request.x.id is not a node in your schema', { xQuerySection })
 
-  const rLoop = loopOptions(queryFormatSection.x)
+  const rLoop = loopOptions(xQuerySection.x)
 
   return {
     ...rLoop,
     has: enums.has.many,
-    x: queryFormatSection.x,
+    x: xQuerySection.x,
     schemaProperty: schemaProperty,
-    nodeName: queryFormatSection.id,
+    nodeName: xQuerySection.id,
     property: rLoop.aliasProperty || schemaProperty,
   }
 }
@@ -60,7 +60,7 @@ export function getGeneratedQueryFormatSectionById (queryFormatSection, schemaPr
 
 /**
  * @param { td.QueryRequestItemNodeX } x
- * @returns { { sets: Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>>, hasCountOne: boolean, hasOptionsFind: boolean, hasValueAsResponse: boolean, priorityOptions: td.QueryRequestItemFormatGeneratedPriorityOptions, aliasProperty?: string } }
+ * @returns { { sets: Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>>, hasCountOne: boolean, hasOptionsFind: boolean, hasValueAsResponse: boolean, priorityOptions: td.QueryRequestItemGeneratedXSectionPriorityOptions, aliasProperty?: string } }
  */ 
 function loopOptions (x) {
   let aliasProperty
