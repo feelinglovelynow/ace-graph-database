@@ -6,7 +6,6 @@ import { exec } from 'node:child_process'
 import { dataTypes } from './enums/dataTypes.js'
 import { pathnames } from './enums/pathnames.js'
 import { has } from './enums/has.js'
-import { idsMutateDelete } from './enums/idsMutateDelete.js'
 import { idsMutate } from './enums/idsMutate.js'
 import { idsQuery } from './enums/idsQuery.js'
 import { idsQueryOptions } from './enums/idsQueryOptions.js'
@@ -69,7 +68,6 @@ import { DELIMITER } from './variables.js'
       enumsMap.set('dataTypes', dataTypes)
       enumsMap.set('pathnames', pathnames)
       enumsMap.set('has', has)
-      enumsMap.set('idsMutateDelete', idsMutateDelete)
       enumsMap.set('idsMutate', idsMutate)
       enumsMap.set('idsSchema', idsSchema)
       enumsMap.set('idsQuery', idsQuery)
