@@ -6,7 +6,7 @@ import { Passport } from './Passport.js'
 import { aceFetch } from './aceFetch.js'
 import { validateSchema } from './schema.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { REQUEST_UID_PREFIX, NODE_UIDS_KEY, ADD_NOW_DATE, DELIMITER, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, RELATIONSHIP_PREFIX, SCHEMA_KEY } from './variables.js'
+import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEMA_KEY, getUniqueIndexKey, getSortIndexKey, getRelationshipProp, getNow, getRevokesKey, getNodeUidsKey, ACE_NODE_NAMES } from './variables.js'
 
 
 
@@ -31,8 +31,8 @@ export async function _mutate (passport, body) {
   try {
     await passport.stamp()
 
-    /** @type { { [nodeName: string]: string[] } } - Uids of all nodes in graph  */
-    const allNodeUids = (await passport.cache.one(NODE_UIDS_KEY)) || {}
+    /** @type { Map<string, string[]> } - <nodeName, uids> Uids of specific nodes in graph  */
+    const nodeUidsMap = new Map()
 
     /** @type { MustPropsMap } - Map of props in schema that must be defined */
     const mustPropsMap = getMustPropMap()
@@ -67,7 +67,7 @@ export async function _mutate (passport, body) {
     let deleteArray = []
 
     await setPrivateJWKs()
-    await setUpdateRequestItems()
+    await prepLoop()
     await deligate()
     throwIfMissingMustProps()
     await addSortIndicesToGraph()
@@ -83,23 +83,51 @@ export async function _mutate (passport, body) {
     }
 
 
-    async function setUpdateRequestItems () {
+    async function prepLoop () {
       if (request) {
-        const nodeUids = []
-        const relationshipUids = []
+        /** @type { Map<string, string> } - <nodeUidsKey, nodeName> Map of node names we will get uids for */
+        const nodeNamesMap = new Map()
+
+        /** @type { { node: string[], relationship: string[] } } - We will convert uids to graph nodes to help with updating */
+        const updateUids = { node: [], relationship: [] }
 
         for (let i = 0; i < request.length; i++) {
           if (request[i].id === enums.idsMutate.UpdateNode) {
-            nodeUids.push(/** @type { td.MutateRequestItemUpdateNode } */(request[i]).x.uid)
+            const mutateRequestItemUpdateNode = /** @type { td.MutateRequestItemUpdateNode } */(request[i])
+            const nodeName = mutateRequestItemUpdateNode.nodeName
+
+            nodeNamesMap.set(getNodeUidsKey(nodeName), nodeName)
+            updateUids.node.push(mutateRequestItemUpdateNode.x.uid)
           }
 
           if (request[i].id === enums.idsMutate.UpdateRelationship) {
-            relationshipUids.push(/** @type { td.MutateRequestItemUpdateRelationship } */(request[i]).x._uid)
+            updateUids.relationship.push(/** @type { td.MutateRequestItemUpdateRelationship } */(request[i]).x._uid)
+          }
+
+          if (request[i].id === enums.idsMutate.SchemaAndDataDeleteNodes) {
+            /** @type { td.MutateRequestItemSchemaAndData } */(request[i]).x.nodes.forEach(nodeName => {
+              nodeNamesMap.set(getNodeUidsKey(nodeName), nodeName)
+            })
+          }
+
+          if (request[i].id === enums.idsMutate.InsertNode) {
+            const nodeName = /** @type { td.MutateRequestItemInsertNode } */ (request[i]).nodeName
+            nodeNamesMap.set(getNodeUidsKey(nodeName), nodeName)
           }
         }
 
-        if (nodeUids.length) updateRequestItems.nodes = await passport.cache.many(nodeUids)
-        if (relationshipUids.length) updateRequestItems.relationships = await passport.cache.many(relationshipUids)
+        if (updateUids.node.length) updateRequestItems.nodes = await passport.cache.many(updateUids.node)
+        if (updateUids.relationship.length) updateRequestItems.relationships = await passport.cache.many(updateUids.relationship)
+
+        if (nodeNamesMap.size) {
+          const keys = [...nodeNamesMap.keys() ]
+          const rCache = await passport.cache.many(keys)
+
+          for (const key of keys) {
+            const nodeName = nodeNamesMap.get(key)
+            if (nodeName) nodeUidsMap.set(nodeName, rCache.get(key) || [])
+          }
+        }
       }
     }
 
@@ -161,17 +189,18 @@ export async function _mutate (passport, body) {
         switch (requestItem.id) {
           case enums.idsMutate.SchemaAndDataDeleteNodes:
             for (const requestNodeName of requestItem.x.nodes) {
-              const nodeUids = allNodeUids[requestNodeName]
+              const nodeUidsKey = getNodeUidsKey(requestNodeName)
+              const nodeUids = nodeUidsMap.get(requestNodeName)
 
-              if (!nodeUids?.length) throw error('mutate__delete-nodes__invalid-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName`, { nodeName: requestNodeName, requestItem })
+              if (!nodeUids?.length) throw error('mutate__delete-nodes__invalid-node', `Please provide a valid nodeName, \`${requestNodeName}\` is not a valid nodeName`, { nodeName: requestNodeName, requestItem })
+              if (ACE_NODE_NAMES.has(requestNodeName)) throw error('mutate__delete-nodes__ace-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName because it is an Ace node name that is required for your graph to function optimally`, { nodeName: requestNodeName, requestItem, ACE_NODE_NAMES: [ ...ACE_NODE_NAMES.keys() ] })
 
               await deleteByUids(nodeUids)
               schemaDeleteNodes()
 
-              delete allNodeUids[requestNodeName]
-              passport.cache.putMap.set(NODE_UIDS_KEY, allNodeUids)
-
+              passport.cache.deleteSet.add(nodeUidsKey)
               delete passport.schema?.nodes[requestNodeName]
+              passport.cache.putMap.set(SCHEMA_KEY, passport.schema)
 
               function schemaDeleteNodes () {
                 if (passport.schema) {
@@ -273,7 +302,7 @@ export async function _mutate (passport, body) {
 
         await populateInupNodesArray()
         implementInupNodesArray()
-        passport.cache.putMap.set(NODE_UIDS_KEY, allNodeUids) // add $nodeUids to ace
+        passport.cache.putMap.set(getNodeUidsKey(requestItem.nodeName), nodeUidsMap.get(requestItem.nodeName))
 
         async function populateInupNodesArray () {
           if (requestItem && nodeNamesSet.has(requestItem.nodeName)) { // IF permission to write this nodeName
@@ -310,10 +339,13 @@ export async function _mutate (passport, body) {
             else {
               graphUid = startsWithUidPrefix ? getGraphUidAndAddToMapUids(requestItem.x.uid, startsWithUidPrefix) : requestItem.x.uid
 
-              if (Array.isArray(allNodeUids[requestItem.nodeName])) allNodeUids[requestItem.nodeName].push(graphUid) // IF schema $nodeUids for this uid's node is already an array => push onto it
-              else allNodeUids[requestItem.nodeName] = [graphUid] // IF schema $nodeUids for this uid's node is not an array => set as array w/ uid as first value
-            
-              passport.cache.putMap.set(NODE_UIDS_KEY, allNodeUids)
+              const nodeUids = nodeUidsMap.get(requestItem.nodeName) || []
+
+              nodeUids.push(graphUid)
+
+              nodeUidsMap.set(requestItem.nodeName, nodeUids)
+
+              passport.cache.putMap.set(getNodeUidsKey(requestItem.nodeName), nodeUids)
             }
 
             for (const nodePropName in requestItem.x) { // loop each request property => validate each property => IF invalid throw errors => IF valid do index things
@@ -495,12 +527,15 @@ export async function _mutate (passport, body) {
 
           /** @param { 'a' | 'b' } direction */
           async function addRelationshipToNode (direction) {
-            const node = await passport.cache.one(requestItem.x[direction])
+            if (requestItem.x[direction]) {
+              const node = await passport.cache.one(/** @type { string } */(requestItem.x[direction]))
 
-            if (!node[relationshipProp]) node[relationshipProp] = [ x._uid ]
-            else node[relationshipProp].push(x._uid)
+              if (!node[relationshipProp]) node[relationshipProp] = [x._uid]
+              else node[relationshipProp].push(x._uid)
 
-            passport.cache.putMap.set(node.x.uid, node)
+              passport.cache.putMap.set(node.x.uid, node)
+
+            }
           }
         }
       }
@@ -527,38 +562,44 @@ export async function _mutate (passport, body) {
         const nodeEntries = await passport.cache.many(uids)
 
         for (const node of nodeEntries.values()) {
-          passport.cache.deleteSet.add(node.x.uid) // add request uid to the passport.cache.deleteSet
 
           /** @type { Map<string, string> } <relationshipUid, relationshipProp> */
-          const relationshipUids = new Map()
+          const relationshipUidsMap = new Map()
 
-          for (const prop in node) {
+          const relationshipUidsArray = [ ...relationshipUidsMap.keys() ]
+
+          for (const prop in node) { // b/c we need to get data from these eal
             if (prop.startsWith(RELATIONSHIP_PREFIX)) {
               for (const relationshipUid of node[prop]) {
-                relationshipUids.set(relationshipUid, prop)
-                passport.cache.deleteSet.add(relationshipUid) // add relationship uids to the passport.cache.deleteSet
+                relationshipUidsMap.set(relationshipUid, prop)
               }
             }
           }
 
           /** @type { Map<string, string> } <relationshipNodeUid, relationshipId> */
           const relationshipNodeUids = new Map()
-          const relationshipEntries = await passport.cache.many([...relationshipUids.keys()])
+          const graphRelationshipsMap = await passport.cache.many(relationshipUidsArray)
 
-          for (const relationship of relationshipEntries.values()) {
-            if (relationship.x.a === node.x.uid) relationshipNodeUids.set(relationship.x.b, relationship.x._uid)
-            if (relationship.x.b === node.x.uid) relationshipNodeUids.set(relationship.x.a, relationship.x._uid)
+          for (const graphRelationship of graphRelationshipsMap.values()) {
+            if (graphRelationship.x.a === node.x.uid) relationshipNodeUids.set(graphRelationship.x.b, graphRelationship.x._uid)
+            if (graphRelationship.x.b === node.x.uid) relationshipNodeUids.set(graphRelationship.x.a, graphRelationship.x._uid)
           }
 
-          const relationshipNodeEntries = await passport.cache.many([ ...relationshipNodeUids.keys() ])
+          const graphRelationshipNodesMap = await passport.cache.many([ ...relationshipNodeUids.keys() ])
 
-          for (const relationshipNode of relationshipNodeEntries.values()) {
-            const _uid = relationshipNodeUids.get(relationshipNode.x.uid)
+          for (const graphRelationshipNode of graphRelationshipNodesMap.values()) {
+            const _uid = relationshipNodeUids.get(graphRelationshipNode.x.uid)
 
             if (_uid) {
-              const prop = relationshipUids.get(_uid)
-              if (prop) removeUidFromRelationshipProp(relationshipNode, prop, _uid)
+              const prop = relationshipUidsMap.get(_uid)
+              if (prop) removeUidFromRelationshipProp(graphRelationshipNode, prop, _uid)
             }
+          }
+
+          passport.cache.deleteSet.add(node.x.uid) // add request uid to the passport.cache.deleteSet
+
+          for (const relationshipUid in relationshipUidsArray) { // we need data from these relationships above so add to deleteSet last
+            passport.cache.deleteSet.add(relationshipUid)
           }
         }
       }
@@ -594,17 +635,17 @@ export async function _mutate (passport, body) {
         if (!passport.schema?.nodes) throw error('add-to-schema__falsy-nodes', '/add-to-schema should be called after calling /start, please call /start before calling /add-to-schema', {})
         if (!passport.schema?.relationships) throw error('add-to-schema__falsy-relationships', '/add-to-schema should be called after calling /start, please call /start before calling /add-to-schema', {})
 
-        if (requestItem.x.schemaAdditions.nodes) {
-          for (const node in requestItem.x.schemaAdditions.nodes) {
+        if (requestItem.x.nodes) {
+          for (const node in requestItem.x.nodes) {
             if (passport.schema?.nodes[node]) throw error('add-to-schema__overwrite-node', `The node \`${node}\` is already in your schema, please only include nodes in /add-to-schema that are not already in your schema`, { node })
-            passport.schema.nodes[node] = requestItem.x.schemaAdditions.nodes[node]
+            passport.schema.nodes[node] = requestItem.x.nodes[node]
           }
         }
 
-        if (requestItem.x.schemaAdditions.relationships) {
-          for (const relationship in requestItem.x.schemaAdditions.relationships) {
+        if (requestItem.x.relationships) {
+          for (const relationship in requestItem.x.relationships) {
             if (passport.schema?.relationships[relationship]) throw error('add-to-schema__overwrite-relationship', `The relationship \`${relationship}\` is already in your schema, please only include relationships in /add-to-schema that are not already in your schema`, { relationship })
-            passport.schema.relationships[relationship] = requestItem.x.schemaAdditions.relationships[relationship]
+            passport.schema.relationships[relationship] = requestItem.x.relationships[relationship]
           }
         }
 
@@ -662,7 +703,7 @@ export async function _mutate (passport, body) {
 
     function throwIfMissingMustProps () {
       if (passport.cache.putMap.size) {
-        for (const requestItem of passport.cache.putMap.values()) {
+        for (const requestItem of [ ...passport.cache.putMap.values() ]) {
           const x = /** @type { td.MutateRequestItemInsertRelationshipX } */ (/** @type {*} */ (requestItem.x))
           const mustProps = requestItem.subId ? mustPropsMap.get(requestItem.subId) : null // the must props for a specific node or relationship
 

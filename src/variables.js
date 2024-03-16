@@ -19,10 +19,18 @@ export function getNow () {
 
 export const DELIMITER = '___'
 export const SCHEMA_KEY = '$schema'
-export const NODE_UIDS_KEY = '$nodeUids'
 export const RELATIONSHIP_PREFIX = '$r' + DELIMITER
+export const NODE_UIDS_PREFIX = '$nodeUids' + DELIMITER
 export const INDEX_SORT_PREFIX = '$index' + DELIMITER + 'sort' + DELIMITER
 export const INDEX_UNIQUE_PREFIX = '$index' + DELIMITER + 'unique' + DELIMITER
+
+export const ACE_NODE_NAMES = new Set([
+  'AceSetting',
+  'AceUser',
+  'AceToken',
+  'AceRole',
+  'AcePermission',
+])
 
 
 /**
@@ -52,6 +60,15 @@ export function getUniqueIndexKey (nodeName, propertyKey, propertyValue) {
  */
 export function getSortIndexKey (nodeName, propertyKey) {
   return INDEX_SORT_PREFIX + nodeName + DELIMITER + propertyKey
+}
+
+
+/**
+ * @param { string } nodeName
+ * @returns { string }
+ */
+export function getNodeUidsKey (nodeName) {
+  return NODE_UIDS_PREFIX + nodeName
 }
 
 

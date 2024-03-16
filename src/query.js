@@ -4,8 +4,8 @@ import { Passport } from './Passport.js'
 import { aceFetch } from './aceFetch.js'
 import { implementQueryOptions } from './queryOptions.js'
 import { getAlgorithmOptions } from './getAlgorithmOptions.js'
-import { NODE_UIDS_KEY, getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey } from './variables.js'
 import { getGeneratedXQuerySectionByParent, getGeneratedXQuerySectionById } from './getGeneratedXQuerySection.js'
+import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey, getNodeUidsKey } from './variables.js'
 
 
 /**
@@ -143,8 +143,7 @@ export async function _query (passport, body) {
         }
 
         if (isValid && !uids?.length) {
-          const allNodes = await passport.cache.one(NODE_UIDS_KEY)
-          uids = allNodes ? allNodes[generatedXQuerySection.nodeName] : [] // IF property is not a sort index => get unsorted node uids from $nodeUids in database
+          uids = await passport.cache.one(getNodeUidsKey(generatedXQuerySection.nodeName)) || []
         }
       }
 

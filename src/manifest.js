@@ -17,7 +17,7 @@ import { queryWhereSymbol } from './enums/queryWhereSymbol.js'
 import { settings } from './enums/settings.js'
 import { sortOptions } from './enums/sortOptions.js'
 import { aceFetch } from './aceFetch.js'
-import { DELIMITER } from './variables.js'
+import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
 
 
 /**
@@ -175,8 +175,8 @@ import { DELIMITER } from './variables.js'
  * @typedef { MutateRequestItem | MutateRequestItem[] } MutateRequest
  * @typedef { MutateRequestItemBoot | MutateRequestItemInsert | MutateRequestItemUpdate | MutateRequestItemDataDelete | MutateRequestItemSchemaAndData | MutateRequestItemSchema } MutateRequestItem
  * @typedef { MutateRequestItemStart | MutateRequestItemRestart } MutateRequestItemBoot
- * @typedef { ${ typedefs.mutateRequestItem.InsertRelationshipPipes || 'MutateRequestItemInsertNode | MutateRequestItemInsertRelationship' } } MutateRequestItemInsert
- * @typedef { ${ typedefs.mutateRequestItem.UpdateRelationshipPipes || 'MutateRequestItemUpdateNode | MutateRequestItemUpdateRelationship' } } MutateRequestItemUpdate
+ * @typedef { MutateRequestItemInsertNode | MutateRequestItemInsertRelationship } MutateRequestItemInsert
+ * @typedef { MutateRequestItemUpdateNode | MutateRequestItemUpdateRelationship } MutateRequestItemUpdate
  * @typedef { MutateRequestItemDataDeleteNodes | MutateRequestItemDataDeleteRelationships | MutateRequestItemDataDeleteNodeProps | MutateRequestItemDataDeleteRelationshipProps } MutateRequestItemDataDelete
  * @typedef { MutateRequestItemSchemaAndDataDeleteNodes } MutateRequestItemSchemaAndData
  * @typedef { MutateRequestItemSchemaAddition } MutateRequestItemSchema
@@ -185,7 +185,7 @@ import { DELIMITER } from './variables.js'
  * @property { typeof enums.idsMutate.Start } id
  *
  * @typedef { object } MutateRequestItemRestart
- * @property { typeof enums.idsMutate.Restart } id${ typedefs.mutateRequestItem.InsertNodeType }${ typedefs.mutateRequestItem.InsertRelationshipType }${ typedefs.mutateRequestItem.UpdateNodeType }${ typedefs.mutateRequestItem.UpdateRelationshipType }
+ * @property { typeof enums.idsMutate.Restart } id${ typedefs.mutate.InsertNodeType }${ typedefs.mutate.InsertRelationshipType }${ typedefs.mutate.UpdateNodeType }${ typedefs.mutate.UpdateRelationshipType }
  * 
  * @typedef { MutateRequestItemUpdateNode & { [relationshipProp: string]: string[] } } MutateRequestItemNodeWithRelationships
  * 
@@ -207,11 +207,11 @@ import { DELIMITER } from './variables.js'
  *
  * @typedef { object } MutateRequestItemSchemaAndDataDeleteNodes
  * @property { typeof enums.idsMutate.SchemaAndDataDeleteNodes } id
- * @property { { nodes: ${ typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType || 'string[]' } } } x
+ * @property { { nodes: ${ typedefs.mutate.SchemaAndDataDeleteNodesType || 'string[]' } } } x
  *
  * @typedef { object } MutateRequestItemSchemaAddition
  * @property { typeof enums.idsMutate.SchemaAddition } id
- * @property { { schemaAdditions: Schema } } x
+ * @property { Schema } x
  *
  * @typedef { object } MutateRequestPrivateJWKOption
  * @property { 'PrivateJWK' } id
@@ -223,7 +223,7 @@ import { DELIMITER } from './variables.js'
  * @property { AceStartResponse } [ start ]
  *
  * @typedef { { [propName: string]: any } } MutateRequestItemInsertRelationshipX
- */${ typedefs.mutateRequestItem.InsertNodeTypes}${typedefs.mutateRequestItem.UpdateNodeTypes }${ typedefs.mutateRequestItem.InsertRelationshipTypes }${ typedefs.mutateRequestItem.UpdateRelationshipTypes }
+ */${ typedefs.mutate.InsertNodeTypes }${ typedefs.mutate.UpdateNodeTypes }${ typedefs.mutate.InsertRelationshipTypes }${ typedefs.mutate.UpdateRelationshipTypes }
 
 
 /** Query
@@ -232,7 +232,7 @@ import { DELIMITER } from './variables.js'
  *
  * @typedef { QueryRequestItemNode | QueryRequestItemRelationship | QueryRequestItemAceBackup | QueryRequestItemAceSchema } QueryRequestItem
  *
-${ typedefs.queryRequest.NodeType }
+${ typedefs.query.NodeType }
  *
  * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty, $options?: QueryRequestItemOptions } } QueryRequestItemNodeX
  * @typedef ${ queryRequestItemOptions } QueryRequestItemOptions
@@ -480,7 +480,7 @@ ${ typedefs.queryRequest.NodeType }
  * @typedef { { [key: string]: CryptoKey } } QueryPublicJWKs
  *
  * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
-*/${ typedefs.queryRequest.Node } ${ typedefs.queryRequest.RelationshipPropTypes }
+*/${ typedefs.query.Node } ${ typedefs.query.RelationshipPropTypes }
 
 
 /** Cloudflare
@@ -567,14 +567,14 @@ ${ typedefs.queryRequest.NodeType }
 
     function getSchemaTypedefs () {
       const typedefs = {
-        queryRequest: {
+        query: {
           NodeType: '',
           Node: '',
           NodePipes: '',
           NodeProps: '',
           RelationshipPropTypes: '',
         },
-        mutateRequestItem: {
+        mutate: {
           InsertNodeType: '',
           UpdateNodeType: '',
           InsertNodePipes: '',
@@ -591,28 +591,20 @@ ${ typedefs.queryRequest.NodeType }
         }
       }
 
-      const aceNodeNames = new Set([
-        'AceSetting',
-        'AceUser',
-        'AceToken',
-        'AceRole',
-        'AcePermission',
-      ])
-
       if (schema?.relationships) {
-        typedefs.mutateRequestItem.InsertRelationshipTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
-        typedefs.mutateRequestItem.UpdateRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
+        typedefs.mutate.InsertRelationshipTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
+        typedefs.mutate.UpdateRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
 
         for (const schemaRelationshipName in schema.relationships) {
-          typedefs.mutateRequestItem.InsertRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemInsertRelationship | `
+          typedefs.mutate.InsertRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemInsertRelationship | `
 
-          typedefs.mutateRequestItem.UpdateRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
+          typedefs.mutate.UpdateRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
 
-          typedefs.mutateRequestItem.UpdateRelationshipType += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
+          typedefs.mutate.UpdateRelationshipType += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
 
           const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ schemaRelationshipName }\` => \`_:node2\``
 
-          typedefs.mutateRequestItem.InsertRelationshipTypes += `\n *
+          typedefs.mutate.InsertRelationshipTypes += `\n *
  * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationship
  * @property { typeof enums.idsMutate.InsertRelationship } id - Insert Relationship
  * @property { '${ schemaRelationshipName }' } relationshipName - Insert \`${ schemaRelationshipName }\` relationship
@@ -621,7 +613,7 @@ ${ typedefs.queryRequest.NodeType }
  * @property { string } a - ${ abDescription }
  * @property { string } b - ${ abDescription }`
      
-          typedefs.mutateRequestItem.UpdateRelationshipTypes += `\n *
+          typedefs.mutate.UpdateRelationshipTypes += `\n *
  * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationship
  * @property { typeof enums.idsMutate.UpdateRelationship } id - Update Relationship
  * @property { '${ schemaRelationshipName }' } relationshipName - Update \`${ schemaRelationshipName }\` relationship
@@ -637,8 +629,8 @@ ${ typedefs.queryRequest.NodeType }
               const dataType = getDataType(schemaProp.x.dataType)
               const description = `Set to a ${ dataType } value if you would love to update this relationship property, \`${schemaRelationshipPropName}\`, in the graph`
 
-              typedefs.mutateRequestItem.InsertRelationshipTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]'} - ${description}`
-              typedefs.mutateRequestItem.UpdateRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
+              typedefs.mutate.InsertRelationshipTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]'} - ${description}`
+              typedefs.mutate.UpdateRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
             }
           }
         }
@@ -646,21 +638,21 @@ ${ typedefs.queryRequest.NodeType }
 
 
       if (schema?.nodes) {
-        typedefs.mutateRequestItem.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
-        typedefs.mutateRequestItem.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
+        typedefs.mutate.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
+        typedefs.mutate.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
 
         for (const schemaNodeName in schema.nodes) {
-          typedefs.queryRequest.NodeProps = '' // clear previous loop props
+          typedefs.query.NodeProps = '' // clear previous loop props
 
-          typedefs.queryRequest.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
+          typedefs.query.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
 
-          typedefs.mutateRequestItem.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
+          typedefs.mutate.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
 
-          typedefs.mutateRequestItem.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
+          typedefs.mutate.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
 
-          if (!aceNodeNames.has(schemaNodeName)) typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
+          if (!ACE_NODE_NAMES.has(schemaNodeName)) typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
 
-          typedefs.mutateRequestItem.InsertNodeTypes += `
+          typedefs.mutate.InsertNodeTypes += `
  *
  * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
  * @property { typeof enums.idsMutate.InsertNode } id - Insert Node
@@ -670,7 +662,7 @@ ${ typedefs.queryRequest.NodeType }
  * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
  * @property { string } uid - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
 
-          typedefs.mutateRequestItem.UpdateNodeTypes += `
+          typedefs.mutate.UpdateNodeTypes += `
  *
  * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
  * @property { typeof enums.idsMutate.UpdateNode } id - Update Node
@@ -686,9 +678,9 @@ ${ typedefs.queryRequest.NodeType }
             switch (schemaProp.id) {
               case 'Prop':
                 const dataType = getDataType(schemaProp.x.dataType)
-                typedefs.mutateRequestItem.InsertNodeTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.mutateRequestItem.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.queryRequest.NodeProps += `\n * @property { boolean | QueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
+                typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+                typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+                typedefs.query.NodeProps += `\n * @property { boolean | QueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
                 break
               case 'ForwardRelationshipProp':
               case 'ReverseRelationshipProp':
@@ -714,11 +706,11 @@ ${ typedefs.queryRequest.NodeType }
 
                 const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
 
-                typedefs.queryRequest.NodeProps += `\n * @property { ${ relationshipPropName } } [ ${ schemaNodePropName } ] - Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
+                typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName } } [ ${ schemaNodePropName } ] - Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
 
-                if (!typedefs.queryRequest.RelationshipPropTypes) typedefs.queryRequest.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
+                if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
 
-                typedefs.queryRequest.RelationshipPropTypes += `
+                typedefs.query.RelationshipPropTypes += `
  * @typedef { object } ${ relationshipPropName }
  * @property ${ queryRequestItemOptions } [ $options ]
  * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
@@ -728,31 +720,34 @@ ${ typedefs.queryRequest.NodeType }
             }
           }
 
-          if (!typedefs.queryRequest.Node) typedefs.queryRequest.Node += `\n\n\n/** Query: Node's (from schema)\n`
+          if (!typedefs.query.Node) typedefs.query.Node += `\n\n\n/** Query: Node's (from schema)\n`
 
-          typedefs.queryRequest.Node +=` *
+          typedefs.query.Node +=` *
  * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
  * @property { '${ schemaNodeName }' } id
  * @property { string } property
  * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
  * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
- * @property ${ queryRequestItemOptions } [ $options ]${ typedefs.queryRequest.NodeProps }
+ * @property ${ queryRequestItemOptions } [ $options ]${ typedefs.query.NodeProps }
  *`
         }
       }
 
-      if (typedefs.queryRequest.Node) typedefs.queryRequest.Node += '/'
-      if (typedefs.queryRequest.RelationshipPropTypes) typedefs.queryRequest.RelationshipPropTypes += '/'
-      if (typedefs.mutateRequestItem.InsertNodeTypes) typedefs.mutateRequestItem.InsertNodeTypes += '\n */'
-      if (typedefs.mutateRequestItem.UpdateNodeTypes) typedefs.mutateRequestItem.UpdateNodeTypes += '\n */'
-      if (typedefs.mutateRequestItem.InsertRelationshipTypes) typedefs.mutateRequestItem.InsertRelationshipTypes += '\n */'
-      if (typedefs.mutateRequestItem.UpdateRelationshipTypes) typedefs.mutateRequestItem.UpdateRelationshipTypes += '\n */'
-      if (typedefs.mutateRequestItem.InsertRelationshipPipes) typedefs.mutateRequestItem.InsertRelationshipPipes = typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType.slice(0, -3)
-      if (typedefs.mutateRequestItem.UpdateRelationshipPipes) typedefs.mutateRequestItem.UpdateRelationshipPipes = typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType.slice(0, -3)
-      if (typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType) typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType = typedefs.mutateRequestItem.SchemaAndDataDeleteNodesType.slice(0, -3)
+      if (typedefs.query.Node) typedefs.query.Node += '/'
+      if (typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '/'
+      if (typedefs.mutate.InsertNodeTypes) typedefs.mutate.InsertNodeTypes += '\n */'
+      if (typedefs.mutate.UpdateNodeTypes) typedefs.mutate.UpdateNodeTypes += '\n */'
+      if (typedefs.mutate.InsertRelationshipTypes) typedefs.mutate.InsertRelationshipTypes += '\n */'
+      if (typedefs.mutate.UpdateRelationshipTypes) typedefs.mutate.UpdateRelationshipTypes += '\n */'
+      if (typedefs.query.NodePipes) typedefs.query.NodePipes = typedefs.query.NodePipes.slice(0, -3)
+      if (typedefs.mutate.InsertNodePipes) typedefs.mutate.InsertNodePipes = typedefs.mutate.InsertNodePipes.slice(0, -3)
+      if (typedefs.mutate.UpdateNodePipes) typedefs.mutate.UpdateNodePipes = typedefs.mutate.UpdateNodePipes.slice(0, -3)
+      if (typedefs.mutate.InsertRelationshipPipes) typedefs.mutate.InsertRelationshipPipes = typedefs.mutate.InsertRelationshipPipes.slice(0, -3)
+      if (typedefs.mutate.UpdateRelationshipPipes) typedefs.mutate.UpdateRelationshipPipes = typedefs.mutate.UpdateRelationshipPipes.slice(0, -3)
+      if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')[]'
 
-      typedefs.queryRequest.NodeType = plop({
-        now: typedefs.queryRequest.NodePipes,
+      typedefs.query.NodeType = plop({
+        now: typedefs.query.NodePipes,
         left: ' * @typedef { ',
         right: ` } QueryRequestItemNode`,
         default: ` * @typedef { object } QueryRequestItemNode
@@ -761,8 +756,8 @@ ${ typedefs.queryRequest.NodeType }
  * @property { QueryRequestItemNodeX } x`
       })
 
-      typedefs.mutateRequestItem.InsertNodeType = plop({
-        now: typedefs.mutateRequestItem.InsertNodePipes,
+      typedefs.mutate.InsertNodeType = plop({
+        now: typedefs.mutate.InsertNodePipes,
         left: '\n *\n * @typedef { ',
         right: ' } MutateRequestItemInsertNode',
         default: `\n *\n * @typedef { object } MutateRequestItemInsertNode
@@ -771,8 +766,8 @@ ${ typedefs.queryRequest.NodeType }
  * @property { { uid: string, [propName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x`
       })
 
-      typedefs.mutateRequestItem.UpdateNodeType = plop({
-        now: typedefs.mutateRequestItem.UpdateNodePipes,
+      typedefs.mutate.UpdateNodeType = plop({
+        now: typedefs.mutate.UpdateNodePipes,
         left: '\n *\n * @typedef { ',
         right: ' } MutateRequestItemUpdateNode',
         default: `\n *\n * @typedef { object } MutateRequestItemUpdateNode
@@ -781,8 +776,8 @@ ${ typedefs.queryRequest.NodeType }
  * @property { { uid: string, [propName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x`
       })
 
-      typedefs.mutateRequestItem.InsertRelationshipType = plop({
-        now: typedefs.mutateRequestItem.InsertRelationshipPipes,
+      typedefs.mutate.InsertRelationshipType = plop({
+        now: typedefs.mutate.InsertRelationshipPipes,
         left: '\n *\n * @typedef { ',
         right: ' } MutateRequestItemInsertRelationship',
         default: `\n *\n * @typedef { object } MutateRequestItemInsertRelationship
@@ -791,8 +786,8 @@ ${ typedefs.queryRequest.NodeType }
  * @property { { a: string, b: string, [propName: string]: any, $options?: MutateRequestPrivateJWKOption[] } } x`
       })
 
-      typedefs.mutateRequestItem.UpdateRelationshipType = plop({
-        now: typedefs.mutateRequestItem.UpdateRelationshipPipes,
+      typedefs.mutate.UpdateRelationshipType = plop({
+        now: typedefs.mutate.UpdateRelationshipPipes,
         left: '\n *\n * @typedef { ',
         right: ' } MutateRequestItemUpdateRelationship',
         default: `\n *\n * @typedef { object } MutateRequestItemUpdateRelationship
@@ -814,7 +809,7 @@ ${ typedefs.queryRequest.NodeType }
         let now = options.now
 
         if (!now) response = options.default
-        else response = options.left + now.slice(0, - 3) + options.right
+        else response = options.left + now + options.right
 
         return response
       }

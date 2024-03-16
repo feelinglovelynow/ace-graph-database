@@ -5,7 +5,7 @@ import { _mutate } from './mutate.js'
 import { Passport } from './Passport.js'
 import { createJWKs } from './createJWKs.js'
 import { validateSchema } from './schema.js'
-import { NODE_UIDS_KEY, SCHEMA_KEY, getRevokesKey } from './variables.js'
+import { SCHEMA_KEY, getRevokesKey } from './variables.js'
 
 
 /**
@@ -14,14 +14,11 @@ import { NODE_UIDS_KEY, SCHEMA_KEY, getRevokesKey } from './variables.js'
  * @returns { Promise<td.AceStartResponse> }
  */
 export async function start (passport) {
-  /** @type { { [nodeName: string]: string[] } } - Uids of all nodes in graph  */
-  const allNodeUids = (await passport.cache.one(NODE_UIDS_KEY)) || {}
-
   /** @type { number } - Count of nodes defined in schema  */
   const schemaNodesDefined = Object.keys(passport.schema?.nodes || {})?.length
 
   /** @type { number } - Count of relationships defined in schema  */
-  const relationshipNodesDefined = Object.keys(passport.schema?.relationships || {})?.length
+  const schemaRelationshipsDefined = Object.keys(passport.schema?.relationships || {})?.length
 
   /** @type { { username: string, uid: string, token: string, role: string } } - Common admin variables */
   const admin = { username: 'admin', uid: '_:userAdmin', token: '_:tokenAdmin', role: '_:roleAdmin' }
@@ -48,8 +45,7 @@ export async function start (passport) {
 
   function validate () {
     if (schemaNodesDefined) throw error('start__schema-nodes-defined', 'Request fails because there are nodes defined in your schema. Start is meant to boot up a graph without nodes. Delete you schema if you would love to start a new graph.', { schemaNodesDefined })
-    if (relationshipNodesDefined) throw error('start__schema-relationships-defined', 'Request fails because there are relationships defined in your schema. Start is meant to boot up a graph without relationships. Delete you schema if you would love to start a new graph.', { relationshipsLength: relationshipNodesDefined })
-    if (allNodeUids?.length) throw error('start__nodes-found', 'Request fails because there are nodes in your graph. Start is meant to boot up a graph without nodes. Delete your nodes if you would love to start a new graph.', { allNodeUidsLength: allNodeUids.length })
+    if (schemaRelationshipsDefined) throw error('start__schema-relationships-defined', 'Request fails because there are relationships defined in your schema. Start is meant to boot up a graph without relationships. Delete you schema if you would love to start a new graph.', { relationshipsLength: schemaRelationshipsDefined })
   }
 
 
