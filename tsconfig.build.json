@@ -1,6 +1,7 @@
 {
   "files": [
     "src/aceFetch.js",
+    "src/Cache.js",
     "src/createJWKs.js",
     "src/getAlgorithmOptions.js",
     "src/getDerivedValue.js",

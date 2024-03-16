@@ -15,7 +15,7 @@ import { NODE_UIDS_KEY, SCHEMA_KEY, getRevokesKey } from './variables.js'
  */
 export async function start (passport) {
   /** @type { { [nodeName: string]: string[] } } - Uids of all nodes in graph  */
-  const allNodeUids = (await passport.storage.get(NODE_UIDS_KEY)) || {}
+  const allNodeUids = (await passport.cache.one(NODE_UIDS_KEY)) || {}
 
   /** @type { number } - Count of nodes defined in schema  */
   const schemaNodesDefined = Object.keys(passport.schema?.nodes || {})?.length
@@ -99,7 +99,7 @@ export async function start (passport) {
       }
     }
 
-    passport.storage.put(SCHEMA_KEY, validateSchema(schema))
+    passport.cache.storage.put(SCHEMA_KEY, validateSchema(schema))
 
     return schema
   }

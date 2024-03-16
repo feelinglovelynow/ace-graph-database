@@ -59,7 +59,7 @@ export async function _query (passport, body) {
 
           /** @type { { [k: string]: any } } - We'll turn the map into this object */
           const rList = {}
-          const listEntries = await passport.storage.list()
+          const listEntries = await passport.cache.storage.list()
 
           listEntries.forEach((value, key) => {
             rList[key] = value
@@ -113,7 +113,7 @@ export async function _query (passport, body) {
 
       if (sortOptions) {
         const indexKey = getSortIndexKey(generatedXQuerySection.nodeName, sortOptions.x.property) // IF sorting by an property requested => see if property is a sort index
-        if (indexKey) uids = await passport.storage.get(indexKey)
+        if (indexKey) uids = await passport.cache.one(indexKey)
       }
 
       let isUsingSortIndexNodes = false
@@ -128,7 +128,7 @@ export async function _query (passport, body) {
           if (!uids.length) isValid = false
         } else if (findByUnique) {
           const key = getUniqueIndexKey(generatedXQuerySection.nodeName, findByUnique.x.property, findByUnique.x.value)
-          const rGetPutCache = await getPutCache([ key ])
+          const rGetPutCache = await passport.cache.one(key)
           const uid = rGetPutCache.get(key)
           uids = uid ? [uid ] : []
           if (!uids.length) isValid = false
@@ -137,13 +137,13 @@ export async function _query (passport, body) {
             return getUniqueIndexKey(generatedXQuerySection.nodeName, value.property, value.value)
           })
 
-          const rGetPutCache = await getPutCache(keys)
+          const rGetPutCache = await passport.cache.many(keys)
           uids = [ ...(rGetPutCache.values()) ]
           if (!uids.length) isValid = false
         }
 
         if (isValid && !uids?.length) {
-          const allNodes = await passport.storage.get(NODE_UIDS_KEY)
+          const allNodes = await passport.cache.one(NODE_UIDS_KEY)
           uids = allNodes ? allNodes[generatedXQuerySection.nodeName] : [] // IF property is not a sort index => get unsorted node uids from $nodeUids in database
         }
       }
@@ -170,7 +170,7 @@ export async function _query (passport, body) {
 
       if (permission && !permission.allowPropName) throw error('auth__read-node', `Because the read node name \`${ generatedXQuerySection.nodeName }\` permission is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
 
-      const rGetPutCache = await getPutCache(uids)
+      const rGetPutCache = await passport.cache.many(uids)
 
       for (let i = 0; i < uids.length; i++) {
         const node = rGetPutCache.get(uids[i])
@@ -195,7 +195,7 @@ export async function _query (passport, body) {
       const uid = item.uid || item.node?.x?.uid
 
       if (!graphNode && uid) {
-        const rGetPutCache = await getPutCache([ uid ])
+        const rGetPutCache = await passport.cache.one(uid)
         graphNode = rGetPutCache.get(uid)
       }
 
@@ -260,25 +260,25 @@ export async function _query (passport, body) {
                 const uniqueUids = /** @type { string[] } */ ([])
 
                 if (uniqueKeys.length) {
-                  const rGetPutCache = await getPutCache(uniqueKeys)
-                  uniqueUids.push(...[ ...rGetPutCache.values() ])
+                  const rCache = await passport.cache.many(uniqueKeys)
+                  uniqueUids.push(...[ ...rCache.values() ])
                 }
 
-                const rGetPutCache = await getPutCache(relationshipUids)
+                const rCache = await passport.cache.many(relationshipUids)
 
                 switch (schemaNodeProp.id) {
                   case enums.idsSchema.ForwardRelationshipProp:
-                    rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
+                    rCache.forEach((graphRelationship, graphRelationshipKey) => {
                       if (uid === graphRelationship?.x.a) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
                     })
                     break
                   case enums.idsSchema.ReverseRelationshipProp:
-                    rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
+                    rCache.forEach((graphRelationship, graphRelationshipKey) => {
                       if (uid === graphRelationship?.x.b) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
                     })
                     break
                   case enums.idsSchema.BidirectionalRelationshipProp:
-                    rGetPutCache.forEach((graphRelationship, graphRelationshipKey) => {
+                    rCache.forEach((graphRelationship, graphRelationshipKey) => {
                       validateAndPushUids(relationshipGeneratedQueryXSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
                     })
                     break
@@ -352,35 +352,6 @@ export async function _query (passport, body) {
           }
         }
       }
-    }
-
-    
-    /**
-     * If key is in cache, return cache version. If key is not in cache, return storage version and populate cache.
-     * @param { string[] } keys 
-     * @returns { Promise<Map<string, any>> }
-     */
-    async function getPutCache (keys) {
-      const storageKeys = []
-      const response = new Map()
-
-      for (const key of keys) {
-        const cacheFind = cache.get(key)
-
-        if (cacheFind) response.set(key, cacheFind)
-        else storageKeys.push(key)
-      }
-
-      if (storageKeys.length) {
-        const storageResponse = await passport.storage.get(keys)
-
-        storageResponse.forEach((/** @type { any } */ value, /** @type { string } */ key) => {
-          response.set(key, value)
-          cache.set(key, value)
-        })
-      }
-
-      return response
     }
 
 

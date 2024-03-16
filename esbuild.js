@@ -8,6 +8,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
   outdir: './dist', // Sets the output directory for the build operation.
   entryPoints: [ // This is an array of files that each serve as an input to the bundling algorithm.
     './tsc/src/aceFetch.js',
+    './tsc/src/Cache.js',
     './tsc/src/createJWKs.js',
     './tsc/src/getAlgorithmOptions.js',
     './tsc/src/getDerivedValue.js',

@@ -2,6 +2,7 @@
   "files": [
     "src/enums/dataTypes.js",
     "src/enums/pathnames.js",
+    "src/Cache.js",
     "src/aceFetch.js",
     "src/createJWKs.js",
     "src/getDerivedValue.js",

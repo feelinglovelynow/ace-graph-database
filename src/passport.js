@@ -1,12 +1,13 @@
 import { error } from './throw.js'
+import { Cache } from './Cache.js'
 import { _query } from './query.js'
 import { td, enums } from '#manifest'
 import { REQUEST_TOKEN_HEADER, SCHEMA_KEY, getRevokesKey, getUniqueIndexKey } from './variables.js'
 
 
 export class Passport {
+  cache
   source
-  storage
   user
   token
   schema
@@ -16,7 +17,8 @@ export class Passport {
   /**
    * @typedef { object } PassportOptions
    * @property { enums.passportSource } source - The source function that created this passport
-   * @property { td.CF_DO_Storage } storage - Cloudflare Durable Object Storage (Ace Graph Database)
+   * @property { td.CF_DO_Storage } [ storage ] - Cloudflare Durable Object Storage (Ace Graph Database)
+   * @property { Cache } [ cache ]
    * @property { td.AcePassportUser } [ user ]
    * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling mutate > Start
    * @property { td.Schema } [ schema ]
@@ -27,19 +29,23 @@ export class Passport {
    */
   constructor (options) {
     this.source = options.source
-    this.storage = options.storage
+
     if (options.user) this.user = options.user
     if (options.token) this.token = options.token
     if (options.schema) this.schema = options.schema
     if (options.request) this.token = options.request.headers.get(REQUEST_TOKEN_HEADER)
     if (options.revokesAcePermissions) this.revokesAcePermissions = options.revokesAcePermissions
     if (typeof options.isEnforcePermissionsOn === 'boolean') this.isEnforcePermissionsOn = options.isEnforcePermissionsOn
+
+    if (options.cache) this.cache = options.cache
+    else if (options.storage) this.cache = new Cache(options.storage)
+    else throw error('passport__cache-required', 'Please pass options.cache or options.storage to new Passport() so Cache may be setup', { options })
   }
 
   
   async stamp () {
     const _passport = new Passport({
-      storage: this.storage,
+      cache: this.cache,
       source: enums.passportSource.stamp,
       token: this.token,
       schema: this.schema,
@@ -54,7 +60,7 @@ export class Passport {
         if (!this.revokesAcePermissions) this.revokesAcePermissions = new Map()
         break
       default:
-        if (!this.schema) this.schema = _passport.schema = await this.storage.get(SCHEMA_KEY) // _getSchema() calls stamp so if we call _getSchema() here it's circular
+        if (!this.schema) this.schema = _passport.schema = await this.cache.one(SCHEMA_KEY) // _getSchema() calls stamp so if we call _getSchema() here it's circular
 
         if (!this.user) {
           const [user, isEnforcePermissionsOn] = await Promise.all([this.#getUser(_passport), this.#getIsEnforcePermissionsOn(_passport)])
@@ -144,7 +150,7 @@ export class Passport {
    */
   async #getIsEnforcePermissionsOn (_passport) {
     const key = getUniqueIndexKey('AceSetting', 'slug', enums.settings.enforcePermissions)
-    const uid = await this.storage.get(key)
+    const uid = await this.cache.one(key)
 
     if (!uid) return false
 

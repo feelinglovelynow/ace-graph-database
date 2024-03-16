@@ -32,7 +32,7 @@ export async function _mutate (passport, body) {
     await passport.stamp()
 
     /** @type { { [nodeName: string]: string[] } } - Uids of all nodes in graph  */
-    const allNodeUids = (await passport.storage.get(NODE_UIDS_KEY)) || {}
+    const allNodeUids = (await passport.cache.one(NODE_UIDS_KEY)) || {}
 
     /** @type { MustPropsMap } - Map of props in schema that must be defined */
     const mustPropsMap = getMustPropMap()
@@ -49,15 +49,6 @@ export async function _mutate (passport, body) {
     /** @type { Map<string, { nodeName: string, nodePropName: string, uids: string[] }> } - As we find properties that according to the schema need a sort index insert we will keep track of them here. Once we get them all together, we sort them, and then add to graph. */
     const sortIndexMap = new Map()
 
-    /** @type { Map<string, any> } - The entries we will put */
-    const putEntries = new Map()
-
-    /** @type { Set<string> } - The set of uids we will delete (delete) */
-    const deleteSet = new Set()
-
-    /** @type { string[] } - The deleteSet converted into an array */
-    const deleteArray = []
-
     /** @type { { [key: string]: CryptoKey } } - Object that converts stringified jwks into CryptoKey's */
     const privateJWKs = {}
 
@@ -71,6 +62,9 @@ export async function _mutate (passport, body) {
 
     /** @type { undefined | td.AceStartResponse } Response from start() */
     let startResponse
+
+    /** @type { string[] } - The passport.cache.deleteSet converted into an array */
+    let deleteArray = []
 
     await setPrivateJWKs()
     await setUpdateRequestItems()
@@ -104,8 +98,8 @@ export async function _mutate (passport, body) {
           }
         }
 
-        if (nodeUids.length) updateRequestItems.nodes = await passport.storage.get(nodeUids)
-        if (relationshipUids.length) updateRequestItems.relationships = await passport.storage.get(relationshipUids)
+        if (nodeUids.length) updateRequestItems.nodes = await passport.cache.many(nodeUids)
+        if (relationshipUids.length) updateRequestItems.relationships = await passport.cache.many(relationshipUids)
       }
     }
 
@@ -141,11 +135,10 @@ export async function _mutate (passport, body) {
         }
       }
 
-      if (deleteSet.size) {
-        deleteSet.forEach(uid => deleteArray.push(uid))
-        await passport.storage.delete(deleteArray)
+      if (passport.cache.deleteSet.size) {
+        passport.cache.deleteSet.forEach(uid => deleteArray.push(uid))
+        passport.cache.storage.delete(deleteArray)
       }
-
 
       /** @returns { Promise<td.AceStartResponse> } */
       async function restart () {
@@ -155,7 +148,7 @@ export async function _mutate (passport, body) {
           if (value.action === 'write' && value.relationshipName) throw error('auth__write-node', `Because write permissions to the relationship name \`${value.relationshipName}\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
         })
 
-        await passport.storage.deleteAll()
+        passport.cache.storage.deleteAll()
         passport.schema = undefined
         return await start(passport)
       }
@@ -176,7 +169,7 @@ export async function _mutate (passport, body) {
               schemaDeleteNodes()
 
               delete allNodeUids[requestNodeName]
-              putEntries.set(NODE_UIDS_KEY, allNodeUids)
+              passport.cache.putMap.set(NODE_UIDS_KEY, allNodeUids)
 
               delete passport.schema?.nodes[requestNodeName]
 
@@ -210,7 +203,7 @@ export async function _mutate (passport, body) {
               }
             }
 
-            putEntries.set(SCHEMA_KEY, passport.schema)
+            passport.cache.putMap.set(SCHEMA_KEY, passport.schema)
             break
         }
       }
@@ -226,12 +219,12 @@ export async function _mutate (passport, body) {
             break
           case enums.idsMutate.DataDeleteRelationships:
             if (requestItem.x?._uids?.length) {
-              requestItem.x._uids.forEach(_uid => deleteSet.add(_uid)) // add request _uids to the deleteSet
+              requestItem.x._uids.forEach(_uid => passport.cache.deleteSet.add(_uid)) // add request _uids to the passport.cache.deleteSet
 
-              const relationships = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x._uids }))
+              const relationships = await passport.cache.many(requestItem.x._uids)
 
               for (const relationship of relationships.values()) {
-                const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: [ relationship.x.a, relationship.x.b ] }))
+                const relationshipNodes = await passport.cache.many([ relationship.x.a, relationship.x.b ])
 
                 for (const relationshipNode of relationshipNodes.values()) {
                   removeUidFromRelationshipProp(relationshipNode, getRelationshipProp(relationship.id), relationship.x._uid)
@@ -241,13 +234,13 @@ export async function _mutate (passport, body) {
             break
           case enums.idsMutate.DataDeleteNodeProps:
             if (requestItem.x?.uids?.length && requestItem.x?.props?.length) {
-              const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x.uids }))
+              const relationshipNodes = await passport.cache.many(requestItem.x.uids)
 
               for (const relationshipNode of relationshipNodes.values()) {
                 for (const prop of requestItem.x.props) {
                   if (typeof relationshipNode.x[prop] !== 'undefined') {
                     delete relationshipNode.x[prop]
-                    putEntries.set(relationshipNode.x.uid, relationshipNode)
+                    passport.cache.putMap.set(relationshipNode.x.uid, relationshipNode)
                   }
                 }
               }
@@ -255,13 +248,13 @@ export async function _mutate (passport, body) {
             break
           case enums.idsMutate.DataDeleteRelationshipProps:
             if (requestItem.x?._uids?.length && requestItem.x?.props?.length) {
-              const relationshipNodes = /** @type { Map<string, any> } */ (await putStorageGet({ uids: requestItem.x._uids }))
+              const relationshipNodes = await passport.cache.many(requestItem.x._uids)
 
               for (const relationshipNode of relationshipNodes.values()) {
                 for (const prop of requestItem.x.props) {
                   if (typeof relationshipNode.x[prop] !== 'undefined') {
                     delete relationshipNode.x[prop]
-                    putEntries.set(relationshipNode.x._uid, relationshipNode)
+                    passport.cache.putMap.set(relationshipNode.x._uid, relationshipNode)
                   }
                 }
               }
@@ -280,7 +273,7 @@ export async function _mutate (passport, body) {
 
         await populateInupNodesArray()
         implementInupNodesArray()
-        putEntries.set(NODE_UIDS_KEY, allNodeUids) // add $nodeUids to ace
+        passport.cache.putMap.set(NODE_UIDS_KEY, allNodeUids) // add $nodeUids to ace
 
         async function populateInupNodesArray () {
           if (requestItem && nodeNamesSet.has(requestItem.nodeName)) { // IF permission to write this nodeName
@@ -320,7 +313,7 @@ export async function _mutate (passport, body) {
               if (Array.isArray(allNodeUids[requestItem.nodeName])) allNodeUids[requestItem.nodeName].push(graphUid) // IF schema $nodeUids for this uid's node is already an array => push onto it
               else allNodeUids[requestItem.nodeName] = [graphUid] // IF schema $nodeUids for this uid's node is not an array => set as array w/ uid as first value
             
-              putEntries.set(NODE_UIDS_KEY, allNodeUids)
+              passport.cache.putMap.set(NODE_UIDS_KEY, allNodeUids)
             }
 
             for (const nodePropName in requestItem.x) { // loop each request property => validate each property => IF invalid throw errors => IF valid do index things
@@ -354,7 +347,7 @@ export async function _mutate (passport, body) {
                   requestItemX[nodePropName] = await sign(privateJWKs[jwkName], nodePropValue?.value)
                 }
 
-                if (schemaProp.x.uniqueIndex) putEntries.set(getUniqueIndexKey(requestItem.nodeName, nodePropName, nodePropValue), graphUid)
+                if (schemaProp.x.uniqueIndex) passport.cache.putMap.set(getUniqueIndexKey(requestItem.nodeName, nodePropName, nodePropValue), graphUid)
 
                 if (schemaProp.x.sortIndex) {
                   const key = requestItem.nodeName + DELIMITER + nodePropName
@@ -386,7 +379,7 @@ export async function _mutate (passport, body) {
               if (key !== 'id') graphRequestItem[key] = /** @type { td.MutateRequestItemNodeWithRelationships } */(requestItem)[key]
             }
 
-            putEntries.set(graphUid, graphRequestItem) // The entries we will put
+            passport.cache.putMap.set(graphUid, graphRequestItem) // The entries we will put
           }
         }
 
@@ -460,7 +453,7 @@ export async function _mutate (passport, body) {
          */
         async function updatePreviousRelationshipNode (isDifferent, deletedNodeUid, requestItem) {
           if (isDifferent) {
-            const relationshipNode = await putStorageGet({ uid: deletedNodeUid })
+            const relationshipNode = await passport.cache.one(deletedNodeUid)
 
             if (relationshipNode && requestItem.x._uid) removeUidFromRelationshipProp(relationshipNode, getRelationshipProp(requestItem.relationshipName), requestItem.x._uid)
           }
@@ -497,17 +490,17 @@ export async function _mutate (passport, body) {
           await addRelationshipToNode('a')
           await addRelationshipToNode('b')
 
-          putEntries.set(x._uid, { relationshipName: requestItem.relationshipName, x: requestItem.x })
+          passport.cache.putMap.set(x._uid, { relationshipName: requestItem.relationshipName, x: requestItem.x })
 
 
           /** @param { 'a' | 'b' } direction */
           async function addRelationshipToNode (direction) {
-            const node = await putStorageGet({ uid: requestItem.x[direction] })
+            const node = await passport.cache.one(requestItem.x[direction])
 
             if (!node[relationshipProp]) node[relationshipProp] = [ x._uid ]
             else node[relationshipProp].push(x._uid)
 
-            putEntries.set(node.x.uid, node)
+            passport.cache.putMap.set(node.x.uid, node)
           }
         }
       }
@@ -531,10 +524,10 @@ export async function _mutate (passport, body) {
 
       /** @param { string[] } uids */
       async function deleteByUids (uids) {
-        const nodeEntries = await putStorageGet({ uids })
+        const nodeEntries = await passport.cache.many(uids)
 
         for (const node of nodeEntries.values()) {
-          deleteSet.add(node.x.uid) // add request uid to the deleteSet
+          passport.cache.deleteSet.add(node.x.uid) // add request uid to the passport.cache.deleteSet
 
           /** @type { Map<string, string> } <relationshipUid, relationshipProp> */
           const relationshipUids = new Map()
@@ -543,21 +536,21 @@ export async function _mutate (passport, body) {
             if (prop.startsWith(RELATIONSHIP_PREFIX)) {
               for (const relationshipUid of node[prop]) {
                 relationshipUids.set(relationshipUid, prop)
-                deleteSet.add(relationshipUid) // add relationship uids to the deleteSet
+                passport.cache.deleteSet.add(relationshipUid) // add relationship uids to the passport.cache.deleteSet
               }
             }
           }
 
           /** @type { Map<string, string> } <relationshipNodeUid, relationshipId> */
           const relationshipNodeUids = new Map()
-          const relationshipEntries = await passport.storage.get([...relationshipUids.keys()])
+          const relationshipEntries = await passport.cache.many([...relationshipUids.keys()])
 
           for (const relationship of relationshipEntries.values()) {
             if (relationship.x.a === node.x.uid) relationshipNodeUids.set(relationship.x.b, relationship.x._uid)
             if (relationship.x.b === node.x.uid) relationshipNodeUids.set(relationship.x.a, relationship.x._uid)
           }
 
-          const relationshipNodeEntries = await putStorageGet({ uids: [...relationshipNodeUids.keys()] })
+          const relationshipNodeEntries = await passport.cache.many([ ...relationshipNodeUids.keys() ])
 
           for (const relationshipNode of relationshipNodeEntries.values()) {
             const _uid = relationshipNodeUids.get(relationshipNode.x.uid)
@@ -587,40 +580,7 @@ export async function _mutate (passport, body) {
             if (!relationshipNode[prop].length) delete relationshipNode[prop]
           }
 
-          putEntries.set(relationshipNode.x.uid, relationshipNode)
-        }
-      }
-
-
-      /**
-       * Get from putEntries OR get from storage
-       * @param { { uid?: string, uids?: string[] } } options
-       */
-      async function putStorageGet (options) {
-        if (options.uid) return putEntries.get(options.uid) || (await passport.storage.get(options.uid))
-        else if (options.uids) {
-          /** @type { string [] } - If there are items we don't find in putEntries, add them to this list, we'll call storage once w/ this list if list.length */
-          const storageUids = []
-
-          /** @type { Map<string, any> } - Map of uids and nodes based on the provided uids */
-          const response = new Map()
-
-          for (const uid of options.uids) {
-            const putNode = putEntries.get(uid)
-
-            if (putNode) response.set(uid, putNode)
-            else storageUids.push(uid)
-          }
-
-          if (storageUids.length) {
-            const rStorage = await passport.storage.get(storageUids)
-
-            rStorage.forEach((/** @type { any } */node, /** @type { string } */uid) => {
-              response.set(uid, node)
-            })
-          }
-
-          return response
+          passport.cache.putMap.set(relationshipNode.x.uid, relationshipNode)
         }
       }
 
@@ -648,7 +608,7 @@ export async function _mutate (passport, body) {
           }
         }
 
-        putEntries.set(SCHEMA_KEY, validateSchema(passport.schema))
+        passport.cache.putMap.set(SCHEMA_KEY, validateSchema(passport.schema))
         return passport.schema
       }
     }
@@ -657,21 +617,10 @@ export async function _mutate (passport, body) {
     async function addSortIndicesToGraph () {
       if (sortIndexMap.size) {
         for (const { nodeName, nodePropName, uids } of sortIndexMap.values()) {
-          let nodes = []
-          const storageUids = []
+          const nodes = [ ...(await passport.cache.many(uids)).values() ]
+            .sort((a, b) => Number(a[nodePropName] > b[nodePropName]) - Number(a[nodePropName] < b[nodePropName])) // order ascending
 
-          for (const uid of uids) {
-            const putEntryNode = putEntries.get(uid)
-
-            if (putEntryNode) nodes.push(putEntryNode)
-            else storageUids.push(uid)
-          }
-
-          if (storageUids.length) nodes.push(...(/** @type { Map<string, any> } */ (await passport.storage.get(storageUids)).values()))
-
-          nodes = nodes.sort((a, b) => Number(a[nodePropName] > b[nodePropName]) - Number(a[nodePropName] < b[nodePropName])) // order ascending
-
-          putEntries.set(getSortIndexKey(nodeName, nodePropName), nodes.map(n => n.uid))
+          passport.cache.putMap.set(getSortIndexKey(nodeName, nodePropName), nodes.map(n => n.uid))
         }
       }
     }
@@ -712,8 +661,8 @@ export async function _mutate (passport, body) {
 
 
     function throwIfMissingMustProps () {
-      if (putEntries.size) {
-        for (const requestItem of putEntries.values()) {
+      if (passport.cache.putMap.size) {
+        for (const requestItem of passport.cache.putMap.values()) {
           const x = /** @type { td.MutateRequestItemInsertRelationshipX } */ (/** @type {*} */ (requestItem.x))
           const mustProps = requestItem.subId ? mustPropsMap.get(requestItem.subId) : null // the must props for a specific node or relationship
 
@@ -767,7 +716,7 @@ export async function _mutate (passport, body) {
 
           if (relationshipUids) {
             for (const relationshipUid of relationshipUids) {
-              const putEntry = putEntries.get(relationshipUid)
+              const putEntry = passport.cache.putMap.get(relationshipUid)
 
               if (putEntry) relationshipNodes.push(putEntry)
               else storageUids.push(relationshipUid)
@@ -792,20 +741,23 @@ export async function _mutate (passport, body) {
     /** @returns { td.MutateResponse } */
     function conclude () {
       let identityUidMap = /** @type { { [k: string]: string } } */ ({})
-      let storagePutEntries = /** @type { { [k: string]: any } } */ ({})
 
-      if (putEntries.size) { // convert from map to object for do storage
-        putEntries.forEach((v, k) => {
-          if (!deleteSet.has(k)) storagePutEntries[k] = v // ensure this put is not being deleted
+      /** @type { { [k: string]: any } } - Convert putMap into an object that is ready for Cloudflare Storage */
+      const putObj = {}
+
+      if (passport.cache.putMap.size) { // convert from map to object for do storage
+        passport.cache.putMap.forEach((v, k) => {
+          if (!passport.cache.deleteSet.has(k)) putObj[k] = v // ensure this put is not being deleted
         })
-        passport.storage.put(storagePutEntries)
+
+        passport.cache.storage.put(putObj)
       }
 
       if (mapUids.size) mapUids.forEach((v, k) => identityUidMap[k] = v) // convert from map to object for response
 
       return {
         identity: identityUidMap,
-        deleted: deleteArray,
+        deleted: deleteArray || [],
         start: startResponse
       }
     }
