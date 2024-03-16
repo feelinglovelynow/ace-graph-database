@@ -566,7 +566,6 @@ export async function _mutate (passport, body) {
           /** @type { Map<string, string> } <relationshipUid, relationshipProp> */
           const relationshipUidsMap = new Map()
 
-          const relationshipUidsArray = [ ...relationshipUidsMap.keys() ]
 
           for (const prop in node) { // b/c we need to get data from these eal
             if (prop.startsWith(RELATIONSHIP_PREFIX)) {
@@ -576,18 +575,20 @@ export async function _mutate (passport, body) {
             }
           }
 
+          const relationshipUidsArray = [ ...relationshipUidsMap.keys() ]
+
           /** @type { Map<string, string> } <relationshipNodeUid, relationshipId> */
           const relationshipNodeUids = new Map()
           const graphRelationshipsMap = await passport.cache.many(relationshipUidsArray)
 
-          for (const graphRelationship of graphRelationshipsMap.values()) {
+          for (const graphRelationship of [ ...graphRelationshipsMap.values() ]) {
             if (graphRelationship.x.a === node.x.uid) relationshipNodeUids.set(graphRelationship.x.b, graphRelationship.x._uid)
             if (graphRelationship.x.b === node.x.uid) relationshipNodeUids.set(graphRelationship.x.a, graphRelationship.x._uid)
           }
 
           const graphRelationshipNodesMap = await passport.cache.many([ ...relationshipNodeUids.keys() ])
 
-          for (const graphRelationshipNode of graphRelationshipNodesMap.values()) {
+          for (const graphRelationshipNode of [ ...graphRelationshipNodesMap.values() ]) {
             const _uid = relationshipNodeUids.get(graphRelationshipNode.x.uid)
 
             if (_uid) {
@@ -598,7 +599,7 @@ export async function _mutate (passport, body) {
 
           passport.cache.deleteSet.add(node.x.uid) // add request uid to the passport.cache.deleteSet
 
-          for (const relationshipUid in relationshipUidsArray) { // we need data from these relationships above so add to deleteSet last
+          for (const relationshipUid of relationshipUidsArray) { // we need data from these relationships above so add to deleteSet last
             passport.cache.deleteSet.add(relationshipUid)
           }
         }

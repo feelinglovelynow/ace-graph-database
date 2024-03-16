@@ -20,7 +20,7 @@ export function getNow () {
 export const DELIMITER = '___'
 export const SCHEMA_KEY = '$schema'
 export const RELATIONSHIP_PREFIX = '$r' + DELIMITER
-export const NODE_UIDS_PREFIX = '$nodeUids' + DELIMITER
+export const NODE_UIDS_PREFIX = '$node' + DELIMITER + 'uids' + DELIMITER
 export const INDEX_SORT_PREFIX = '$index' + DELIMITER + 'sort' + DELIMITER
 export const INDEX_UNIQUE_PREFIX = '$index' + DELIMITER + 'unique' + DELIMITER
 
