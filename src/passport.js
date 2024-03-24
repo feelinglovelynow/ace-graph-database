@@ -6,15 +6,36 @@ import { REQUEST_TOKEN_HEADER, SCHEMA_KEY, getRevokesKey, getUniqueIndexKey } fr
 
 
 export class Passport {
+  /** @type { Cache } */
   cache
+  /** @type { enums.passportSource } */
   source
+  /** @type { td.AcePassportUser | undefined } */
   user
+  /** @type { string | null | undefined } */
   token
+  /** @type { td.Schema | undefined } */
   schema
+  /** @type { Map<string, any> | undefined } */
   revokesAcePermissions
+  /** @type { boolean | undefined } */
   isEnforcePermissionsOn
+  /** @type { PassportSchemaDataStructures | undefined } */
+  schemaDataStructures
+  /** @type { PassportSchemaDataStructureOptions | undefined } */
+  schemaDataStructuresOptions
 
   /**
+   * @typedef { object } PassportSchemaDataStructures
+   * @property { Set<string> } [ nodeNamesSet ]
+   * @property { Set<string> } [ relationshipNamesSet ]
+   * @property { Map<string, Map<string, td.SchemaForwardRelationshipProp | td.SchemaReverseRelationshipProp | td.SchemaBidirectionalRelationshipProp>> } [ relationshipPropsMap ]
+   *
+   * @typedef { object } PassportSchemaDataStructureOptions
+   * @property { boolean } [ nodeNamesSet ]
+   * @property { boolean } [ relationshipNamesSet ]
+   * @property { boolean } [ relationshipPropsMap ]
+   *
    * @typedef { object } PassportOptions
    * @property { enums.passportSource } source - The source function that created this passport
    * @property { td.CF_DO_Storage } [ storage ] - Cloudflare Durable Object Storage (Ace Graph Database)
@@ -22,13 +43,26 @@ export class Passport {
    * @property { td.AcePassportUser } [ user ]
    * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling mutate > Start
    * @property { td.Schema } [ schema ]
+   * @property { PassportSchemaDataStructureOptions } [ desiredSchemaDataStructures ]
+   * @property { PassportSchemaDataStructures } [ schemaDataStructures ]
    * @property { Request } [ request ]
    * @property { Map<string, any> } [ revokesAcePermissions ]
    * @property { boolean } [ isEnforcePermissionsOn ]
    * @param { PassportOptions } options 
    */
+
+  /**
+   * @param { PassportOptions } options
+   */
   constructor (options) {
+    if (options.cache) this.cache = options.cache
+    else if (options.storage) this.cache = new Cache(options.storage)
+    else throw error('passport__cache-required', 'Please pass options.cache or options.storage to new Passport(options) so Cache may be setup', { options })
+
     this.source = options.source
+
+    if (!this.source) throw error('passport__falsy-source', 'Please pass options.source to new Passport(options)', { options })
+    if (!enums.passportSource[this.source]) throw error('passport__invalid-source', 'Please pass a valid options.source to new Passport(options)', { options, validSources: enums.passportSource })
 
     if (options.user) this.user = options.user
     if (options.token) this.token = options.token
@@ -37,31 +71,22 @@ export class Passport {
     if (options.revokesAcePermissions) this.revokesAcePermissions = options.revokesAcePermissions
     if (typeof options.isEnforcePermissionsOn === 'boolean') this.isEnforcePermissionsOn = options.isEnforcePermissionsOn
 
-    if (options.cache) this.cache = options.cache
-    else if (options.storage) this.cache = new Cache(options.storage)
-    else throw error('passport__cache-required', 'Please pass options.cache or options.storage to new Passport() so Cache may be setup', { options })
+    if (options.schemaDataStructures) this.schemaDataStructures = options.schemaDataStructures
+    else if (options.desiredSchemaDataStructures) this.schemaDataStructuresOptions = options.desiredSchemaDataStructures
   }
 
   
   async stamp () {
-    const _passport = new Passport({
-      cache: this.cache,
-      source: enums.passportSource.stamp,
-      token: this.token,
-      schema: this.schema,
-      user: this.user,
-      isEnforcePermissionsOn: this.isEnforcePermissionsOn,
-      revokesAcePermissions: this.revokesAcePermissions,
-    })
+    if (!this.schema) this.schema = await this.cache.one(SCHEMA_KEY)
+    if (!this.schemaDataStructures && this.schemaDataStructuresOptions) this.#setDesiredSchemaDataStructures()
 
+    const _passport = new Passport({ ...this, source: enums.passportSource.stamp })
 
     switch (this.source) {
       case enums.passportSource.stamp:
         if (!this.revokesAcePermissions) this.revokesAcePermissions = new Map()
         break
       default:
-        if (!this.schema) this.schema = _passport.schema = await this.cache.one(SCHEMA_KEY) // _getSchema() calls stamp so if we call _getSchema() here it's circular
-
         if (!this.user) {
           const [user, isEnforcePermissionsOn] = await Promise.all([this.#getUser(_passport), this.#getIsEnforcePermissionsOn(_passport)])
           this.user = user
@@ -92,7 +117,6 @@ export class Passport {
           property: 'token',
           x: {
             $options: [
-              { id: 'Alias', x: { alias: 'token' } },
               { id: 'FindByUid', x: { uid: _passport.token } }
             ],
             user: {
@@ -128,7 +152,7 @@ export class Passport {
    * @param { td.AcePassportUser } [ user ] 
    * @returns { Map<string, any> }
    */
-  #getRevokesAcePermissions(isEnforcePermissionsOn, user)  {
+  #getRevokesAcePermissions (isEnforcePermissionsOn, user)  {
     /** @type { Map<string, any> } - Converts an array of permissions into a map where each key represents the permission (limit includes lookups) and each value is the permission */
     const revokesAcePermissions = new Map()
 
@@ -168,5 +192,47 @@ export class Passport {
     })
 
     return Boolean(isOn)
+  }
+
+
+  #setDesiredSchemaDataStructures () {
+    if (!this.schemaDataStructures && this.schemaDataStructuresOptions) {
+      /** @type { PassportSchemaDataStructures } */
+      this.schemaDataStructures = {}
+
+      if (this.schema?.nodes && (this.schemaDataStructuresOptions.nodeNamesSet || this.schemaDataStructuresOptions.relationshipPropsMap)) { // nodeNamesSet || relationshipPropsMap
+        for (const nodeName in this.schema.nodes) {
+          if (this.schemaDataStructuresOptions.nodeNamesSet) { // nodeNamesSet
+            if (!this.schemaDataStructures?.nodeNamesSet) this.schemaDataStructures.nodeNamesSet = new Set()
+            this.schemaDataStructures.nodeNamesSet.add(nodeName)
+          }
+
+          if (this.schemaDataStructuresOptions.relationshipPropsMap) { // relationshipPropsMap
+            if (!this.schemaDataStructures?.relationshipPropsMap) this.schemaDataStructures.relationshipPropsMap = new Map()
+
+            for (const nodeName in this.schema.nodes) {
+              for (const propName in this.schema.nodes[nodeName]) {
+                const propValue = this.schema.nodes[nodeName][propName]
+
+                if (propValue.id !== 'Prop') {
+                  const mapValue = this.schemaDataStructures.relationshipPropsMap.get(propValue.x.relationshipName) || new Map()
+                  mapValue.set(propName, propValue)
+                  this.schemaDataStructures.relationshipPropsMap.set(propValue.x.relationshipName, mapValue)
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (this.schema?.relationships && this.schemaDataStructuresOptions.relationshipNamesSet) { // relationshipNamesSet
+        for (const relationshipName in this.schema.relationships) {
+          if (this.schemaDataStructuresOptions.relationshipNamesSet) {
+            if (!this.schemaDataStructures?.relationshipNamesSet) this.schemaDataStructures.relationshipNamesSet = new Set()
+            this.schemaDataStructures.relationshipNamesSet.add(relationshipName)
+          }
+        }
+      }
+    }
   }
 }

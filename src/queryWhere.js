@@ -6,16 +6,16 @@ import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestItemGeneratedXSection } generatedXQuerySection 
+ * @param { td.QueryRequestItemGeneratedXSection } xGenerated 
  * @param { td.QueryResponse } response 
  * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } $where 
  * @param { td.QueryPublicJWKs | null } publicJWKs 
  * @param { Passport } passport 
  */
-export async function queryWhere (generatedXQuerySection, response, $where, publicJWKs, passport) {
-  if (Array.isArray(response.original[generatedXQuerySection.property])) {
+export async function queryWhere (xGenerated, response, $where, publicJWKs, passport) {
+  if (Array.isArray(response.original[xGenerated.propName])) {
     let iOrignal = 0
-    const clone = [ ...(response.original[generatedXQuerySection.property]) ]
+    const clone = [ ...(response.original[xGenerated.propName]) ]
 
     for (let iClone = 0; iClone < clone.length; iClone++) {
       let spliced = false
@@ -24,17 +24,17 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
       else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
 
       if (!spliced && ($where.id === enums.idsQueryOptions.Find || $where.id === enums.idsQueryOptions.FindDefined || $where.id === enums.idsQueryOptions.FindUndefined)) {
-        response.now[generatedXQuerySection.property] = [response.now[generatedXQuerySection.property][iOrignal] ]
-        response.original[generatedXQuerySection.property] = [ response.original[generatedXQuerySection.property][iOrignal] ]
+        response.now[xGenerated.propName] = [response.now[xGenerated.propName][iOrignal] ]
+        response.original[xGenerated.propName] = [ response.original[xGenerated.propName][iOrignal] ]
         break
       }
 
       if (!spliced) iOrignal++
     }
 
-    if (Array.isArray(response.original[generatedXQuerySection.property]) && !response.original[generatedXQuerySection.property].length) {
-      response.now[generatedXQuerySection.property] = null
-      response.original[generatedXQuerySection.property] = null
+    if (Array.isArray(response.original[xGenerated.propName]) && !response.original[xGenerated.propName].length) {
+      response.now[xGenerated.propName] = null
+      response.original[xGenerated.propName] = null
     }
   }
 
@@ -43,7 +43,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
    * @typedef { object } GetValueResponse
    * @property { null | 'QueryValue' | 'QueryProperty' } type
    * @property { any } value
-   * @property { null | td.QueryRequestItemGeneratedXSection } generatedXQuerySection
+   * @property { null | td.QueryRequestItemGeneratedXSection } xGenerated
    */
 
 
@@ -105,7 +105,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
         case enums.idsQueryOptions.FindUndefined:
         case enums.idsQueryOptions.FilterDefined:
         case enums.idsQueryOptions.FilterUndefined:
-          r = await verifySplice(query, i, response.original[generatedXQuerySection.property][i], false)
+          r = await verifySplice(query, i, response.original[xGenerated.propName][i], false)
           break
         case enums.idsQueryOptions.FindGroup:
         case enums.idsQueryOptions.FilterGroup:
@@ -124,8 +124,8 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
    * @param { number } i 
    */
   function splice (i) {
-    response.now[generatedXQuerySection.property].splice(i, 1)
-    response.original[generatedXQuerySection.property].splice(i, 1)
+    response.now[xGenerated.propName].splice(i, 1)
+    response.original[xGenerated.propName].splice(i, 1)
   }
 
 
@@ -211,7 +211,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
     let response = /** @type { GetValueResponse } */ ({
       type: null,
       value: null,
-      generatedXQuerySection: null
+      xGenerated: null
     })
 
     switch (propertyOrValue.id) {
@@ -220,19 +220,19 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
 
         response.value = queryValue.x.value
         response.type = 'QueryValue'
-        response.generatedXQuerySection = generatedXQuerySection
+        response.xGenerated = xGenerated
         break
       case enums.idsQueryOptions.Property:
         const queryProperty = /** @type { td.QueryProperty } */ (propertyOrValue)
 
         if (!queryProperty.x.relationships?.length) {
           response.value = graphNode[queryProperty.x.property]
-          response.generatedXQuerySection = generatedXQuerySection
+          response.xGenerated = xGenerated
         } else {
-          const rRelationshipNode = getRelationshipNode(generatedXQuerySection, graphNode, passport, queryProperty.x.relationships)
+          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, queryProperty.x.relationships)
 
           if (rRelationshipNode?.node?.[queryProperty.x.property]) {
-            response.generatedXQuerySection = rRelationshipNode.generatedXQuerySection
+            response.xGenerated = rRelationshipNode.xGenerated
             response.value = rRelationshipNode.node[queryProperty.x.property]
           }
         }
@@ -254,7 +254,7 @@ export async function queryWhere (generatedXQuerySection, response, $where, publ
    */
   function isLeftOrRightHash (qw, left, right, sideIndex) {
     const side = sideIndex === 0 ? left : right
-    return Boolean(side.type === 'QueryProperty' && side.generatedXQuerySection && /** @type { td.SchemaProp } */ (passport.schema?.nodes?.[side.generatedXQuerySection.nodeName]?.[/** @type { td.QueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
+    return Boolean(side.type === 'QueryProperty' && side.xGenerated && /** @type { td.SchemaProp } */ (passport.schema?.nodes?.[side.xGenerated.id]?.[/** @type { td.QueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
   }
 
 

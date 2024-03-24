@@ -33,7 +33,8 @@ import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
     const bashEntries = [...process.argv.entries()]
     const optionValue = bashEntries[2]?.[1]
     const port = Number(optionValue)
-    const queryRequestItemOptions = '{ (QueryPropertyAsResponse | QueryPropertyAdjacentToResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[] }'
+    const queryRequestItemNodeOptions = '(QueryPropertyAsResponse | QueryPropertyAdjacentToResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[]'
+    const queryRequestItemRelationshipOptions = '(QueryPropertyAsResponse | QueryPropertyAdjacentToResponse | QueryLimit | QuerySort | QuerySumAsProperty | QueryAverageAsProperty | QueryMinAmountAsProperty | QueryMinNodeAsResponse | QueryMaxNodeAsResponse | QueryMinAmountAsResponse | QueryMaxAmountAsResponse | QuerySumAsResponse | QueryAverageAsResponse | QueryMaxAmountAsProperty | QueryCountAsProperty |  QueryCountAsResponse | QueryFind | QueryFilter | QueryFilterGroup | QueryFindGroup | QueryFilterDefined | QueryFilterUndefined | QueryFindDefined |  QueryFindBy_Uid | QueryFilterBy_Uids | QueryFindUndefined | QueryDerivedProperty | QueryAliasProperty)[]'
 
     const files = {
       dir: '.manifest',
@@ -234,12 +235,12 @@ import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
  *
 ${ typedefs.query.NodeType }
  *
- * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty, $options?: QueryRequestItemOptions } } QueryRequestItemNodeX
- * @typedef ${ queryRequestItemOptions } QueryRequestItemOptions
- * 
- * @typedef { object } QueryRequestItemRelationship
- * @property { string } id
- * @property { string } property
+${ typedefs.query.RelationshipType }
+ *
+ * @typedef { { [propertyName: string]: any,   uid?: boolean | QueryAliasProperty,  $options?: QueryRequestItemNodeOptions } } QueryRequestItemNodeX
+ * @typedef { { [propertyName: string]: any,   _uid?: boolean | QueryAliasProperty, $options?: QueryRequestItemNodeOptions } } QueryRequestItemRelationshipX
+ * @typedef { ${ queryRequestItemNodeOptions } } QueryRequestItemNodeOptions
+ * @typedef { ${ queryRequestItemRelationshipOptions } } QueryRequestItemRelationshipOptions
  * 
  * @typedef { object } QueryRequestItemAceSchema
  * @property { typeof enums.idsQuery.AceSchema } id
@@ -255,16 +256,17 @@ ${ typedefs.query.NodeType }
  * @typedef { Map<enums.idsQueryOptions, (QuerySort | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques)> } QueryRequestItemGeneratedXSectionPriorityOptions
  *
  * @typedef { object } QueryRequestItemGeneratedXSection
- * @property { string } property
- * @property { string } schemaProperty
- * @property { string } [ aliasProperty ]
+ * @property { string } xPropName
+ * @property { string } propName
+ * @property { string } [ aliasPropName ]
  * @property { enums.has } has
- * @property { string } nodeName
+ * @property { string } id
  * @property { string } [ relationshipName ]
  * @property { QueryRequestItemNodeX } x
  * @property { boolean } hasOptionsFind
  * @property { boolean } hasValueAsResponse
  * @property { boolean } hasCountOne
+ * @property { 'getNodes' | 'getRelationships' } queryType
  * @property { Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>> } sets - Allow us to not have to call Set.has() rather then [].includes()
  * @property { QueryRequestItemGeneratedXSectionPriorityOptions } priorityOptions *
  * 
@@ -480,7 +482,7 @@ ${ typedefs.query.NodeType }
  * @typedef { { [key: string]: CryptoKey } } QueryPublicJWKs
  *
  * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } QueryResponse
-*/${ typedefs.query.Node } ${ typedefs.query.RelationshipPropTypes }
+*/${ typedefs.query.Nodes } ${ typedefs.query.Relationships } ${ typedefs.query.RelationshipPropTypes }
 
 
 /** Cloudflare
@@ -537,6 +539,15 @@ ${ typedefs.query.NodeType }
  * @property { string } username
  * @property { string } token
  */
+
+
+/** AceGraph
+ *
+ * @typedef { object } AceGraphRelationship
+ * @property { string } relationshipName
+ * @property { AcGraphRelationshipX } x
+ * @typedef { { a: string, b: string, _uid: string, [propName: string]: any } } AcGraphRelationshipX
+ */
 `),
 
         fs.writeFile(`${ files.dir }/${ files.src }/${ files.enums }`, getEnumsCode()),
@@ -566,12 +577,19 @@ ${ typedefs.query.NodeType }
 
 
     function getSchemaTypedefs () {
+      /** @type { Map<string, { schemaNodeName: string, schemaNodePropName: string, schemaProp: any }[]> }> } <relationshipName, ({ schemaNodeName, schemaNodePropName: string, schemaProp: SchemaBidirectionalRelationshipProp } | { schemaNodePropName: string, schemaProp: SchemaForwardRelationshipProp } | { schemaNodePropName: string, schemaProp: SchemaReverseRelationshipPro }p)[]> */
+      const relationshipMap = new Map()
+
       const typedefs = {
         query: {
+          Nodes: '',
           NodeType: '',
-          Node: '',
-          NodePipes: '',
           NodeProps: '',
+          NodePipes: '',
+          Relationships: '',
+          RelationshipType: '',
+          RelationshipProps: '',
+          RelationshipPipes: '',
           RelationshipPropTypes: '',
         },
         mutate: {
@@ -591,11 +609,116 @@ ${ typedefs.query.NodeType }
         }
       }
 
+
+      if (schema?.nodes) {
+        typedefs.mutate.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
+        typedefs.mutate.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
+
+        for (const schemaNodeName in schema.nodes) {
+          typedefs.query.NodeProps = '' // reset props from previous loop
+
+          typedefs.query.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
+
+          typedefs.mutate.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
+
+          typedefs.mutate.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
+
+          if (!ACE_NODE_NAMES.has(schemaNodeName)) typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
+
+          typedefs.mutate.InsertNodeTypes += `\n *
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
+ * @property { typeof enums.idsMutate.InsertNode } id - Insert Node
+ * @property { '${ schemaNodeName}' } nodeName - Insert \`${ schemaNodeName }\` node
+ * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
+ * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
+ * @property { string } uid - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
+
+          typedefs.mutate.UpdateNodeTypes += `\n *
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
+ * @property { typeof enums.idsMutate.UpdateNode } id - Update Node
+ * @property { '${ schemaNodeName }' } nodeName - Update \`${ schemaNodeName }\` node
+ * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
+ * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
+ * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
+ * @property { string } uid - The node's unique identifier`
+
+          for (const schemaNodePropName in schema.nodes[schemaNodeName]) {
+            const schemaProp = schema.nodes[schemaNodeName][schemaNodePropName]
+
+            switch (schemaProp.id) {
+              case 'Prop':
+                const dataType = getDataType(schemaProp.x.dataType)
+                typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+                typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+                typedefs.query.NodeProps += `\n * @property { boolean | QueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
+                break
+              case 'ForwardRelationshipProp':
+              case 'ReverseRelationshipProp':
+              case 'BidirectionalRelationshipProp':
+                const relationshipMapValue = relationshipMap.get(schemaProp.x.relationshipName) || []
+
+                relationshipMapValue.push({ schemaNodeName, schemaNodePropName, schemaProp })
+                relationshipMap.set(schemaProp.x.relationshipName, relationshipMapValue)
+
+                let queryProps = ''
+
+                for (const relationshipNodePropName in schema.nodes[schemaProp.x.nodeName]) {
+                  const rSchemaProp = schema.nodes[schemaProp.x.nodeName][relationshipNodePropName]
+
+                  queryProps += rSchemaProp.id === 'Prop' ?
+                    `\n * @property { boolean | QueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.nodeName, schemaPropDescription: rSchemaProp.x.description }) }` :
+                    `\n * @property { ${ getNodePropXPropName(schemaProp.x.nodeName, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaProp.x.nodeName, relationshipNodePropName, rSchemaProp) }`
+                }
+
+                if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
+                  const props = schema.relationships?.[schemaProp.x.relationshipName].x.props
+
+                  for (const relationshipPropName in props) {
+                    queryProps += `\n * @property { boolean | QueryAliasProperty } [ ${ relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationshipName, schemaPropDescription: props[relationshipPropName].x.description })}`
+                  }
+                }
+
+                const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
+
+                typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName} } [ ${schemaNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+
+                if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
+
+                typedefs.query.RelationshipPropTypes += `
+ * @typedef { object } ${ relationshipPropName }
+ * @property { QueryRequestItemNodeOptions } [ $options ]
+ * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
+ * @property { boolean | QueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
+ *`
+                break
+            }
+          }
+
+          if (!typedefs.query.Nodes) typedefs.query.Nodes += `\n\n\n/** Query: Node's (from schema)\n`
+
+          typedefs.query.Nodes +=` *
+ * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
+ * @property { '${ schemaNodeName }' } id
+ * @property { string } property
+ * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
+ * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
+ * @property { boolean | QueryAliasProperty } [ uid ]
+ * @property { QueryRequestItemNodeOptions } [ $options ]${ typedefs.query.NodeProps }
+`
+        }
+      }
+
+
       if (schema?.relationships) {
         typedefs.mutate.InsertRelationshipTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
         typedefs.mutate.UpdateRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
 
         for (const schemaRelationshipName in schema.relationships) {
+          typedefs.query.RelationshipProps = '' // reset props from previous loop
+
+          typedefs.query.RelationshipPipes += `${ schemaRelationshipName }QueryRequestItemRelationship | `
+
           typedefs.mutate.InsertRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemInsertRelationship | `
 
           typedefs.mutate.UpdateRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
@@ -629,111 +752,38 @@ ${ typedefs.query.NodeType }
               const dataType = getDataType(schemaProp.x.dataType)
               const description = `Set to a ${ dataType } value if you would love to update this relationship property, \`${schemaRelationshipPropName}\`, in the graph`
 
+              typedefs.query.RelationshipProps += `\n * @property { boolean | QueryAliasProperty } [ ${schemaRelationshipPropName } ] - ${ getQueryPropDescription({ propName: schemaRelationshipPropName, relationshipName: schemaRelationshipName, schemaPropDescription: schemaProp.x.description }) }`
               typedefs.mutate.InsertRelationshipTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]'} - ${description}`
               typedefs.mutate.UpdateRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
             }
           }
-        }
-      }
 
+          const relationshipMapValue = relationshipMap.get(schemaRelationshipName)
 
-      if (schema?.nodes) {
-        typedefs.mutate.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
-        typedefs.mutate.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
-
-        for (const schemaNodeName in schema.nodes) {
-          typedefs.query.NodeProps = '' // clear previous loop props
-
-          typedefs.query.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
-
-          typedefs.mutate.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
-
-          typedefs.mutate.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
-
-          if (!ACE_NODE_NAMES.has(schemaNodeName)) typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
-
-          typedefs.mutate.InsertNodeTypes += `
- *
- * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
- * @property { typeof enums.idsMutate.InsertNode } id - Insert Node
- * @property { '${ schemaNodeName}' } nodeName - Insert \`${ schemaNodeName }\` node
- * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
- * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
- * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
- * @property { string } uid - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
-
-          typedefs.mutate.UpdateNodeTypes += `
- *
- * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
- * @property { typeof enums.idsMutate.UpdateNode } id - Update Node
- * @property { '${ schemaNodeName }' } nodeName - Update \`${ schemaNodeName }\` node
- * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
- * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
- * @property { MutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
- * @property { string } uid - The node's unique identifier`
-
-          for (const schemaNodePropName in schema.nodes[schemaNodeName]) {
-            const schemaProp = schema.nodes[schemaNodeName][schemaNodePropName]
-
-            switch (schemaProp.id) {
-              case 'Prop':
-                const dataType = getDataType(schemaProp.x.dataType)
-                typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.query.NodeProps += `\n * @property { boolean | QueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
-                break
-              case 'ForwardRelationshipProp':
-              case 'ReverseRelationshipProp':
-              case 'BidirectionalRelationshipProp':
-
-                let queryProps = ''
-
-                for (const relationshipNodePropName in schema.nodes[schemaProp.x.nodeName]) {
-                  const rSchemaProp = schema.nodes[schemaProp.x.nodeName][relationshipNodePropName]
-
-                  queryProps += rSchemaProp.id === 'Prop' ?
-                    `\n * @property { boolean | QueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.nodeName, schemaPropDescription: rSchemaProp.x.description }) }` :
-                    `\n * @property { ${ getNodePropXPropName(schemaProp.x.nodeName, relationshipNodePropName) } } [ ${ relationshipNodePropName } ] - Return object to see node name: \`${ schemaProp.x.nodeName }\` and prop name: \`${ relationshipNodePropName }\`, that will provide properties on the \`${ rSchemaProp.x.nodeName }\` node in the response`
-                }
-
-                if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
-                  const props = schema.relationships?.[schemaProp.x.relationshipName].x.props
-
-                  for (const relationshipPropName in props) {
-                    queryProps += `\n * @property { boolean | QueryAliasProperty } [ ${relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationshipName, schemaPropDescription: props[relationshipPropName].x.description })}`
-                  }
-                }
-
-                const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
-
-                typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName } } [ ${ schemaNodePropName } ] - Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
-
-                if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
-
-                typedefs.query.RelationshipPropTypes += `
- * @typedef { object } ${ relationshipPropName }
- * @property ${ queryRequestItemOptions } [ $options ]
- * @property { boolean | QueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
- * @property { boolean | QueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
- *`
-                break
+          if (relationshipMapValue) {
+            for (const { schemaNodeName, schemaNodePropName, schemaProp } of relationshipMapValue) {
+              typedefs.query.RelationshipProps += `\n * @property { ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
             }
           }
 
-          if (!typedefs.query.Node) typedefs.query.Node += `\n\n\n/** Query: Node's (from schema)\n`
 
-          typedefs.query.Node +=` *
- * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
- * @property { '${ schemaNodeName }' } id
+          if (!typedefs.query.Relationships) typedefs.query.Relationships += `\n\n\n/** Query: Relationship's (from schema)\n`
+
+          typedefs.query.Relationships += ` *
+ * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationship
+ * @property { '${ schemaRelationshipName }' } id
  * @property { string } property
- * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
- * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
- * @property ${ queryRequestItemOptions } [ $options ]${ typedefs.query.NodeProps }
- *`
+ * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } x
+ * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationshipX
+ * @property { boolean | QueryAliasProperty } [ _uid ]
+ * @property { QueryRequestItemRelationshipOptions } [ $options ]${ typedefs.query.RelationshipProps }
+`
         }
       }
 
-      if (typedefs.query.Node) typedefs.query.Node += '/'
+
+      if (typedefs.query.Nodes) typedefs.query.Nodes += ' */'
+      if (typedefs.query.Relationships) typedefs.query.Relationships += ' */'
       if (typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '/'
       if (typedefs.mutate.InsertNodeTypes) typedefs.mutate.InsertNodeTypes += '\n */'
       if (typedefs.mutate.UpdateNodeTypes) typedefs.mutate.UpdateNodeTypes += '\n */'
@@ -742,19 +792,33 @@ ${ typedefs.query.NodeType }
       if (typedefs.query.NodePipes) typedefs.query.NodePipes = typedefs.query.NodePipes.slice(0, -3)
       if (typedefs.mutate.InsertNodePipes) typedefs.mutate.InsertNodePipes = typedefs.mutate.InsertNodePipes.slice(0, -3)
       if (typedefs.mutate.UpdateNodePipes) typedefs.mutate.UpdateNodePipes = typedefs.mutate.UpdateNodePipes.slice(0, -3)
+      if (typedefs.query.RelationshipPipes) typedefs.query.RelationshipPipes = typedefs.query.RelationshipPipes.slice(0, -3)
       if (typedefs.mutate.InsertRelationshipPipes) typedefs.mutate.InsertRelationshipPipes = typedefs.mutate.InsertRelationshipPipes.slice(0, -3)
       if (typedefs.mutate.UpdateRelationshipPipes) typedefs.mutate.UpdateRelationshipPipes = typedefs.mutate.UpdateRelationshipPipes.slice(0, -3)
       if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')[]'
 
+
       typedefs.query.NodeType = plop({
         now: typedefs.query.NodePipes,
         left: ' * @typedef { ',
-        right: ` } QueryRequestItemNode`,
+        right: ' } QueryRequestItemNode',
         default: ` * @typedef { object } QueryRequestItemNode
  * @property { string } id
  * @property { string } property
  * @property { QueryRequestItemNodeX } x`
       })
+
+
+      typedefs.query.RelationshipType = plop({
+        now: typedefs.query.RelationshipPipes,
+        left: ' * @typedef { ',
+        right: ' } QueryRequestItemRelationship',
+        default: ` * @typedef { object } QueryRequestItemRelationship
+ * @property { string } id
+ * @property { string } property
+ * @property { QueryRequestItemRelationshipX } x`
+      })
+
 
       typedefs.mutate.InsertNodeType = plop({
         now: typedefs.mutate.InsertNodePipes,
@@ -936,6 +1000,17 @@ export const ${ enumStr } =  ''\n\n\n`
      */
     function getQueryPropDescription (options) {
       return `Set to true to see ${ options.nodeName ? 'node' : 'relationship' } name \`${ options.nodeName ? options.nodeName : options.relationshipName }\` & property name \`${ options.propName }\` in the response. A \`QueryAliasProperty\` object is also available. ${ options.schemaPropDescription || '' }`
+    }
+
+
+    /**
+     * @param { string } schemaNodeName 
+     * @param { string } schemaNodePropName 
+     * @param {*} schemaProp 
+     * @returns 
+     */
+    function getQueryRelationshipPropDescription (schemaNodeName, schemaNodePropName, schemaProp) {
+      return `Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
     }
   } catch (error) {
     console.log('error', error)

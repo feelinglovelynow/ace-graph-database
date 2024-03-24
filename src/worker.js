@@ -16,13 +16,12 @@ async function getResponse (storage, request) {
   switch (url.pathname) {
     // mutate
     case enums.pathnames.mutate:
-      
-      return new Response(JSON.stringify(await _mutate(new Passport({ storage, request, source: enums.passportSource.mutate }), await request.json())), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _mutate(new Passport({ storage, request, source: enums.passportSource.mutate, desiredSchemaDataStructures: { nodeNamesSet: true, relationshipNamesSet: true } }), await request.json())), { headers: getHeaders('json') })
 
 
     // query
     case enums.pathnames.query:
-      return new Response(JSON.stringify(await _query(new Passport({ storage, request, source: enums.passportSource.query }), await request.json())), { headers: getHeaders('json') })
+      return new Response(JSON.stringify(await _query(new Passport({ storage, request, source: enums.passportSource.query, desiredSchemaDataStructures: { nodeNamesSet: true, relationshipNamesSet: true, relationshipPropsMap: true } }), await request.json())), { headers: getHeaders('json') })
 
 
     // throw b/c unknown pathname provided

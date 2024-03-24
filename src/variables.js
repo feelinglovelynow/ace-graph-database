@@ -23,6 +23,7 @@ export const RELATIONSHIP_PREFIX = '$r' + DELIMITER
 export const NODE_UIDS_PREFIX = '$node' + DELIMITER + 'uids' + DELIMITER
 export const INDEX_SORT_PREFIX = '$index' + DELIMITER + 'sort' + DELIMITER
 export const INDEX_UNIQUE_PREFIX = '$index' + DELIMITER + 'unique' + DELIMITER
+export const RELATIONSHIP_UIDS_PREFIX = '$relationship' + DELIMITER + 'uids' + DELIMITER
 
 export const ACE_NODE_NAMES = new Set([
   'AceSetting',
@@ -43,23 +44,32 @@ export function getRelationshipProp (relationshipName) {
 
 
 /**
- * @param { string } nodeName
- * @param { string } propertyKey
- * @param { string | boolean | number } propertyValue
+ * @param { string } prop
  * @returns { string }
  */
-export function getUniqueIndexKey (nodeName, propertyKey, propertyValue) {
-  return INDEX_UNIQUE_PREFIX + nodeName + DELIMITER + propertyKey + DELIMITER + String(propertyValue)
+export function getRelationshipNameFromProp (prop) {
+  return prop.split(RELATIONSHIP_PREFIX)?.[1]
 }
 
 
 /**
- * @param { string } nodeName
+ * @param { string } id - Node name or relationship name
+ * @param { string } propertyKey
+ * @param { string | boolean | number } propertyValue
+ * @returns { string }
+ */
+export function getUniqueIndexKey (id, propertyKey, propertyValue) {
+  return INDEX_UNIQUE_PREFIX + id + DELIMITER + propertyKey + DELIMITER + String(propertyValue)
+}
+
+
+/**
+ * @param { string } id - Node name or relationship name
  * @param { string } propertyKey
  * @returns { string }
  */
-export function getSortIndexKey (nodeName, propertyKey) {
-  return INDEX_SORT_PREFIX + nodeName + DELIMITER + propertyKey
+export function getSortIndexKey (id, propertyKey) {
+  return INDEX_SORT_PREFIX + id + DELIMITER + propertyKey
 }
 
 
@@ -69,6 +79,15 @@ export function getSortIndexKey (nodeName, propertyKey) {
  */
 export function getNodeUidsKey (nodeName) {
   return NODE_UIDS_PREFIX + nodeName
+}
+
+
+/**
+ * @param { string } relationshipName
+ * @returns { string }
+ */
+export function getRelationshipUidsKey (relationshipName) {
+  return RELATIONSHIP_UIDS_PREFIX + relationshipName
 }
 
 
