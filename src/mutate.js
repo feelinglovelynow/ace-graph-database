@@ -138,6 +138,9 @@ export async function _mutate (passport, body) {
           case enums.idsMutate.SchemaAddition:
             await schemaAdditions(requestItem)
             break
+          case enums.idsMutate.AceBackup:
+            await backup(requestItem)
+            break
           case enums.idsMutate.InsertNode:
           case enums.idsMutate.UpdateNode:
             await inupNodes(requestItem)
@@ -173,6 +176,16 @@ export async function _mutate (passport, body) {
         passport.cache.storage.deleteAll()
         passport.schema = undefined
         return await start(passport)
+      }
+
+
+      /** @param { td.MutateRequestItemBackup } requestItem */
+      async function backup (requestItem) {
+        if (typeof requestItem?.x?.backup !== 'string') throw error('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
+        if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'load', backup: true }))) throw error('auth__load-backup', `Because the load backup permission is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
+
+        passport.cache.storage.deleteAll()
+        passport.cache.storage.put(JSON.parse(requestItem.x.backup))
       }
 
 

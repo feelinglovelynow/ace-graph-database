@@ -51,7 +51,7 @@ export async function _query (passport, body) {
             if (value.action === 'read' && value.relationshipName) throw error('auth__read-relationship', `Because read permissions to the relationship name \`${ value.relationshipName }\` is revoked from your AcePermission's, you cannot do this`, { token: passport.token, source: passport.source })
           })
 
-          /** @type { { [k: string]: any } } - We'll turn the map into this object */
+          /** @type { td.AceBackupResponse } - We'll turn the map into this object */
           const rList = {}
           const listEntries = await passport.cache.storage.list()
 

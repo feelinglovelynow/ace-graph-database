@@ -79,7 +79,8 @@ export async function start (passport) {
         },
         AcePermission: {
           action: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          schema: { id: 'Prop', x: { dataType: 'string' } },
+          schema: { id: 'Prop', x: { dataType: 'boolean' } },
+          backup: { id: 'Prop', x: { dataType: 'boolean' } },
           nodeName: { id: 'Prop', x: { dataType: 'string' } },
           relationshipName: { id: 'Prop', x: { dataType: 'string' } },
           propName: { id: 'Prop', x: { dataType: 'string' } },
@@ -111,7 +112,9 @@ export async function start (passport) {
         { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', slug: 'architect' } },
         { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleEditor', name: 'Editor', slug: 'editor' } },
         { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleReader', name: 'Reader', slug: 'reader' } },
-        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionSchema', action: 'write', schema: '*' } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionSaveBackup', action: 'save', backup: true } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionLoadBackup', action: 'load', backup: true } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionSchema', action: 'write', schema: true } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionAceSetting', action: 'write', nodeName: 'AceSetting', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionWriteAceUser', action: 'write', nodeName: 'AceUser', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionWriteAceSetting', action: 'write', nodeName: 'AceSetting', propName: '*' } },
@@ -143,10 +146,14 @@ export async function start (passport) {
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteAcePermission' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWritePassword' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionReadPassword' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionSaveBackup' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionLoadBackup' } },
 
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionSchema' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionWriteAnyNode' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadPassword' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionSaveBackup' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionLoadBackup' } },
       ]
     })
   }

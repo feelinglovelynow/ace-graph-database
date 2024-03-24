@@ -174,13 +174,17 @@ import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
 /** Mutate
  *
  * @typedef { MutateRequestItem | MutateRequestItem[] } MutateRequest
- * @typedef { MutateRequestItemBoot | MutateRequestItemInsert | MutateRequestItemUpdate | MutateRequestItemDataDelete | MutateRequestItemSchemaAndData | MutateRequestItemSchema } MutateRequestItem
+ * @typedef { MutateRequestItemBackup | MutateRequestItemBoot | MutateRequestItemInsert | MutateRequestItemUpdate | MutateRequestItemDataDelete | MutateRequestItemSchemaAndData | MutateRequestItemSchema } MutateRequestItem
  * @typedef { MutateRequestItemStart | MutateRequestItemRestart } MutateRequestItemBoot
  * @typedef { MutateRequestItemInsertNode | MutateRequestItemInsertRelationship } MutateRequestItemInsert
  * @typedef { MutateRequestItemUpdateNode | MutateRequestItemUpdateRelationship } MutateRequestItemUpdate
  * @typedef { MutateRequestItemDataDeleteNodes | MutateRequestItemDataDeleteRelationships | MutateRequestItemDataDeleteNodeProps | MutateRequestItemDataDeleteRelationshipProps } MutateRequestItemDataDelete
  * @typedef { MutateRequestItemSchemaAndDataDeleteNodes } MutateRequestItemSchemaAndData
  * @typedef { MutateRequestItemSchemaAddition } MutateRequestItemSchema
+ * 
+ * @typedef { object } MutateRequestItemBackup
+ * @property { typeof enums.idsMutate.AceBackup } id
+ * @property { { backup: string } } x
  *
  * @typedef { object } MutateRequestItemStart
  * @property { typeof enums.idsMutate.Start } id
@@ -249,9 +253,6 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } QueryRequestItemAceBackup
  * @property { typeof enums.idsQuery.AceBackup } id
  * @property { string } property
- * @property { QueryRequestItemAceBackupX } [ x ]
- * @typedef { object } QueryRequestItemAceBackupX
- * @property { boolean } save
  *
  * @typedef { Map<enums.idsQueryOptions, (QuerySort | QueryFindByUnique | QueryFindByUid | QueryFindBy_Uid | QueryFilterByUids | QueryFilterBy_Uids | QueryFilterByUniques)> } QueryRequestItemGeneratedXSectionPriorityOptions
  *
@@ -547,6 +548,12 @@ ${ typedefs.query.RelationshipType }
  * @property { string } relationshipName
  * @property { AcGraphRelationshipX } x
  * @typedef { { a: string, b: string, _uid: string, [propName: string]: any } } AcGraphRelationshipX
+ */
+
+
+/** AceBackup
+ *
+ * @typedef { { [k: string]: any }  } AceBackupResponse
  */
 `),
 

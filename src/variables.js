@@ -92,7 +92,7 @@ export function getRelationshipUidsKey (relationshipName) {
 
 
 /**
- * @param { { action: 'read' | 'write', schema?: boolean, nodeName?: string | null, relationshipName?: string | null, propName?: string | null } } x 
+ * @param { { action: 'read' | 'write' | 'save' | 'load', backup?: boolean, schema?: boolean, nodeName?: string | null, relationshipName?: string | null, propName?: string | null } } x 
  * @returns { string }
  */
 export function getRevokesKey (x) {
@@ -100,6 +100,7 @@ export function getRevokesKey (x) {
 
   if (x.schema) response = x.action + DELIMITER + 'schema'
   else if (x.nodeName || x.relationshipName) response = x.action + DELIMITER + (x.nodeName || x.relationshipName) + DELIMITER + x.propName
+  else if (x.backup && (x.action === 'save' || x.action === 'load')) response = x.action + DELIMITER + 'backup'
 
   return response
 }

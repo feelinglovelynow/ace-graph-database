@@ -45,7 +45,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules pnpm jest",
     "dbCloud": "wrangler deploy",
     "dev": "wrangler dev",
-    "manifest": "node src/manifest.js"
+    "manifest": "node src/manifest.js",
+    "backup": "node src/backup.js"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
