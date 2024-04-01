@@ -1,27 +1,206 @@
 # 🕉 @feelinglovelynow/ace-graph-database
 
 
-## 💎 Install
-```bash
-pnpm add @feelinglovelynow/ace-graph-database
+
+## 🙏 JavaScipt's BEST Database!
+* You just found, what we feel is the BEST database option, for JavaScript developers!
+
+
+## What is Ace?
+* Ace sits on top of a key value store
+* Ace structures data in the key value store as a graph (nodes and relationships):
+* Ace works with the JSON Schema that you provide
+* Via the script, `pnpm ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS)
+* The Ace query language is a typesafe (JS/TS) function called `chat()`
+* Users, Roles and Permissions (read, insert, update or delete) by node, relationship or property may be easily setup
+* Backups are simple and free!
+
+
+
+## How to create a Movie Graph?
+Step 1: JavaScript
+```ts
+const core = { graphs: [ { workerUrl: 'http://localhost:8787' } ] }
+
+const request = [
+  { id: 'Start' },
+
+  {
+    id: 'SchemaAddition',
+    x: {
+      nodes: {
+        Movie: {
+          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+          actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
+        },
+        Actor: {
+          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+          actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
+        }
+      },
+      relationships: {
+        actsInMovie: {
+          id: 'ManyToMany',
+          x: {
+            props: {
+              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
+            }
+          }
+        },
+      }
+    }
+  },
+
+  { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
+  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
+  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
+  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
+
+  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
+  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
+  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
+
+  {
+    id: 'Query',
+    nodeName: 'Movie',
+    property: 'movies',
+    x: {
+      uid: true,
+      name: true,
+      actors: {
+        _uid : true, // relationship (actsInMovie) uid
+        _salary: true, // relationship (actsInMovie) uid
+        uid: true, // node (Actor) uid
+        name: true, // node (Actor) uid
+      }
+    }
+  }
+]
+
+const response = await chat(core, request)
+```
+Step 2: Bash
+``` bash
+ace types
 ```
 
 
-## 🙏 JavaScipt's BEST Database!
-* Greetings JavaScript developer! If you are looking for a database, you just found the best one!
-* Thanks to JSDoc comments and TypeScript types that Ace generates based on your JSON schema, autocomplete and pre save errors work beautifully for TypeScript AND JavaScript developers!
-* One to one, one to many AND many to many relationships may be queried with 0 joins, because Ace is a Graph Database, so typesafe queries that go several relationships deep are fast!
-* Open source (MIT)
-* Data stored as [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/)
-* [$5 monthly to Cloudflare](https://developers.cloudflare.com/durable-objects/platform/pricing/) + ***Ace Graph Database***  provides:
-  * [50 GB of Graph Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
-  * [1 million Graph requests a month](https://developers.cloudflare.com/durable-objects/platform/pricing/)
-  * [10 million Serverless requests a month](https://developers.cloudflare.com/workers/platform/pricing/#workers)
-  * [10 million Cache requests a month](https://developers.cloudflare.com/kv/platform/pricing/)
-  * [Transaction Mutations](https://developers.cloudflare.com/durable-objects/api/transactional-storage-api/)
-  * [Simple Graph Migrations](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/)
-  * [Graph Memory Data Caching](https://developers.cloudflare.com/durable-objects/learning/in-memory-state/)
-  * [Graph Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
+## What options do I have to store my data?
+* Cloudflare Durable Object
+    * Their $5 a month pricing tier allows:
+        * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
+        * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
+        * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
+* Browser - Local Storage (FREE)
+* Node - File (Standard Server Cost)
+
+
+## Version 1 Roadmap 
+* From write to (inup / insert / update / delete)
+* Finish errors updates
+* Slug to Enum
+* Lib folder
+* Node or edge name may not start w/ [ Ace, Query, Mutate, Schema, CF ] and no triple underscores (DELIMETER) b/c we use them as delimeters
+    * Don't allow uid or _uid to be a prop
+* Objects folder, b/c JSDoc is not good @ classes
+    * graph
+    * transaction
+    * passport
+    * cache
+    * log
+        * Put [ Key, Original, Now, Request Item, API Token ]
+        * Delete [ Key, API Token ]
+    * error
+* Manifest to cli
+    * Data structures that allow 1 loop in cli function
+    * `ace backup`
+    * `ace enums`
+    * `ace types` does `ace enums` first, b/c enums are used in types
+    * `.ace` folder
+        * Folders: (types, enums, backups)
+* SCHEMA_KEY use app wide
+* Move schema loops into schema data structures
+* loopOptions > switch 
+* Remove can't read something from putMap if in deleteSet
+* Add can't put something in putMap that is in deleteSet
+* Do not allow the forward and the reverse relationship propName to be the same propName
+* `chat()`
+    * Function to communicate with the graph
+    * Insert w/ no uid allowed (node can't be used in relationships)
+    * Insert w/ provdided uid allowed (node can be used in relationships)
+    * Let 'Start' support property
+    * Let 'Restart' support property
+    * Let 'SchemaAddition' support property
+    * Delete `cascadePropNames` array
+    * Upsert, won't throw an error if the item exists
+    * Multiple Queries - Values from previous query available in current query
+    * To handle accessing values from a previous mutation
+        * Id: 'MutationLoop'
+        * Id: 'ResponsePropNameValue'
+    * throwIfMissingMustProps -> update / delete 
+    * Properties:
+      * Options:
+          * Graphs
+          * Transaction
+          * Hold Commit
+          * Prefix
+      * Request:
+          * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
+          * Request Item can support
+* Transaction
+    * IF mutation in chat() found and no transaction provided, create transaction w/ undefined holdCommit
+    * Logs
+    * createTransaction()
+    * save()
+    * clear() - putMap & deleteSet
+    * rollback()
+      * Rollback Options
+        * Retry
+        * Maintain data structures 
+* Mutations that alter Schema and Data simultaneously (idsMutate)
+* Function response types
+* Node Typedefs (all optional props)
+* Must relationship (storage fallback)
+* Full Text Index, Mutation and Query
+* Geojson support
+    * Coordinates data type (Multidimensional array with longitude and latitude array)
+* Timeseries data types
+* Relationship prop indexes
+* Test relationship props update + guidance
+* App Worker > Ace Durable Object
+* Browser > Ace > Local Storage
+* Node > Ace > Text File (stoage que?)
+* Batch requests to storage to stay within storage required Maximum count
+* KV (request cache) Integration
+* REPL (event, storage, share)
+* Comments (param, returns, description, example usage, why) for all index functions
+* Proofread all comments
+* Independant Security Audit
+* Independant Code Review
+* Unit Tests
+* Studio
+    * (View / Edit) data from multiple graphs, simultaneously in the browser
+    * Q&A - Show questions that makes sense to ask about the graph and the answers
+* Lovely Unity 1.0
+* Real project benchmarks
+* Docs
+    * Search
+    * Ask Ai
+    * Link to see / edit on GitHub
+        * Doc Page
+        * Functions Doc Page references
+
+
+## Version 2 Roadmap 
+* Store Vectors
+
+* VMWare Private Ai
+    * Ai ask questios about graph(s)
+    * Ai chart generation
+* Backup triggers (replica graph)
+* Rag support
+* Studio
+    * Collaboration Tools
 
 
 ## 🎁 All Our Packages
