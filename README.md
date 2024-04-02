@@ -35,7 +35,7 @@ const response = await chat({
       x: {
         nodes: {
           AceUser: { // AceUser is a node that is added to your schema during id: 'Start' above
-            fbFriends: { id: 'BidirectionalRelationshipProp', x: { has: 'many', nodeName: 'User', relationshipName: 'friends' } }, // if adding props to default ace nodes like AceUser, we recommend beginning the prop name w/ prefix
+            fbFriends: { id: 'BidirectionalRelationshipProp', x: { has: 'many', nodeName: 'User', relationshipName: 'friends' } }, // if adding props to default ace nodes like AceUser, we recommend beginning the prop name w/ a prefix
           },
         },
         relationships: {
@@ -84,13 +84,13 @@ ace types #generate types that align with above schema
 
 
 ## 🤓 Version 1 Roadmap 
-* From write to (inup / insert / update / delete)
-* Finish errors updates
-* Slug to Enum
-* Lib folder
-* Node or edge name may not start w/ [ Ace, Query, Mutate, Schema, CF ] and no triple underscores (DELIMETER) b/c we use them as delimeters
+1. From write to (inup / insert / update / delete)
+1. Finish errors updates
+1. Slug to Enum
+1. Lib folder
+1. Node or edge name may not start w/ [ Ace, Query, Mutate, Schema, CF ] and no triple underscores (DELIMETER) b/c we use them as delimeters
     * Don't allow uid or _uid to be a prop
-* Objects folder, b/c JSDoc is not good @ classes
+1. Objects folder, b/c JSDoc is not good @ classes
     * graph
     * transaction
     * passport
@@ -99,20 +99,20 @@ ace types #generate types that align with above schema
         * Put [ Key, Original, Now, Request Item, API Token ]
         * Delete [ Key, API Token ]
     * error
-* Manifest to cli
+1. Manifest to cli
     * Data structures that allow 1 loop in cli function
     * `ace backup`
     * `ace enums`
     * `ace types` does `ace enums` first, b/c enums are used in types
     * `.ace` folder
         * Folders: (types, enums, backups)
-* SCHEMA_KEY use app wide
-* Move schema loops into schema data structures 
-* loopOptions > switch 
-* Remove can't read something from putMap if in deleteSet
-* Add can't put something in putMap that is in deleteSet
-* Do not allow the forward and the reverse relationship propName to be the same propName
-* `chat()`
+1. SCHEMA_KEY use app wide
+1. Move schema loops into schema data structures 
+1. loopOptions > switch 
+1. Remove can't read something from putMap if in deleteSet
+1. Add can't put something in putMap that is in deleteSet
+1. Do not allow the forward and the reverse relationship propName to be the same propName
+1. `chat()`
     * Function to communicate with the graph
     * Insert w/ no uid allowed (node can't be used in relationships)
     * Insert w/ provdided uid allowed (node can be used in relationships)
@@ -135,7 +135,7 @@ ace types #generate types that align with above schema
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
-* Transaction
+1. Transaction
     * IF mutation in chat() found and no transaction provided, create transaction w/ undefined holdCommit
     * Logs
     * createTransaction()
@@ -145,34 +145,34 @@ ace types #generate types that align with above schema
       * Rollback Options
         * Retry
         * Maintain data structures 
-* Mutations that alter Schema and Data simultaneously (idsMutate)
-* Function response types
-* Node Typedefs (all optional props)
-* Must relationship (storage fallback)
-* Full Text Index, Mutation and Query
-* Geojson support
+1. Mutations that alter Schema and Data simultaneously (idsMutate)
+1. Function response types
+1. Node Typedefs (all optional props)
+1. Must relationship (storage fallback)
+1. Full Text Index, Mutation and Query
+1. Geojson support
     * Coordinates data type (Multidimensional array with longitude and latitude array)
-* Timeseries data types
-* Relationship prop indexes
-* Test relationship props update + guidance
-* App Worker > Ace Durable Object
-* Browser > Ace > Local Storage
-* Node > Ace > Text File (stoage que?)
-* Batch requests to storage to stay within storage required Maximum count
-* KV (request cache) Integration
-* REPL (event, storage, share)
-* Comments (param, returns, description, example usage, why) for all index functions
-* Deno
-* Proofread all comments
-* Independant Security Audit
-* Independant Code Review
-* Unit Tests
-* Studio
+1. Timeseries data types
+1. Relationship prop indexes
+1. Test relationship props update + guidance
+1. App Worker > Ace Durable Object
+1. Browser > Ace > Local Storage
+1. Node > Ace > Text File (stoage que?)
+1. Batch requests to storage to stay within storage required Maximum count
+1. KV (request cache) Integration
+1. REPL (event, storage, share)
+1. Comments (param, returns, description, example usage, why) for all index functions
+1. Deno
+1. Proofread all comments
+1. Independant Security Audit
+1. Independant Code Review
+1. Unit Tests
+1. Studio
     * (View / Edit) data from multiple graphs, simultaneously in the browser
     * Q&A - Show questions that makes sense to ask about the graph and the answers
-* Lovely Unity 1.0
-* Real project benchmarks
-* Docs
+1. Lovely Unity 1.0
+1. Real project benchmarks
+1. Docs
     * Search
     * Link to see / edit on GitHub
         * Doc Page
@@ -181,7 +181,7 @@ ace types #generate types that align with above schema
 
 
 ## 🧚‍♀️ Version 2 Roadmap 
-* Rust
+1. Rust
     * Worker
     * Durable Object
     * Lib Folder
@@ -189,16 +189,16 @@ ace types #generate types that align with above schema
     * JS (Call Rust code from JS) Support
         * Edge
         * Node
-* Vector Data Type
-* VMWare Private Ai
+1. Vector Data Type
+1. VMWare Private Ai
     * Teach Ai w/ data from graph(s)
     * Ask Ai questions about graph(s)
-* Backup triggers (replica graph)
-* Rag support
-* Studio
+1. Backup triggers (replica graph)
+1. Rag support
+1. Studio
     * Collaboration Tools
     * Ai chart generation
-* Docs
+1. Docs
     * Explain Version 2
     * Ask Ai
 
