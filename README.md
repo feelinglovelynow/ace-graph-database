@@ -6,20 +6,18 @@
 
 
 ## 🤔 What is Ace?
-* Ace syncs with key value stores
-* Ace structures data in the key value store as a graph (nodes and relationships)
-* Ace works with the JSON Schema that you provide
-* Via the script, `ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS)
-* The Ace query language is a typesafe (JS/TS) function called `chat()`
-* Users, Roles and Permissions (read, insert, update or delete) by node, relationship or property may be easily setup
-* Backups via `ace backup` are free
+1. Ace structures data in key value stores as a graph (nodes, relationships and properties)
+1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
+1. Via the script, `ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
+1. The Ace query language is a typesafe (JS/TS) function called `chat()` that allows queries and transactional mutations
+1. Easily configure users, passwords, roles and permissions by node, relationship or property, for the actions read, insert, update, upsert or delete
+1. Our cli scipt `ace backup` provides free backups for your graph and a simple way to load backups
 
 
-## 🙌 How to create a Facebook Graph, in 3 steps?
+## 🎬 How to create a Movie Graph?
 ****Step 1: Bash****
 ``` bash
-pnpm add @feelinglovelynow/ace-graph-database # or npm or yarn
-ace dev # start development server
+pnpm add @feelinglovelynow/ace-graph-database && ace dev 8787
 ```
 ****Step 2: JavaScript****
 ```ts
@@ -27,52 +25,59 @@ const response = await chat({
   graphs: [ { workerUrl: 'http://localhost:8787' } ],
 
   request: [
-    { id: 'Start', property: 'start', }, // adds fundamental nodes, relationships & properties to graph
+    { id: 'Initalize', property: 'init', },
 
     {
-      id: 'SchemaAddition', // add to schema
+      id: 'SchemaAddition',
       property: 'schemaAddition',
       x: {
         nodes: {
-          AceUser: { // AceUser is a node that is added to your schema during id: 'Start' above
-            fbFriends: { id: 'BidirectionalRelationshipProp', x: { has: 'many', nodeName: 'User', relationshipName: 'friends' } }, // if adding props to default ace nodes like AceUser, we recommend beginning the prop name w/ a prefix
+          Actor: {
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
+          },
+          Movie: {
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
           },
         },
         relationships: {
-          friends: {
-            id: 'ManyToMany', // other options are 'OneToMany' and 'OneToOne'
+          actsInMovie: {
+            id: 'ManyToMany',
             x: {
               props: {
-                _createdAt: { id: 'RelationshipProp', x: { dataType: 'isoString', mustBeDefined: true } } // starting relationship props with an underscore helps w/ queries as seen below
+                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // relationship prop
               }
             }
-          }
+          },
         }
       }
     },
 
-    { id: 'InsertNode', nodeName: 'AceUser', x: { uid: '_:Chris', name: 'Chris' } },
-    { id: 'InsertNode', nodeName: 'AceUser', x: { uid: '_:Jenny', name: 'Jenny' } },
-    { id: 'InsertNode', nodeName: 'AceUser', x: { uid: '_:Donna', name: 'Donna' } },
+    { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
+    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
+    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
+    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
 
-    { id: 'InsertRelationship', relationshipName: 'friends', x: { a: '_:Chris', b: '_:Jenny', _createdAt: 'now' } },
-    { id: 'InsertRelationship', relationshipName: 'friends', x: { a: '_:Chris', b: '_:Donna', _createdAt: 'now' } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
 
     {
       id: 'Query',
-      nodeName: 'AceUser',
-      property: 'users',
+      nodeName: 'Movie',
+      property: 'movies',
       x: {
         uid: true,
         name: true,
-        friends: {
-          _uid : true, // relationship (friends)
-          _createdAt: true, // relationship (friends)
-          uid: true, // node (AceUser)
-          name: true, // node (AceUser)
+        actors: {
+          _uid : true, // relationship prop (actsInMovie)
+          _salary: true, // relationship prop (actsInMovie)
+          uid: true, // node prop (Actor)
+          name: true, // node prop (Actor)
         }
       }
-    },
+    }
   ]
 })
 ```
@@ -80,7 +85,6 @@ const response = await chat({
 ``` bash
 ace types #generate types that align with above schema
 ```
-
 
 
 ## 🤓 Version 1 Roadmap 
@@ -179,7 +183,6 @@ ace types #generate types that align with above schema
         * Functions Doc Page references
 
 
-
 ## 🧚‍♀️ Version 2 Roadmap 
 1. Rust
     * Worker
@@ -189,6 +192,7 @@ ace types #generate types that align with above schema
     * JS (Call Rust code from JS) Support
         * Edge
         * Node
+        * Deno
 1. Vector Data Type
 1. VMWare Private Ai
     * Teach Ai w/ data from graph(s)
@@ -198,10 +202,12 @@ ace types #generate types that align with above schema
 1. Studio
     * Collaboration Tools
     * Ai chart generation
+    * Ai Q&A generator
+    * Report Builder
+    * Report Scheduler
 1. Docs
     * Explain Version 2
     * Ask Ai
-
 
 
 ## 💎 What options do I have to store my data?
@@ -212,79 +218,6 @@ ace types #generate types that align with above schema
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
 * Browser - Local Storage (FREE)
 * Node - File (Standard Server Cost)
-
-
-## 🎬 How to create a Movie Graph?
-****Step 1: Bash****
-``` bash
-pnpm add @feelinglovelynow/ace-graph-database && ace dev
-```
-****Step 2: JavaScript****
-```ts
-const response = await chat({
-  graphs: [ { workerUrl: 'http://localhost:8787' } ],
-  request: [
-    { id: 'Start', property: 'start', },
-
-    {
-      id: 'SchemaAddition',
-      property: 'schemaAddition',
-      x: {
-        nodes: {
-          Actor: {
-            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
-          },
-          Movie: {
-            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
-          },
-        },
-        relationships: {
-          actsInMovie: {
-            id: 'ManyToMany',
-            x: {
-              props: {
-                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
-              }
-            }
-          },
-        }
-      }
-    },
-
-    { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
-    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
-    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
-    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
-
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
-
-    {
-      id: 'Query',
-      nodeName: 'Movie',
-      property: 'movies',
-      x: {
-        uid: true,
-        name: true,
-        actors: {
-          _uid : true, // relationship (actsInMovie)
-          _salary: true, // relationship (actsInMovie)
-          uid: true, // node (Actor)
-          name: true, // node (Actor)
-        }
-      }
-    }
-  ]
-})
-```
-****Step 3: Bash****
-``` bash
-ace types #generate types that align with above schema
-```
-
 
 
 ## 🎁 All Our Packages
