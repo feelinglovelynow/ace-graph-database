@@ -1,101 +1,89 @@
 # 🕉 @feelinglovelynow/ace-graph-database
 
 
-
 ## 🙏 JavaScipt's BEST Database!
-* You just found, what we feel is the BEST database option, for JavaScript developers!
+* We feel Ace Graph Database is the BEST database option for JavaScript developers!
 
 
-## What is Ace?
-* Ace sits on top of a key value store
-* Ace structures data in the key value store as a graph (nodes and relationships):
+## 🤔 What is Ace?
+* Ace syncs with key value stores
+* Ace structures data in the key value store as a graph (nodes and relationships)
 * Ace works with the JSON Schema that you provide
-* Via the script, `pnpm ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS)
+* Via the script, `ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS)
 * The Ace query language is a typesafe (JS/TS) function called `chat()`
 * Users, Roles and Permissions (read, insert, update or delete) by node, relationship or property may be easily setup
-* Backups are simple and free!
+* Backups via `ace backup` are free
 
 
-
-## How to create a Movie Graph?
-Step 1: JavaScript
+## 🙌 How to create a Facebook Graph, in 3 steps?
+****Step 1: Bash****
+``` bash
+pnpm add @feelinglovelynow/ace-graph-database # or npm or yarn
+ace dev # start development server
+```
+****Step 2: JavaScript****
 ```ts
-const core = { graphs: [ { workerUrl: 'http://localhost:8787' } ] }
+const response = await chat({
+  graphs: [ { workerUrl: 'http://localhost:8787' } ],
 
-const request = [
-  { id: 'Start' },
+  request: [
+    { id: 'Start', property: 'start', }, // adds fundamental nodes, relationships & properties to graph
 
-  {
-    id: 'SchemaAddition',
-    x: {
-      nodes: {
-        Movie: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
+    {
+      id: 'SchemaAddition', // add to schema
+      property: 'schemaAddition',
+      x: {
+        nodes: {
+          AceUser: { // AceUser is a node that is added to your schema during id: 'Start' above
+            fbFriends: { id: 'BidirectionalRelationshipProp', x: { has: 'many', nodeName: 'User', relationshipName: 'friends' } }, // if adding props to default ace nodes like AceUser, we recommend beginning the prop name w/ prefix
+          },
         },
-        Actor: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
-        }
-      },
-      relationships: {
-        actsInMovie: {
-          id: 'ManyToMany',
-          x: {
-            props: {
-              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
+        relationships: {
+          friends: {
+            id: 'ManyToMany', // other options are 'OneToMany' and 'OneToOne'
+            x: {
+              props: {
+                _createdAt: { id: 'RelationshipProp', x: { dataType: 'isoString', mustBeDefined: true } } // starting relationship props with an underscore helps w/ queries as seen below
+              }
             }
           }
-        },
+        }
       }
-    }
-  },
+    },
 
-  { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
-  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
-  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
-  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
+    { id: 'InsertNode', nodeName: 'AceUser', x: { uid: '_:Chris', name: 'Chris' } },
+    { id: 'InsertNode', nodeName: 'AceUser', x: { uid: '_:Jenny', name: 'Jenny' } },
+    { id: 'InsertNode', nodeName: 'AceUser', x: { uid: '_:Donna', name: 'Donna' } },
 
-  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
-  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
-  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
+    { id: 'InsertRelationship', relationshipName: 'friends', x: { a: '_:Chris', b: '_:Jenny', _createdAt: 'now' } },
+    { id: 'InsertRelationship', relationshipName: 'friends', x: { a: '_:Chris', b: '_:Donna', _createdAt: 'now' } },
 
-  {
-    id: 'Query',
-    nodeName: 'Movie',
-    property: 'movies',
-    x: {
-      uid: true,
-      name: true,
-      actors: {
-        _uid : true, // relationship (actsInMovie) uid
-        _salary: true, // relationship (actsInMovie) uid
-        uid: true, // node (Actor) uid
-        name: true, // node (Actor) uid
+    {
+      id: 'Query',
+      nodeName: 'AceUser',
+      property: 'users',
+      x: {
+        uid: true,
+        name: true,
+        friends: {
+          _uid : true, // relationship (friends)
+          _createdAt: true, // relationship (friends)
+          uid: true, // node (AceUser)
+          name: true, // node (AceUser)
+        }
       }
-    }
-  }
-]
-
-const response = await chat(core, request)
+    },
+  ]
+})
 ```
-Step 2: Bash
+****Step 3: Bash****
 ``` bash
-ace types
+ace types #generate types that align with above schema
 ```
 
 
-## What options do I have to store my data?
-* Cloudflare Durable Object
-    * Their $5 a month pricing tier allows:
-        * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
-        * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
-        * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
-* Browser - Local Storage (FREE)
-* Node - File (Standard Server Cost)
 
-
-## Version 1 Roadmap 
+## 🤓 Version 1 Roadmap 
 * From write to (inup / insert / update / delete)
 * Finish errors updates
 * Slug to Enum
@@ -119,7 +107,7 @@ ace types
     * `.ace` folder
         * Folders: (types, enums, backups)
 * SCHEMA_KEY use app wide
-* Move schema loops into schema data structures
+* Move schema loops into schema data structures 
 * loopOptions > switch 
 * Remove can't read something from putMap if in deleteSet
 * Add can't put something in putMap that is in deleteSet
@@ -174,6 +162,7 @@ ace types
 * KV (request cache) Integration
 * REPL (event, storage, share)
 * Comments (param, returns, description, example usage, why) for all index functions
+* Deno
 * Proofread all comments
 * Independant Security Audit
 * Independant Code Review
@@ -185,22 +174,117 @@ ace types
 * Real project benchmarks
 * Docs
     * Search
-    * Ask Ai
     * Link to see / edit on GitHub
         * Doc Page
         * Functions Doc Page references
 
 
-## Version 2 Roadmap 
-* Store Vectors
 
+## 🧚‍♀️ Version 2 Roadmap 
+* Rust
+    * Worker
+    * Durable Object
+    * Lib Folder
+    * Cargo Package
+    * JS (Call Rust code from JS) Support
+        * Edge
+        * Node
+* Vector Data Type
 * VMWare Private Ai
-    * Ai ask questios about graph(s)
-    * Ai chart generation
+    * Teach Ai w/ data from graph(s)
+    * Ask Ai questions about graph(s)
 * Backup triggers (replica graph)
 * Rag support
 * Studio
     * Collaboration Tools
+    * Ai chart generation
+* Docs
+    * Explain Version 2
+    * Ask Ai
+
+
+
+## 💎 What options do I have to store my data?
+* Cloudflare Durable Object
+    * Their $5 a month pricing tier allows:
+        * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
+        * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
+        * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
+* Browser - Local Storage (FREE)
+* Node - File (Standard Server Cost)
+
+
+## 🎬 How to create a Movie Graph?
+****Step 1: Bash****
+``` bash
+pnpm add @feelinglovelynow/ace-graph-database && ace dev
+```
+****Step 2: JavaScript****
+```ts
+const response = await chat({
+  graphs: [ { workerUrl: 'http://localhost:8787' } ],
+  request: [
+    { id: 'Start', property: 'start', },
+
+    {
+      id: 'SchemaAddition',
+      property: 'schemaAddition',
+      x: {
+        nodes: {
+          Actor: {
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
+          },
+          Movie: {
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
+          },
+        },
+        relationships: {
+          actsInMovie: {
+            id: 'ManyToMany',
+            x: {
+              props: {
+                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
+              }
+            }
+          },
+        }
+      }
+    },
+
+    { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
+    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
+    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
+    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
+
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
+
+    {
+      id: 'Query',
+      nodeName: 'Movie',
+      property: 'movies',
+      x: {
+        uid: true,
+        name: true,
+        actors: {
+          _uid : true, // relationship (actsInMovie)
+          _salary: true, // relationship (actsInMovie)
+          uid: true, // node (Actor)
+          name: true, // node (Actor)
+        }
+      }
+    }
+  ]
+})
+```
+****Step 3: Bash****
+``` bash
+ace types #generate types that align with above schema
+```
+
 
 
 ## 🎁 All Our Packages
