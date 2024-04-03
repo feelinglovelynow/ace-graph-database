@@ -25,11 +25,11 @@ const response = await chat({
   graphs: [ { workerUrl: 'http://localhost:8787' } ],
 
   request: [
-    { id: 'Initalize', property: 'init', },
+    { id: 'Init', property: 'init' }, // init graph, place 'Init' response items @ response.init
 
     {
-      id: 'SchemaAddition',
-      property: 'schemaAddition',
+      id: 'SchemaAdd', // add to schema, place 'SchemaAdd' response items @ response.additionToSchema
+      property: 'additionToSchema',
       x: {
         nodes: {
           Actor: {
@@ -54,17 +54,20 @@ const response = await chat({
       }
     },
 
+    // add nodes and node props to graph
     { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
     { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
     { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
     { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
 
+    // add relationships and relationship props to graph
     { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
     { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
     { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
 
+    // query all movies and their actors and place this information @ response.movies
     {
-      id: 'Query',
+      id: 'QueryNode',
       nodeName: 'Movie',
       property: 'movies',
       x: {
@@ -90,6 +93,7 @@ ace types #generate types that align with above schema
 ## 🤓 Version 1 Roadmap 
 1. From write to (inup / insert / update / delete)
 1. Finish errors updates
+1. Start to Init
 1. Slug to Enum
 1. Lib folder
 1. Node or edge name may not start w/ [ Ace, Query, Mutate, Schema, CF ] and no triple underscores (DELIMETER) b/c we use them as delimeters
@@ -118,6 +122,7 @@ ace types #generate types that align with above schema
 1. Do not allow the forward and the reverse relationship propName to be the same propName
 1. `chat()`
     * Function to communicate with the graph
+    * $ace in response > [ newUids, deletedKeys ]
     * Insert w/ no uid allowed (node can't be used in relationships)
     * Insert w/ provdided uid allowed (node can be used in relationships)
     * Let 'Start' support property
@@ -150,6 +155,9 @@ ace types #generate types that align with above schema
         * Retry
         * Maintain data structures 
 1. Mutations that alter Schema and Data simultaneously (idsMutate)
+1. Security
+    * Access JWT + Refresh JWT
+    * AceUser > email > passwordless
 1. Function response types
 1. Node Typedefs (all optional props)
 1. Must relationship (storage fallback)
@@ -210,7 +218,7 @@ ace types #generate types that align with above schema
     * Ask Ai
 
 
-## 💎 What options do I have to store my data?
+## 😍 What options do I have to store my data?
 * Cloudflare Durable Object
     * Their $5 a month pricing tier allows:
         * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
@@ -218,6 +226,21 @@ ace types #generate types that align with above schema
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
 * Browser - Local Storage (FREE)
 * Node - File (Standard Server Cost)
+
+
+## 💎 Dictionary
+### Ace
+* Ace is a Graph Database
+### Graph Database
+* A database structured with nodes, relationships and properties
+### Node
+* A noun stored in the graph
+### Relationship
+* Between two nodes
+* Explains how two nodes unite
+### Properties
+* Information about one node (eg: `AceUser` node, `name` prop) or one relationship (`actsInMovie` relationship, `_salary` prop)
+* Relationship properties start with an underscore to help differentiate node props and relationship props during `chat()` queries
 
 
 ## 🎁 All Our Packages
