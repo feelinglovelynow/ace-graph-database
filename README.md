@@ -9,7 +9,7 @@
 1. Ace structures data in key value stores as a graph (nodes, relationships and properties)
 1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
 1. Via the script, `ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
-1. The Ace query language is a typesafe (JS/TS) function called `chat()` that allows queries and transactional mutations
+1. The Ace query language is a typesafe (JS/TS) function called `ace()` that allows queries and transactional mutations
 1. Easily configure users, passwords, roles and permissions by node, relationship or property, for the actions read, insert, update, upsert or delete
 1. Our cli scipt `ace backup` provides free backups for your graph and a simple way to load backups
 
@@ -21,14 +21,12 @@ pnpm add @feelinglovelynow/ace-graph-database && ace dev 8787
 ```
 ****Step 2: JavaScript****
 ```ts
-const response = await chat({
+const response = await ace({
   graphs: [ { workerUrl: 'http://localhost:8787' } ],
 
   request: [
-    { id: 'Init', property: 'init' }, // init graph, place 'Init' response items @ response.init
-
     {
-      id: 'SchemaAdd', // add to schema, place 'SchemaAdd' response items @ response.additionToSchema
+      id: 'SchemaAdd', // add to schema & place 'SchemaAdd' response items @ response.additionToSchema
       property: 'additionToSchema',
       x: {
         nodes: {
@@ -65,7 +63,7 @@ const response = await chat({
     { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
     { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
 
-    // query all movies and their actors and place this information @ response.movies
+    // query all movies and their actors & place this information @ response.movies
     {
       id: 'QueryNode',
       nodeName: 'Movie',
@@ -91,9 +89,14 @@ ace types #generate types that align with above schema
 
 
 ## 🤓 Version 1 Roadmap 
+1. backup > $node___uids___AceUser is empty
 1. From write to (inup / insert / update / delete)
+1. Start all types w/ Ace
+1. Reader / Editor can't read AceSetting / AceRole / AcePermission
 1. Finish errors updates
-1. Start to Init
+1. (Start / Init) to ApplyCore (anytime) (not fundamental to graph w/o it)
+    * AceCore to AceOptions
+    * AceFnRequestResponse to AceRequest and AceResponse
 1. Slug to Enum
 1. Lib folder
 1. Node or edge name may not start w/ [ Ace, Query, Mutate, Schema, CF ] and no triple underscores (DELIMETER) b/c we use them as delimeters
@@ -120,14 +123,14 @@ ace types #generate types that align with above schema
 1. Remove can't read something from putMap if in deleteSet
 1. Add can't put something in putMap that is in deleteSet
 1. Do not allow the forward and the reverse relationship propName to be the same propName
-1. `chat()`
+1. `ace()`
     * Function to communicate with the graph
     * $ace in response > [ newUids, deletedKeys ]
     * Insert w/ no uid allowed (node can't be used in relationships)
     * Insert w/ provdided uid allowed (node can be used in relationships)
-    * Let 'Start' support property
-    * Let 'Restart' support property
-    * Let 'SchemaAddition' support property
+    * Let 'Start' aka 'Init' aka 'Core' support property
+    * 'Clear' (supports property)
+    * Let 'SchemaAdd' support property
     * Delete `cascadePropNames` array
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
@@ -145,7 +148,7 @@ ace types #generate types that align with above schema
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
 1. Transaction
-    * IF mutation in chat() found and no transaction provided, create transaction w/ undefined holdCommit
+    * IF mutation in ace() found and no transaction provided, create transaction w/ undefined holdCommit
     * Logs
     * createTransaction()
     * save()
@@ -168,8 +171,7 @@ ace types #generate types that align with above schema
 1. Relationship prop indexes
 1. Test relationship props update + guidance
 1. App Worker > Ace Durable Object
-1. Browser > Ace > Local Storage
-1. Node > Ace > Text File (stoage que?)
+1. Browser > Ace > Local Storage (stoage que?)
 1. Batch requests to storage to stay within storage required Maximum count
 1. KV (request cache) Integration
 1. REPL (event, storage, share)
@@ -192,6 +194,9 @@ ace types #generate types that align with above schema
 
 
 ## 🧚‍♀️ Version 2 Roadmap 
+1. (Node / Deno) > ace() > Text File 
+    * Look into Mongodb BSON
+    * Ecomm (Multi Graph / EU) Suppport
 1. Rust
     * Worker
     * Durable Object
@@ -209,23 +214,42 @@ ace types #generate types that align with above schema
 1. Rag support
 1. Studio
     * Collaboration Tools
-    * Ai chart generation
-    * Ai Q&A generator
-    * Report Builder
-    * Report Scheduler
 1. Docs
     * Explain Version 2
     * Ask Ai
 
 
+## 🧘‍♀️ Version 3 Roadmap 
+1. Hosting (Node / Deno) File
+    * Free Tier
+    * Select Hostring Provider (We'll do the configuration + maintenace)
+    * Hosting Support
+1. Studio
+    * Report Builder
+    * Report Scheduler
+    * Ai chart generation
+    * Ai Q&A generator
+1. Docs
+    * Explain Version 3
+
+
 ## 😍 What options do I have to store my data?
 * Cloudflare Durable Object
+    * Server Side
+    * Version 1
     * Their $5 a month pricing tier allows:
         * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
         * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
-* Browser - Local Storage (FREE)
-* Node - File (Standard Server Cost)
+* Browser - Local Storage
+    * Client Side
+    * Version 1
+    * Free
+* (Node / Deno) - File
+    * Server Side
+    * Version 2
+    * Server Hosting Cost
+    * May look something like MongoDB w/ BSON
 
 
 ## 💎 Dictionary
@@ -240,7 +264,7 @@ ace types #generate types that align with above schema
 * Explains how two nodes unite
 ### Properties
 * Information about one node (eg: `AceUser` node, `name` prop) or one relationship (`actsInMovie` relationship, `_salary` prop)
-* Relationship properties start with an underscore to help differentiate node props and relationship props during `chat()` queries
+* Relationship properties start with an underscore to help differentiate node props and relationship props during `ace()` queries
 
 
 ## 🎁 All Our Packages
