@@ -194,6 +194,7 @@ ace types #generate types that align with above schema
 
 
 ## 🧚‍♀️ Version 2 Roadmap 
+1. Amazon Dynamo DB Support
 1. (Node / Deno) > ace() > Text File 
     * Look into Mongodb BSON
     * Ecomm (Multi Graph / EU) Suppport
@@ -220,9 +221,15 @@ ace types #generate types that align with above schema
 
 
 ## 🧘‍♀️ Version 3 Roadmap 
+1. Aerospike Support
+1. InfinityDB Support
 1. Hosting (Node / Deno) File
-    * Free Tier
-    * Select Hostring Provider (We'll do the configuration + maintenace)
+    * Free Tier (for providers that allow this)
+    * Select Hosting Provider
+        * File: AWS / Google / Microsoft
+        * KV: Cloudflare Durable Object / Amazon Dynamo / Aerospike / InfinityDB
+        * We'll do the configuration
+        * We'll provide monitoring components + analytics components
     * Hosting Support
 1. Studio
     * Report Builder
@@ -234,22 +241,31 @@ ace types #generate types that align with above schema
 
 
 ## 😍 What options do I have to store my data?
-* Cloudflare Durable Object
+1. Cloudflare Durable Object
     * Server Side
     * Version 1
     * Their $5 a month pricing tier allows:
         * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
         * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
-* Browser - Local Storage
-    * Client Side
+1. Local Storage
+    * Browser
     * Version 1
     * Free
-* (Node / Deno) - File
+1. (Node / Deno) - File
     * Server Side
     * Version 2
     * Server Hosting Cost
     * May look something like MongoDB w/ BSON
+1. Amazon Dynamo DB
+    * Server Side
+    * Version 2
+1. Aerospike
+    * Server Side
+    * Version 3
+1. InfinityDB
+    * Server Side
+    * Version 3
 
 
 ## 💎 Dictionary
