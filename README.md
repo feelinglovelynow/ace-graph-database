@@ -8,10 +8,10 @@
 ## 🤔 What is Ace?
 1. Ace structures data in key value stores as a graph (nodes, relationships and properties)
 1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Via the script, `ace types`, Ace will generate TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
+1. Our cli scipt `ace types` creates TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
 1. The Ace query language is a typesafe (JS/TS) function called `ace()` that allows queries and transactional mutations
 1. Easily configure users, passwords, roles and permissions by node, relationship or property, for the actions read, insert, update, upsert or delete
-1. Our cli scipt `ace backup` provides free backups for your graph and a simple way to load backups
+1. Our cli scipt `ace backup` provides free graph backups and a simple way to load backups
 
 
 ## 🎬 How to create a Movie Graph?
@@ -193,11 +193,10 @@ ace types #generate types that align with above schema
         * Functions Doc Page references
 
 
-## 🧚‍♀️ Version 2 Roadmap 
+## 🌟 Version 2 Roadmap 
+1. Contribution Documentation
+1. ValKey Support
 1. Amazon Dynamo DB Support
-1. (Node / Deno) > ace() > Text File 
-    * Look into Mongodb BSON
-    * Ecomm (Multi Graph / EU) Suppport
 1. Rust
     * Worker
     * Durable Object
@@ -220,17 +219,37 @@ ace types #generate types that align with above schema
     * Ask Ai
 
 
-## 🧘‍♀️ Version 3 Roadmap 
-1. Aerospike Support
-1. InfinityDB Support
-1. Hosting (Node / Deno) File
-    * Free Tier (for providers that allow this)
-    * Select Hosting Provider
-        * File: AWS / Google / Microsoft
-        * KV: Cloudflare Durable Object / Amazon Dynamo / Aerospike / InfinityDB
-        * We'll do the configuration
-        * We'll provide monitoring components + analytics components
-    * Hosting Support
+## ✨ Version 3 Roadmap 
+1. Ace Graph Database Foundation
+    * Open Governance
+    * Community Driven
+    * Welcome to all users and contributors
+1. (Node / Deno / Rust) > ace() > Save to file 
+    * Look into Mongodb BSON
+    * Ecomm (Multi Graph / EU) Suppport
+1. Ace Graph Database Cloud LLC
+    * Clean + Simple + Performant UX
+    * Host (a graph / graphs)
+        * Most hosting options in one place 
+        * Select Hosting Provider
+            * File: AWS / Google / Microsoft
+            * KV: Cloudflare Durable Object / ValKey / Amazon Dynamo
+            * Free Tier (for providers that allow this)
+        * Simple hosting provider migration
+        * Simple hosting provider cost breakdowns
+            * Real time cost comparisons
+        * Components added to Studio just for Cloud customers
+            * Monitoring
+            * Backups
+            * Custom (Analytics / Alerts) via (Component / Email / Webhook / Slack)
+            * Collaboration
+        * Support
+            * Blog
+            * Forum
+            * StackOverflow
+            * Email
+            * Chat
+            * Phone
 1. Studio
     * Report Builder
     * Report Scheduler
@@ -252,31 +271,27 @@ ace types #generate types that align with above schema
     * Browser
     * Version 1
     * Free
-1. (Node / Deno) - File
+1. ValKey
     * Server Side
     * Version 2
-    * Server Hosting Cost
-    * May look something like MongoDB w/ BSON
+    * Open Source
 1. Amazon Dynamo DB
     * Server Side
     * Version 2
-1. Aerospike
+1. (Node / Deno / Rust) - File
     * Server Side
     * Version 3
-1. InfinityDB
-    * Server Side
-    * Version 3
+    * May look something like MongoDB w/ BSON
 
 
 ## 💎 Dictionary
 ### Ace
 * Ace is a Graph Database
 ### Graph Database
-* A database structured with nodes, relationships and properties
+* A database with nodes, relationships and properties
 ### Node
 * A noun stored in the graph
 ### Relationship
-* Between two nodes
 * Explains how two nodes unite
 ### Properties
 * Information about one node (eg: `AceUser` node, `name` prop) or one relationship (`actsInMovie` relationship, `_salary` prop)
