@@ -284,19 +284,57 @@ ace types #generate types that align with above schema
     * May look something like MongoDB w/ BSON
 
 
+## 💪 Version Update Plan
+1. Prototype to Beta
+    * When all Version 1 road map items (other then unit tests & code reviews) are done
+        * Will not include a migration script
+1. Beta to Version 1
+    * When all Version 1 Unit Tests pass
+        * Will not include a migration script
+1. Version 1 to Version 2
+    * When all Version 2 Unit Tests pass
+        * Will include a migration script
+1. Version 2 to Version 3
+    * When Foundation and LLC have been created
+    * When all Version 3 Unit Tests pass
+        * Will include a migration script
+
+
 ## 💎 Dictionary
 ### Ace
 * Ace is a Graph Database
 ### Graph Database
 * A database with nodes, relationships and properties
 ### Node
-* A noun stored in the graph
+* A noun stored in a graph, has a name like `Movie`
+* If storing a node it must align with a node name in your schema, defined in schema @ `const schema = { nodes }`
+* Nodes may have properties
 ### Relationship
-* Explains how two nodes unite
+* Explains how two nodes unite, has a name like `actsInMovie`
+* If storing a relationship it must align with a relationship name in your schema, defined in schema @ `const schema = { relationships }`
+* Each relationship also comes with Node Properties that shows the relationship in both directions
+    * One `ForwardRelationshipProp` may be combined with one `ReverseRelationshipProp` or one `BidirectionalRelationshipProp` may be used
+* Relationships may have properties
 ### Properties
-* Information about one node (eg: `AceUser` node, `name` prop) or one relationship (`actsInMovie` relationship, `_salary` prop)
+* Information about one node (eg: `Movie` node, `name` prop) or one relationship (`actsInMovie` relationship, `_salary` prop)
 * Relationship properties start with an underscore to help differentiate node props and relationship props during `ace()` queries
-
+### Property Data Types
+* string
+* number
+* boolean
+* hash
+    1. Get public and private jwks from ace by calling `ace()` or `createJWKs()`
+    1. Send `ace()` a string and a private jwk
+    1. Ace will hash the string and store the hash value in your graph
+    1. When performing `ace()` queries, provide a public jwk to `Find` a node only if it matches a stored hash
+* isoString
+    * (new Date()).toISOString()
+    * When doing a node or relationship mutation, provide a value of `'now'` to tell Ace to add the `isoString` now date as the value, example:
+        * `{ id: 'InsertNode', nodeName: 'Movie', x: { name: 'The Matrix', createdAt: 'now' } }`
+### Schema
+* Defines how Ace graph data is structured, by defining the nodes, relationships and properties
+### `ace()`
+* How to communicate with Ace Graph Databases
 
 ## 🎁 All Our Packages
 1. @feelinglovelynow/ace-graph-database: [NPM](https://www.npmjs.com/package/@feelinglovelynow/ace-graph-database) ⋅ [Github](https://github.com/feelinglovelynow/ace-graph-database)
