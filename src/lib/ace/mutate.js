@@ -26,12 +26,7 @@ export async function inupNode (requestItem, passport, nodeUidsMap, sortIndexMap
 
   async function populateInupNodesArray () {
     if (requestItem && passport.schemaDataStructures?.nodeNamesSet?.has(requestItem.nodeName)) { // IF permission to write this nodeName
-      if (!requestItem?.x?.uid || typeof requestItem.x.uid !== 'string') throw AceError('mutate__falsy-uid', 'Please pass a request item that includes a uid that is a typeof string', { requestItem })
-
-      const startsWithUidPrefix = requestItem.x.uid.startsWith(REQUEST_UID_PREFIX)
-
-      if (requestItem.id === 'InsertNode' && !startsWithUidPrefix) throw AceError('mutate__invalid-uid', 'Please pass a request item that includes a uid that starts with a uid prefix, like this: _:chris', { requestItem, uidPrefix: REQUEST_UID_PREFIX })
-
+      const startsWithUidPrefix = typeof requestItem.x.uid === 'string' && requestItem.x.uid.startsWith(REQUEST_UID_PREFIX)
       const inupPermission = passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.inup, nodeName: requestItem.nodeName, propName: '*' }))
 
       if (requestItem.id === 'InsertNode') {
@@ -63,7 +58,9 @@ export async function inupNode (requestItem, passport, nodeUidsMap, sortIndexMap
 
       if (requestItem.id === 'UpdateNode') graphUid = requestItem.x.uid
       else {
-        graphUid = startsWithUidPrefix ? getGraphUidAndAddToMapUids(requestItem.x.uid, startsWithUidPrefix) : requestItem.x.uid
+        if (startsWithUidPrefix) graphUid = getGraphUidAndAddToMapUids(requestItem.x.uid, startsWithUidPrefix)
+        else if (!requestItem.x.uid) requestItem.x.uid = graphUid = crypto.randomUUID()
+        else graphUid = String(requestItem.x.uid)
 
         const nodeUids = nodeUidsMap.get(requestItem.nodeName) || []
 

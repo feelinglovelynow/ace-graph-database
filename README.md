@@ -91,8 +91,6 @@ ace types #generate types that align with above schema
 ## 🤓 Version 1 Roadmap 
 1. `ace()`
     * Function to communicate with the graph
-    * Insert w/ no uid allowed (node can't be used in relationships)
-    * Insert w/ provdided uid allowed (node can be used in relationships)
     * Delete `cascadePropNames` array
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
