@@ -710,7 +710,7 @@ ${ typedefs.query.RelationshipType }
  * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
  * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
- * @property { string } uid - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
+ * @property { string } [ uid ] - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
 
           typedefs.mutate.UpdateNodeTypes += `\n *
  * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
@@ -727,7 +727,7 @@ ${ typedefs.query.RelationshipType }
             switch (schemaProp.id) {
               case 'Prop':
                 const dataType = getDataType(schemaProp.x.dataType)
-                typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+                typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
                 typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
                 typedefs.query.NodeProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
                 break
@@ -909,7 +909,7 @@ ${ typedefs.query.RelationshipType }
         default: `\n *\n * @typedef { object } AceMutateRequestItemInsertNode
  * @property { typeof enums.idsAce.InsertNode } id
  * @property { string } nodeName
- * @property { { uid: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { { uid?: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
       })
 
       typedefs.mutate.UpdateNodeType = plop({
