@@ -89,42 +89,10 @@ ace types #generate types that align with above schema
 
 
 ## 🤓 Version 1 Roadmap 
-1. Reader / Editor can't read AceSetting / AceRole / AcePermission
-1. (Start / Init) to Core (anytime) (not fundamental to graph w/o it)
-1. Slug to Enum
-1. Lib folder
-1. Node or edge name may not start w/ [ Ace ] and no triple underscores (DELIMETER) b/c we use them as delimeters
-    * Don't allow uid or _uid to be a prop
-1. Objects folder, b/c JSDoc is not good @ classes
-    * graph
-    * transaction
-    * passport
-    * cache
-    * log
-        * Put [ Key, Original, Now, Request Item, API Token ]
-        * Delete [ Key, API Token ]
-    * error
-1. Manifest to cli
-    * Data structures that allow 1 loop in cli function
-    * `ace backup`
-    * `ace enums`
-    * `ace types` does `ace enums` first, b/c enums are used in types
-    * `.ace` folder
-        * Folders: (types, enums, backups)
-1. SCHEMA_KEY use app wide
-1. Move schema loops into schema data structures 
-1. loopOptions > switch 
-1. Remove can't read something from putMap if in deleteSet
-1. Add can't put something in putMap that is in deleteSet
-1. Do not allow the forward and the reverse relationship propName to be the same propName
 1. `ace()`
     * Function to communicate with the graph
-    * $ace in response > [ newUids, deletedKeys ]
     * Insert w/ no uid allowed (node can't be used in relationships)
     * Insert w/ provdided uid allowed (node can be used in relationships)
-    * Let 'Start' aka 'Init' aka 'Core' support property
-    * 'Clear' (supports property)
-    * Let 'SchemaAdd' support property
     * Delete `cascadePropNames` array
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
@@ -141,6 +109,13 @@ ace types #generate types that align with above schema
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
+1. Manifest to cli
+    * Data structures that allow 1 loop in cli function
+    * `ace backup`
+    * `ace enums`
+    * `ace types` does `ace enums` first, b/c enums are used in types
+    * `.ace` folder
+        * Folders: (types, enums, backups)
 1. Transaction
     * IF mutation in ace() found and no transaction provided, create transaction w/ undefined holdCommit
     * Logs
@@ -151,12 +126,23 @@ ace types #generate types that align with above schema
       * Rollback Options
         * Retry
         * Maintain data structures 
-1. Mutations that alter Schema and Data simultaneously (idsMutate)
 1. Security
-    * Access JWT + Refresh JWT
+    * 2FA + Authy Support
     * AceUser > email > passwordless
-1. Function response types
 1. Node Typedefs (all optional props)
+1. Node or edge name may not start w/ [ Ace ] and no triple underscores (DELIMETER) b/c we use them as delimeters
+    * Don't allow uid or _uid to be a prop
+1. Objects folder, b/c JSDoc is not good @ classes
+    * graph
+    * transaction
+    * log
+        * Put [ Key, Original, Now, Request Item, API Token ]
+        * Delete [ Key, API Token ]
+1. Move schema loops into schema data structures 
+1. loopOptions > switch 
+1. Do not allow the forward and the reverse relationship propName to be the same propName
+1. Mutations that alter Schema and Data simultaneously (idsMutate)
+1. Function response types
 1. Must relationship (storage fallback)
 1. Full Text Index, Mutation and Query
 1. Geojson support

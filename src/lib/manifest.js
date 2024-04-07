@@ -497,7 +497,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryPropertyAsResponseX } x
  * @typedef { object } AceQueryPropertyAsResponseX
  * @property { string } property - String that is the prop name that you would love to show as the response
- * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
+ * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.enum, the relationships will be \`[ 'role' ]\`, property is \`'enum'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
  *
  * @typedef { object } AceQueryPropertyAdjacentToResponse
  * @property { typeof enums.idsQueryOptions.PropertyAdjacentToResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
@@ -505,7 +505,7 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQueryPropertyAdjacentToResponseX
  * @property { string } sourceProperty
  * @property { string } adjacentProperty
- * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.slug, the relationships will be \`[ 'role' ]\`, property is \`'slug'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
+ * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.enum, the relationships will be \`[ 'role' ]\`, property is \`'enum'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
  *
  * @typedef { object } AceQueryAverageAsProperty
  * @property { typeof enums.idsQueryOptions.AverageAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response

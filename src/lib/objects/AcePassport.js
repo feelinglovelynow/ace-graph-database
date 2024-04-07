@@ -194,7 +194,7 @@ function getRevokesAcePermissions (isEnforcePermissionsOn, user)  {
  * @returns { Promise<boolean>}
  */
 async function getIsEnforcePermissionsOn (_passport) {
-  const key = getUniqueIndexKey('AceSetting', 'slug', enums.settings.enforcePermissions)
+  const key = getUniqueIndexKey('AceSetting', 'enum', enums.settings.enforcePermissions)
   const uid = await one(key, _passport.cache)
 
   if (!uid) return false

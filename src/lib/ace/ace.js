@@ -1,4 +1,4 @@
-import { core } from '../core.js'
+import { core } from './core.js'
 import { td, enums } from '#manifest'
 import { aceFetch } from '../aceFetch.js'
 import { many } from '../objects/AceCache.js'
@@ -152,7 +152,7 @@ export async function _ace (passport, body) {
             await schemaGet(requestItem)
             break
           case enums.idsAce.SchemaAdd:
-            const addToSchemaResponse = await addToSchema(requestItem, passport)
+            const addToSchemaResponse = addToSchema(passport, requestItem.x)
             if (requestItem.property) response.now[requestItem.property] = addToSchemaResponse
             setSchemaDataStructures(passport)
             break

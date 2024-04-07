@@ -1,10 +1,7 @@
-import { _ace } from './ace/ace.js'
+import { _ace } from './ace.js'
 import { td, enums } from '#manifest'
-import { AceAuthError } from './objects/AceError.js'
-import { createJWKs } from './security/createJWKs.js'
-import { validateSchema } from './ace/validateSchema.js'
-import { SCHEMA_KEY, getRevokesKey } from './variables.js'
-import { setSchemaDataStructures } from './objects/AcePassport.js'
+import { addToSchema } from './mutate.js'
+import { createJWKs } from '../security/createJWKs.js'
 
 
 /**
@@ -16,7 +13,7 @@ export async function core (passport) {
   /** @type { { username: string, uid: string, token: string, role: string } } - Common admin variables */
   const admin = { username: 'admin', uid: '_:userAdmin', token: '_:tokenAdmin', role: '_:roleAdmin' }
 
-  setSchema()
+  _addToSchema()
   const [ jwks, response ] = await Promise.all([ createJWKs(), mutate() ])
 
   return {
@@ -34,15 +31,12 @@ export async function core (passport) {
     },
   }
 
-  async function setSchema () {
-    if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
-
-    /** @type { td.AceSchema } */
-    const schema = {
+  async function _addToSchema () {
+    return addToSchema(passport, {
       nodes: {
         AceSetting: {
           name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          slug: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true, uniqueIndex: true } },
+          enum: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true, uniqueIndex: true } },
           isOn: { id: 'Prop', x: { dataType: 'boolean', mustBeDefined: true } },
         },
         AceUser: {
@@ -58,7 +52,7 @@ export async function core (passport) {
         },
         AceRole: {
           name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          slug: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+          enum: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
           users: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceUser', relationshipName: 'isTheAceRole' } },
           revokesAcePermissions: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AcePermission', relationshipName: 'revokesAcePermission' } },
         },
@@ -77,33 +71,29 @@ export async function core (passport) {
         isTheAceRole: { id: 'OneToMany' },
         revokesAcePermission: { id: 'ManyToMany' },
       }
-    }
-
-    passport.cache.storage.put(SCHEMA_KEY, validateSchema(schema))
-    passport.schema = schema
-    setSchemaDataStructures(passport)
-
-    return schema
+    })
   }
 
 
   async function mutate () {
     return _ace(passport, {
       request: [
-        { id: 'InsertNode', nodeName: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', slug: enums.settings.enforcePermissions, isOn: false } },
+        { id: 'InsertNode', nodeName: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', enum: enums.settings.enforcePermissions, isOn: false } },
         { id: 'InsertNode', nodeName: 'AceUser', x: { uid: admin.uid, username: admin.username } },
         { id: 'InsertNode', nodeName: 'AceToken',  x: { uid: admin.token, name: 'Admin', createdAt: 'now' } },
-        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: admin.role, name: 'Admin', slug: 'admin' } },
-        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', slug: 'architect' } },
-        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleEditor', name: 'Editor', slug: 'editor' } },
-        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleReader', name: 'Reader', slug: 'reader' } },
-        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionSchema', action: enums.permissionActions.inup, schema: true } },
-        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionAceSetting', action: enums.permissionActions.inup, nodeName: 'AceSetting', propName: '*' } },
-        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAceUser', action: enums.permissionActions.inup, nodeName: 'AceUser', propName: '*' } },
+        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: admin.role, name: 'Admin', enum: 'admin' } },
+        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', enum: 'architect' } },
+        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleEditor', name: 'Editor', enum: 'editor' } },
+        { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleReader', name: 'Reader', enum: 'reader' } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionWriteSchema', action: enums.permissionActions.write, schema: true } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAceSetting', action: enums.permissionActions.inup, nodeName: 'AceSetting', propName: '*' } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionReadAceSetting', action: enums.permissionActions.read, nodeName: 'AceSetting', propName: '*' } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAceUser', action: enums.permissionActions.inup, nodeName: 'AceUser', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAceToken', action: enums.permissionActions.inup, nodeName: 'AceToken', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAceRole', action: enums.permissionActions.inup, nodeName: 'AceRole', propName: '*' } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionReadAceRole', action: enums.permissionActions.read, nodeName: 'AceRole', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAcePermission', action: enums.permissionActions.inup, nodeName: 'AcePermission', propName: '*' } },
+        { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionReadAcePermission', action: enums.permissionActions.read, nodeName: 'AcePermission', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionInupAnyNode', action: enums.permissionActions.inup, nodeName: '*', propName: '*' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionUpdatePassword', action: enums.permissionActions.update, nodeName: 'AceUser', propName: 'password', allowPropName: 'uid' } },
         { id: 'InsertNode', nodeName: 'AcePermission', x: { uid: '_:permissionReadPassword', action: enums.permissionActions.read, nodeName: 'AceUser', propName: 'password', allowPropName: 'uid' } },
@@ -111,7 +101,7 @@ export async function core (passport) {
         { id: 'InsertRelationship', relationshipName: 'hasTheAceToken', x: { a: admin.uid, b: admin.token } },
         { id: 'InsertRelationship', relationshipName: 'isTheAceRole', x: { a: admin.uid, b: admin.role } },
 
-        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionAceSetting' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionInupAceSetting' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionInupAceUser' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionInupAceSetting' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionInupAceToken' } },
@@ -120,8 +110,8 @@ export async function core (passport) {
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionUpdatePassword' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleArchitect', b: '_:permissionReadPassword' } },
 
-        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionAceSetting' } },
-        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionSchema' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionInupAceSetting' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionWriteSchema' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionInupAceSetting' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionInupAceUser' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionInupAceToken' } },
@@ -129,10 +119,16 @@ export async function core (passport) {
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionInupAcePermission' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionUpdatePassword' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionReadPassword' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionReadAceSetting' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionReadAceRole' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleEditor', b: '_:permissionReadAcePermission' } },
 
-        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionSchema' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionWriteSchema' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionInupAnyNode' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadPassword' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadAceSetting' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadAceRole' } },
+        { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadAcePermission' } },
       ]
     })
   }

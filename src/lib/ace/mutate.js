@@ -347,28 +347,34 @@ function deleteUidFromRelationshipProp (relationshipNode, prop, _uid, passport) 
 
 
 /**
- * @param { td.AceMutateRequestItemSchemaAdd } requestItem 
  * @param { td.AcePassport } passport 
- * @returns 
+ * @param { td.AceSchema } schema 
+ * @returns { td.AceSchema }
  */
-export async function addToSchema (requestItem, passport) {
+export function addToSchema (passport, schema) {
   if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
-  if (!passport.schema?.nodes) throw AceError('add-to-schema__falsy-nodes', '/add-to-schema should be called after calling /start, please call /start before calling /add-to-schema', {})
-  if (!passport.schema?.relationships) throw AceError('add-to-schema__falsy-relationships', '/add-to-schema should be called after calling /start, please call /start before calling /add-to-schema', {})
 
-  if (requestItem.x.nodes) {
-    for (const node in requestItem.x.nodes) {
-      if (passport.schema?.nodes[node]) throw AceError('add-to-schema__overwrite-node', `The node \`${node}\` is already in your schema, please only include nodes in /add-to-schema that are not already in your schema`, { node })
-      passport.schema.nodes[node] = requestItem.x.nodes[node]
+  if (schema.nodes) {
+    for (const node in schema.nodes) {
+      if (passport.schema?.nodes[node]) throw AceError('mutate__add-to-schema__overwrite-node', `The node \`${node}\` is already in your schema, please only include nodes in /add-to-schema that are not already in your schema`, { node })
+
+      if (!passport.schema) passport.schema = { nodes: { [node]: schema.nodes[node] }, relationships: {} }
+      else if (!passport.schema.nodes) passport.schema.nodes = { [node]: schema.nodes[node] }
+      else passport.schema.nodes[node] = schema.nodes[node]
     }
   }
 
-  if (requestItem.x.relationships) {
-    for (const relationship in requestItem.x.relationships) {
-      if (passport.schema?.relationships[relationship]) throw AceError('add-to-schema__overwrite-relationship', `The relationship \`${relationship}\` is already in your schema, please only include relationships in /add-to-schema that are not already in your schema`, { relationship })
-      passport.schema.relationships[relationship] = requestItem.x.relationships[relationship]
+  if (schema.relationships) {
+    for (const relationship in schema.relationships) {
+      if (passport.schema?.relationships[relationship]) throw AceError('mutate__add-to-schema__overwrite-relationship', `The relationship \`${relationship}\` is already in your schema, please only include relationships in /add-to-schema that are not already in your schema`, { relationship })
+
+      if (!passport.schema) passport.schema = { nodes: {}, relationships: { [relationship]: schema.relationships[relationship] } }
+      else if (!passport.schema.relationships) passport.schema.relationships = { [relationship]: schema.relationships[relationship] }
+      else passport.schema.relationships[relationship] = schema.relationships[relationship]
     }
   }
+
+  if (!passport.schema) throw AceError('mutate__add-to-schema__invalid-schema', 'The request is failing b/c passport.schema is falsy, please pass a schema to ace()', { schema: '' })
 
   passport.cache.putMap.set(SCHEMA_KEY, validateSchema(passport.schema))
   setSchemaDataStructures(passport)
