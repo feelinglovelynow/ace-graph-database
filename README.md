@@ -109,9 +109,12 @@ ace types #generate types that align with above schema
           * Request Item can support
 1. Manifest to cli
     * Data structures that allow 1 loop in cli function
-    * `ace backup`
     * `ace enums`
-    * `ace types` does `ace enums` first, b/c enums are used in types
+    * `ace types`
+    * `ace types -w=http://localhost:8787`
+        * does `ace enums` first, b/c enums are used in types
+    * `ace backupSave -w=http://localhost:8787`
+    * `ace backupLoad -w=http://localhost:8787 -f=2024-03-24T19:44:36.492Z.json`
     * `.ace` folder
         * Folders: (types, enums, backups)
 1. Transaction
