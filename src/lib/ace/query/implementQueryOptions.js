@@ -1,16 +1,15 @@
 import { td, enums } from '#manifest'
-import { Passport } from './Passport.js'
 import { queryWhere } from './queryWhere.js'
 import { getDerivedValue } from './getDerivedValue.js'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestItemGeneratedXSection } xGenerated 
- * @param { td.QueryResponse } response 
+ * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
+ * @param { td.AceFnFullResponse } response 
  * @param { boolean } isUsingSortIndex 
- * @param { td.QueryPublicJWKs | null } publicJWKs 
- * @param { Passport } passport 
+ * @param { td.AceQueryPublicJWKs | null } publicJWKs 
+ * @param { td.AcePassport } passport 
  * @returns { Promise<void> }
  */
 export async function implementQueryOptions (xGenerated, response, isUsingSortIndex, publicJWKs, passport) {
@@ -105,7 +104,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryLimit } option */
+  /** @param { td.AceQueryLimit } option */
   function doLimit (option) {
     if (option.x.skip && option.x.count) {
       response.now[xGenerated.propName] = response.now[xGenerated.propName].slice(option.x.skip, option.x.skip + option.x.count)
@@ -120,7 +119,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QuerySort } option */
+  /** @param { td.AceQuerySort } option */
   function doSort (option) {
     if (!isUsingSortIndex) { // IF not using a sorted index array => sort items
       const property = option.x.property
@@ -151,7 +150,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryDerivedProperty } option */
+  /** @param { td.AceQueryDerivedProperty } option */
   function doDerivedProperty (option) {
     for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
       const derivedValue = getDerivedValue(xGenerated, response.original[xGenerated.propName][i], option.x.symbol, option.x.items, passport)
@@ -162,7 +161,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QuerySumAsProperty } option */
+  /** @param { td.AceQuerySumAsProperty } option */
   function doSumAsProperty (option) {
     let sum = 0
 
@@ -177,7 +176,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QuerySumAsResponse } option */
+  /** @param { td.AceQuerySumAsResponse } option */
   function doSumAsResponse (option) {
     let sum = 0
 
@@ -190,7 +189,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryAverageAsProperty } option */
+  /** @param { td.AceQueryAverageAsProperty } option */
   function doAverageAsProperty (option) {
     let sum = 0
 
@@ -209,7 +208,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryAverageAsResponse } option */
+  /** @param { td.AceQueryAverageAsResponse } option */
   function doAverageAsResponse (option) {
     let sum = 0
 
@@ -226,7 +225,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryMinAmountAsProperty } option */
+  /** @param { td.AceQueryMinAmountAsProperty } option */
   function doMinAmountAsProperty (option) {
     let amount = 0
 
@@ -243,7 +242,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryMinAmountAsResponse } option */
+  /** @param { td.AceQueryMinAmountAsResponse } option */
   function doMinAmountAsResponse (option) {
     let amount = 0
 
@@ -258,7 +257,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryMinNodeAsResponse } option */
+  /** @param { td.AceQueryMinNodeAsResponse } option */
   function doMinNodeAsResponse (option) {
     let node = null
     let amount = 0
@@ -277,7 +276,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryMaxNodeAsResponse } option */
+  /** @param { td.AceQueryMaxNodeAsResponse } option */
   function doMaxNodeAsResponse (option) {
     let node = null
     let amount = 0
@@ -296,7 +295,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryMaxAmountAsProperty } option */
+  /** @param { td.AceQueryMaxAmountAsProperty } option */
   function doMaxAmountAsProperty (option) {
     let amount = 0
 
@@ -313,7 +312,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryMaxAmountAsResponse } option */
+  /** @param { td.AceQueryMaxAmountAsResponse } option */
   function doMaxAmountAsResponse (option) {
     let amount = 0
 
@@ -328,7 +327,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryCountAsProperty } option */
+  /** @param { td.AceQueryCountAsProperty } option */
   function doCountAsProperty (option) {
     const count = response.original[xGenerated.propName].length
 
@@ -347,7 +346,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryPropertyAsResponse } option */
+  /** @param { td.AceQueryPropertyAsResponse } option */
   function doPropertyAsResponse (option) {
     let value
 
@@ -366,7 +365,7 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
   }
 
 
-  /** @param { td.QueryPropertyAdjacentToResponse } option */
+  /** @param { td.AceQueryPropertyAdjacentToResponse } option */
   function doPropertyAdjacentToResponse (option) {
     let value
 

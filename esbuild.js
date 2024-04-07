@@ -7,23 +7,31 @@ esbuild.build({ // // https://esbuild.github.io/api/
   minify: true, // When enabled, the generated code will be minified instead of pretty-printed. 
   outdir: './dist', // Sets the output directory for the build operation.
   entryPoints: [ // This is an array of files that each serve as an input to the bundling algorithm.
-    './tsc/src/aceFetch.js',
-    './tsc/src/Cache.js',
-    './tsc/src/createJWKs.js',
-    './tsc/src/getAlgorithmOptions.js',
-    './tsc/src/getDerivedValue.js',
-    './tsc/src/getXGenerated.js',
-    './tsc/src/getRelationshipNode.js',
-    './tsc/src/hash.js',
+    './tsc/src/lib/ace/query/getDerivedValue.js',
+    './tsc/src/lib/ace/query/getRelationshipNode.js',
+    './tsc/src/lib/ace/query/getXGenerated.js',
+    './tsc/src/lib/ace/query/implementQueryOptions.js',
+    './tsc/src/lib/ace/query/query.js',
+    './tsc/src/lib/ace/query/queryWhere.js',
+    './tsc/src/lib/ace/ace.js',
+    './tsc/src/lib/ace/mutate.js',
+    './tsc/src/lib/ace/validateSchema.js',
+
+    './tsc/src/lib/objects/AceCache.js',
+    './tsc/src/lib/objects/AceError.js',
+    './tsc/src/lib/objects/AcePassport.js',
+
+    './tsc/src/lib/security/createJWKs.js',
+    './tsc/src/lib/security/getAlgorithmOptions.js',
+    './tsc/src/lib/security/hash.js',
+
+    './tsc/src/lib/aceFetch.js',
+    './tsc/src/lib/backup.js',
+    './tsc/src/lib/core.js',
+    './tsc/src/lib/getBashMap.js',
+    './tsc/src/lib/manifest.js',
+    './tsc/src/lib/variables.js',
+
     './tsc/src/index.js',
-    './tsc/src/mutate.js',
-    './tsc/src/Passport.js',
-    './tsc/src/query.js',
-    './tsc/src/queryOptions.js',
-    './tsc/src/queryWhere.js',
-    './tsc/src/schema.js',
-    './tsc/src/start.js',
-    './tsc/src/throw.js',
-    './tsc/src/variables.js',
   ],
 })

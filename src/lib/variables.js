@@ -1,5 +1,7 @@
 // INTERNAL OR EXTERNAL (So exported @ index.js)
 
+// import { enums } from "#manifest"
+
 export const ADD_NOW_DATE = 'now'
 export const REQUEST_UID_PREFIX = '_:'
 export const REQUEST_TOKEN_HEADER = 'ace_api_token'
@@ -53,23 +55,23 @@ export function getRelationshipNameFromProp (prop) {
 
 
 /**
- * @param { string } id - Node name or relationship name
+ * @param { string } name - Node name or relationship name
  * @param { string } propertyKey
  * @param { string | boolean | number } propertyValue
  * @returns { string }
  */
-export function getUniqueIndexKey (id, propertyKey, propertyValue) {
-  return INDEX_UNIQUE_PREFIX + id + DELIMITER + propertyKey + DELIMITER + String(propertyValue)
+export function getUniqueIndexKey (name, propertyKey, propertyValue) {
+  return INDEX_UNIQUE_PREFIX + name + DELIMITER + propertyKey + DELIMITER + String(propertyValue)
 }
 
 
 /**
- * @param { string } id - Node name or relationship name
+ * @param { string } name - Node name or relationship name
  * @param { string } propertyKey
  * @returns { string }
  */
-export function getSortIndexKey (id, propertyKey) {
-  return INDEX_SORT_PREFIX + id + DELIMITER + propertyKey
+export function getSortIndexKey (name, propertyKey) {
+  return INDEX_SORT_PREFIX + name + DELIMITER + propertyKey
 }
 
 
@@ -92,7 +94,7 @@ export function getRelationshipUidsKey (relationshipName) {
 
 
 /**
- * @param { { action: 'read' | 'write' | 'save' | 'load', backup?: boolean, schema?: boolean, nodeName?: string | null, relationshipName?: string | null, propName?: string | null } } x 
+ * @param { { action: *, schema?: boolean, nodeName?: string, relationshipName?: string, propName?: string } } x 
  * @returns { string }
  */
 export function getRevokesKey (x) {
@@ -100,7 +102,16 @@ export function getRevokesKey (x) {
 
   if (x.schema) response = x.action + DELIMITER + 'schema'
   else if (x.nodeName || x.relationshipName) response = x.action + DELIMITER + (x.nodeName || x.relationshipName) + DELIMITER + x.propName
-  else if (x.backup && (x.action === 'save' || x.action === 'load')) response = x.action + DELIMITER + 'backup'
 
   return response
+}
+
+
+/**
+ * @param { string } nodeName 
+ * @param { string } relationshipName 
+ * @returns { string }
+ */
+export function getNodeNamePlusRelationshipNameToNodePropNameMapKey (nodeName, relationshipName) {
+  return nodeName + DELIMITER + relationshipName
 }

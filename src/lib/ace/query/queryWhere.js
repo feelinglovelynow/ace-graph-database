@@ -1,16 +1,15 @@
-import { verify } from './hash.js'
-import { error } from './throw.js'
 import { td, enums } from '#manifest'
-import { Passport } from './Passport.js'
+import { verify } from '../../security/hash.js'
+import { AceError } from '../../objects/AceError.js'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestItemGeneratedXSection } xGenerated 
- * @param { td.QueryResponse } response 
- * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } $where 
- * @param { td.QueryPublicJWKs | null } publicJWKs 
- * @param { Passport } passport 
+ * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
+ * @param { td.AceFnFullResponse } response 
+ * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup | td.AceQueryFind | td.AceQueryFilter | td.AceQueryFindDefined | td.AceQueryFindUndefined | td.AceQueryFilterDefined | td.AceQueryFilterUndefined } $where 
+ * @param { td.AceQueryPublicJWKs | null } publicJWKs 
+ * @param { td.AcePassport } passport 
  */
 export async function queryWhere (xGenerated, response, $where, publicJWKs, passport) {
   if (Array.isArray(response.original[xGenerated.propName])) {
@@ -41,14 +40,14 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
   /**
    * @typedef { object } GetValueResponse
-   * @property { null | 'QueryValue' | 'QueryProperty' } type
+   * @property { null | 'Value' | 'Property' } id
    * @property { any } value
-   * @property { null | td.QueryRequestItemGeneratedXSection } xGenerated
+   * @property { null | td.AceQueryRequestItemGeneratedXSection } xGenerated
    */
 
 
   /**
-   * @param { td.QueryFindGroup | td.QueryFilterGroup } group 
+   * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup } group 
    * @param { number } i 
    * @param { boolean } doSplice 
    */
@@ -92,7 +91,7 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
 
     /**
-     * @param { td.QueryFindGroup | td.QueryFilterGroup | td.QueryFind | td.QueryFilter | td.QueryFindDefined | td.QueryFindUndefined | td.QueryFilterDefined | td.QueryFilterUndefined } query 
+     * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup | td.AceQueryFind | td.AceQueryFilter | td.AceQueryFindDefined | td.AceQueryFindUndefined | td.AceQueryFilterDefined | td.AceQueryFilterUndefined } query 
      * @returns { Promise<boolean | undefined> }
      */
     async function innerLoopGroupQueries (query) {
@@ -149,7 +148,7 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
     } else if ($where.id === enums.idsQueryOptions.FilterUndefined || $where.id === enums.idsQueryOptions.FindUndefined) {
       if (typeof getValue($where.x.property, graphNode).value !== 'undefined') bye()
     } else {
-      const qw = /** @type { td.QueryFilter | td.QueryFind } */ ($where)
+      const qw = /** @type { td.AceQueryFilter | td.AceQueryFind } */ ($where)
 
       const left = getValue(qw.x.items[0], graphNode)
       const right = getValue(qw.x. items[1], graphNode)
@@ -203,27 +202,27 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
 
   /**
-   * @param { td.QueryProperty | td.QueryValue } propertyOrValue 
+   * @param { td.AceQueryProperty | td.AceQueryValue } propertyOrValue 
    * @param { any } graphNode
    * @returns { GetValueResponse }
    */
   function getValue (propertyOrValue, graphNode) {
     let response = /** @type { GetValueResponse } */ ({
-      type: null,
+      id: null,
       value: null,
       xGenerated: null
     })
 
     switch (propertyOrValue.id) {
       case enums.idsQueryOptions.Value:
-        const queryValue = /** @type { td.QueryValue } */ (propertyOrValue)
+        const queryValue = /** @type { td.AceQueryValue } */ (propertyOrValue)
 
         response.value = queryValue.x.value
-        response.type = 'QueryValue'
+        response.id = propertyOrValue.id
         response.xGenerated = xGenerated
         break
       case enums.idsQueryOptions.Property:
-        const queryProperty = /** @type { td.QueryProperty } */ (propertyOrValue)
+        const queryProperty = /** @type { td.AceQueryProperty } */ (propertyOrValue)
 
         if (!queryProperty.x.relationships?.length) {
           response.value = graphNode[queryProperty.x.property]
@@ -237,7 +236,7 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
           }
         }
 
-        response.type = 'QueryProperty'
+        response.id = propertyOrValue.id
         break
     }
 
@@ -246,7 +245,7 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
 
   /**
-   * @param { td.QueryFind | td.QueryFilter } qw 
+   * @param { td.AceQueryFind | td.AceQueryFilter } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } sideIndex 
@@ -254,20 +253,20 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
    */
   function isLeftOrRightHash (qw, left, right, sideIndex) {
     const side = sideIndex === 0 ? left : right
-    return Boolean(side.type === 'QueryProperty' && side.xGenerated && /** @type { td.SchemaProp } */ (passport.schema?.nodes?.[side.xGenerated.id]?.[/** @type { td.QueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
+    return Boolean(side.id === 'Property' && side.xGenerated && /** @type { td.AceSchemaProp } */ (passport.schema?.nodes?.[side.xGenerated.nodeName || '']?.[/** @type { td.AceQueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
   }
 
 
   /**
-   * @param { td.QueryFind | td.QueryFilter } qw 
+   * @param { td.AceQueryFind | td.AceQueryFilter } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } base64Index
    * @returns { Promise<boolean> }
    */
   async function isHashValid (qw, left, right, base64Index) {
-    if (!qw.x.publicJWK) throw error('query__falsy-hash-public-key', 'The request is invalid because qw.x.hashPublicKey is falsy', { qw })
-    if (!publicJWKs?.[qw.x.publicJWK]) throw error('query__invalid-hash-public-key', 'The request is invalid because qw.x.hashPublicKey does not match request.publicJWKs', { qw })
+    if (!qw.x.publicJWK) throw AceError('query__falsy-hash-public-key', 'The request is invalid because qw.x.hashPublicKey is falsy', { qw })
+    if (!publicJWKs?.[qw.x.publicJWK]) throw AceError('query__invalid-hash-public-key', 'The request is invalid because qw.x.hashPublicKey does not match request.publicJWKs', { qw })
 
     return base64Index ?
       await verify(publicJWKs[qw.x.publicJWK], left.value, right.value) :

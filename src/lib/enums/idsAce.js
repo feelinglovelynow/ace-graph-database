@@ -1,22 +1,37 @@
-export const idsMutate = new Set([
-  'Start',
-  'Restart',
-  'AceBackup',
+export const idsAce = new Set([
+  'Core',
+  'Empty',
+
+  'SchemaGet',
+  'SchemaAdd',
+
   'InsertNode',
   'InsertRelationship',
+
   'UpdateNode',
   'UpdateRelationship',
+
+  'QueryNode',
+  'QueryRelationship',
+
+  'BackupGet',
+  'BackupSave',
+
   'DataDeleteNodes',
+  'DataDeleteRelationships',
+
   'DataDeleteNodeProps',
   'DataDeleteRelationshipProps',
-  'DataDeleteRelationships',
-  'SchemaAddition',
+
   'SchemaAndDataDeleteNodes',
   'SchemaAndDataDeleteRelationships',
+
   'SchemaAndDataDeleteNodeProps',
   'SchemaAndDataDeleteRelationshipProps',
+
   'SchemaAndDataUpdateNameOfNodes',
   'SchemaAndDataUpdateNameOfRelationships',
+
   'SchemaAndDataUpdateNameOfNodeProps',
   'SchemaAndDataUpdateNameOfRelationshipProps',
 ])

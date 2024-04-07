@@ -89,17 +89,11 @@ ace types #generate types that align with above schema
 
 
 ## 🤓 Version 1 Roadmap 
-1. backup > $node___uids___AceUser is empty
-1. From write to (inup / insert / update / delete)
-1. Start all types w/ Ace
 1. Reader / Editor can't read AceSetting / AceRole / AcePermission
-1. Finish errors updates
-1. (Start / Init) to ApplyCore (anytime) (not fundamental to graph w/o it)
-    * AceCore to AceOptions
-    * AceFnRequestResponse to AceRequest and AceResponse
+1. (Start / Init) to Core (anytime) (not fundamental to graph w/o it)
 1. Slug to Enum
 1. Lib folder
-1. Node or edge name may not start w/ [ Ace, Query, Mutate, Schema, CF ] and no triple underscores (DELIMETER) b/c we use them as delimeters
+1. Node or edge name may not start w/ [ Ace ] and no triple underscores (DELIMETER) b/c we use them as delimeters
     * Don't allow uid or _uid to be a prop
 1. Objects folder, b/c JSDoc is not good @ classes
     * graph
@@ -195,8 +189,6 @@ ace types #generate types that align with above schema
 
 ## 🌟 Version 2 Roadmap 
 1. Contribution Documentation
-1. ValKey Support
-1. Amazon Dynamo DB Support
 1. Rust
     * Worker
     * Durable Object
@@ -224,16 +216,15 @@ ace types #generate types that align with above schema
     * Open Governance
     * Community Driven
     * Welcome to all users and contributors
-1. (Node / Deno / Rust) > ace() > Save to file 
-    * Look into Mongodb BSON
-    * Ecomm (Multi Graph / EU) Suppport
+1. ValKey Support
+    * Queue: (Input / Output ) Gates
 1. Ace Graph Database Cloud LLC
     * Clean + Simple + Performant UX
     * Host (a graph / graphs)
         * Most hosting options in one place 
         * Select Hosting Provider
-            * File: AWS / Google / Microsoft
-            * KV: Cloudflare Durable Object / ValKey / Amazon Dynamo
+            * ValKey @ most (popular / affordable) providers
+            * Cloudflare Durable Object
             * Free Tier (for providers that allow this)
         * Simple hosting provider migration
         * Simple hosting provider cost breakdowns
@@ -275,13 +266,6 @@ ace types #generate types that align with above schema
     * Server Side
     * Version 2
     * Open Source
-1. Amazon Dynamo DB
-    * Server Side
-    * Version 2
-1. (Node / Deno / Rust) - File
-    * Server Side
-    * Version 3
-    * May look something like MongoDB w/ BSON
 
 
 ## 💪 Version Update Plan

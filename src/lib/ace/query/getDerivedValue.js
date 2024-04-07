@@ -1,14 +1,13 @@
 import { td, enums } from '#manifest'
-import { Passport } from './Passport.js'
 import { getRelationshipNode } from './getRelationshipNode.js'
 
 
 /**
- * @param { td.QueryRequestItemGeneratedXSection } xGenerated 
+ * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
  * @param { { [k: string]: any } } graphNode 
  * @param { enums.queryDerivedSymbol } symbol 
- * @param { (td.QueryDerivedGroup | td.QueryProperty | td.QueryValue)[] } items 
- * @param { Passport } passport 
+ * @param { (td.AceQueryDerivedGroup | td.AceQueryProperty | td.AceQueryValue)[] } items 
+ * @param { td.AcePassport } passport 
  * @returns { number | string | undefined }
  */
 export function getDerivedValue (xGenerated, graphNode, symbol, items, passport) {
@@ -17,16 +16,16 @@ export function getDerivedValue (xGenerated, graphNode, symbol, items, passport)
   for (const item of items) {
     switch (item.id) {
       case enums.idsQueryOptions.DerivedGroup:
-        const queryDerivedGroup = /** @type { td.QueryDerivedGroup } */ (item)
+        const queryDerivedGroup = /** @type { td.AceQueryDerivedGroup } */ (item)
         const v = getDerivedValue(xGenerated, graphNode, queryDerivedGroup.x.symbol, queryDerivedGroup.x.items, passport)
         setDerivedValueAndUsing(queryDerivedGroup.x.symbol, v)
         break
       case enums.idsQueryOptions.Value:
-        const queryValue = /** @type { td.QueryValue } */ (item)
+        const queryValue = /** @type { td.AceQueryValue } */ (item)
         setDerivedValueAndUsing(symbol, queryValue.x.value)
         break
       case enums.idsQueryOptions.Property:
-        const queryProperty = /** @type { td.QueryProperty } */ (item)
+        const queryProperty = /** @type { td.AceQueryProperty } */ (item)
 
         if (!queryProperty.x.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProperty.x.property])
         else {
