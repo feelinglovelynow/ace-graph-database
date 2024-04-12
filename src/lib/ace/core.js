@@ -42,7 +42,7 @@ export async function core (passport) {
         AceUser: {
           username: { id: 'Prop', x: { dataType: 'string' } },
           password: { id: 'Prop', x: { dataType: 'hash' } },
-          token: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
+          tokens: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
           role: { id: 'ForwardRelationshipProp', x: { has: 'one', nodeName: 'AceRole', relationshipName: 'isTheAceRole' } },
         },
         AceToken: {

@@ -51,8 +51,8 @@ export function AceAuthError (action, passport, options) {
  * @param { string } name 
  * @param { string } option1 
  * @param { string } option2 
- * @param { string } [ val ]
+ * @returns { td.AceError }
  */
-export function CLIFalsyError (name, option1, option2, val) {
-  if (!val) throw AceError(`cli__${ name }-falsy`, `Ace CLI is throwing an error b/c the option ${ option1 } which may be also specified like this ${ option2 } is falsy`, { [ name ]: '' })
+export function CLIFalsyError (name, option1, option2) {
+  return AceError(`cli__${ name }-falsy`, `Ace CLI is throwing an error b/c the option ${ option1 } which may be also specified like this ${ option2 } is falsy`, { [ name ]: '' })
 }

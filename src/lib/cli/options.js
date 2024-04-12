@@ -1,8 +1,11 @@
+import { td } from '#ace'
+
+
 /**
  * @param { NodeJS.Process } process
- * @returns { Map<string, string> }
+ * @returns { td.AceCLIOptions }
  */
-export function getBashMap (process) {
+export function getCliOptions (process) {
   const bashEntries = [ ...process.argv.entries() ]
 
   /** @type { Map<string, string> } */

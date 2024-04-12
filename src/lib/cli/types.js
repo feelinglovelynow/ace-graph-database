@@ -38,6 +38,12 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  */
 
 
+/** AceCLI
+ *
+ * @typedef { Map<string, string> } AceCLIOptions
+ */
+
+
 /** AceFn
  *
  * @typedef { object } AceFn
@@ -635,7 +641,7 @@ function getSchemaTypedefs (schema) {
           case 'Prop':
             const dataType = getDataType(schemaProp.x.dataType)
             typedefs.Nodes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] ${ schemaProp.x.description || '' }`
-            typedefs.mutate.InsertNodeTypes += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+            typedefs.mutate.InsertNodeTypes += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${ dataType }\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
             typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
             typedefs.query.NodeProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
             break
@@ -647,7 +653,7 @@ function getSchemaTypedefs (schema) {
             relationshipMapValue.push({ schemaNodeName, schemaNodePropName, schemaProp })
             relationshipMap.set(schemaProp.x.relationshipName, relationshipMapValue)
 
-            typedefs.Nodes += `\n * @property { ${ schemaProp.x.nodeName } } [ ${ schemaNodePropName } ]`
+            typedefs.Nodes += `\n * @property { ${ schemaProp.x.nodeName }${ schemaProp.x.has === 'many' ? '[]' : '' } } [ ${ schemaNodePropName } ]`
 
             let queryProps = ''
 

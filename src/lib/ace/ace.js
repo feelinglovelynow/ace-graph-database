@@ -163,7 +163,7 @@ export async function _ace (passport, body) {
             await backupGet(requestItem)
             break
           case enums.idsAce.BackupLoad:
-            await backupLoad(requestItem)
+            await fileToGraph(requestItem)
             break
           case enums.idsAce.InsertNode:
           case enums.idsAce.UpdateNode:
@@ -240,7 +240,7 @@ export async function _ace (passport, body) {
 
 
       /** @param { td.AceMutateRequestItemBackupLoad } requestItem */
-      async function backupLoad (requestItem) {
+      async function fileToGraph (requestItem) {
         if (typeof requestItem?.x?.backup !== 'string') throw AceError('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
 
         throwIfAnyGenericRevokes()

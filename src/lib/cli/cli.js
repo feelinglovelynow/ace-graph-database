@@ -6,18 +6,19 @@ import util from 'node:util'
 import { enums } from './enums.js'
 import { fileURLToPath } from 'node:url'
 import { aceFetch } from '../aceFetch.js'
+import { getCliOptions } from './options.js'
 import fsPromises from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { execSync, exec } from 'node:child_process'
 import { CLIFalsyError } from '../objects/AceError.js'
 import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
-import { getBackupFromSchema, parseBackupLoadEntries } from './backup.js'
 
 
 (async function cli () {
   try {
     const root = '../../../'
-    const bashEntries = [...process.argv.entries() ]
+    const options = getCliOptions(process)
+    const bashEntries = [...process.argv.entries()]
     const __dirname = dirname(fileURLToPath(import.meta.url))
 
     const files = {
@@ -35,10 +36,12 @@ import { getBackupFromSchema, parseBackupLoadEntries } from './backup.js'
     if (!fs.existsSync(files.dir)) await fsPromises.mkdir(files.dir) // IF .ace directory does not exist, create it
 
     switch (bashEntries?.[2]?.[1]) {
+      // ace local
       case 'local':
         execSync('wrangler dev', { stdio: 'inherit', cwd: files.root })
         break
 
+      // ace types --worker=http://localhost:8787
       case 'types':
         const typesSchema = await schemaGet()
 
@@ -58,16 +61,25 @@ import { getBackupFromSchema, parseBackupLoadEntries } from './backup.js'
         console.log('✨ types ready!')
         break
 
-      case 'backupFile':
-        const host = hostGet()
-        CLIFalsyError('worker', '-w', '--worker', host)
-        const backupFromSchema = await getBackupFromSchema(host) // get backup
+      // ace graphToFile --worker=http://localhost:8787 --encrypt=true
+      case 'graphToFile':
+        const host = options.get('-w') || options.get('-worker')
+        if (!host) throw CLIFalsyError('worker', '-w', '--worker')
+
+        const { backupFromSchema } = await aceFetch({ url: host + '/ace', body: { request: { id: 'BackupGet', property: 'backupFromSchema' } } })
         if (!fs.existsSync(files.backups)) await fsPromises.mkdir(files.backups) // IF backups directory does not exist, create it
+
         await fsPromises.writeFile(resolve(__dirname, `${ root }.ace/backups/${ (new Date()).toISOString() }`), JSON.stringify(backupFromSchema, null, 2)) // write 
         break
 
-      case 'backupLoad':
-        const { file, worker } = await parseBackupLoadEntries(bashEntries) // get backup
+      // ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --worker=http://localhost:8787
+      case 'fileToGraph':
+        const file = options.get('-f') || options.get('--file')
+        const worker = options.get('-w') || options.get('--worker')
+
+        if (!file) throw CLIFalsyError('file', '-f', '--file')
+        if (!worker) throw CLIFalsyError('url', '-w', '--worker')
+
         const backupFromFile = await fsPromises.readFile(resolve(__dirname, `${ root }.ace/backups/${ file }`), { encoding: 'utf-8' })
         await aceFetch({ url: worker + '/ace', body: { request: { id: 'BackupLoad', x: { backup: backupFromFile } } } })
         break
@@ -83,7 +95,7 @@ import { getBackupFromSchema, parseBackupLoadEntries } from './backup.js'
 
     /** @returns { Promise<{ nodes: any, relationships: any } | null> } */
     async function schemaGet () {
-      const host = hostGet()
+      const host = options.get('-w') || options.get('--worker')
 
       if (!host) return null
       else {
@@ -97,23 +109,17 @@ import { getBackupFromSchema, parseBackupLoadEntries } from './backup.js'
     }
 
 
-    /** @returns { string } */
-    function hostGet () {
-      return bashEntries[3]?.[1]?.split('=')?.[1]
-    }
-
-
    function help () {
      hr()
      console.log(`🤓 Get backup from file -f, in the folder ${ files.backups } and load the backup to the worker url -w`)
-     bold('ace backupLoad -f=2024-03-24T19:44:36.492Z.json -w=http://localhost:8787')
-     bold('ace backupLoad --file=2024-03-24T19:44:36.492Z.json --worker=http://localhost:8787')
+     bold('ace fileToGraph -f=2024-03-24T19:44:36.492Z.json -w=http://localhost:8787')
+     bold('ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --worker=http://localhost:8787')
      hr()
 
 
      console.log(`🤓 Create backup from the worker url -w, and save the backup as a json file here: ${ files.backups }`)
-     bold('ace backupFile -w=http://localhost:8787')
-     bold('ace backupFile --worker=http://localhost:8787')
+     bold('ace graphToFile -w=http://localhost:8787 -e=true')
+     bold('ace graphToFile --worker=http://localhost:8787 --encrypted=true')
      hr()
 
 
@@ -139,6 +145,7 @@ import { getBackupFromSchema, parseBackupLoadEntries } from './backup.js'
      bold('ace --help')
      hr()
    }
+
 
 
    /** @param { string } log */
