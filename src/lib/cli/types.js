@@ -2,7 +2,7 @@ import { ACE_NODE_NAMES, DELIMITER } from '../variables.js'
 
 
 /**
- * @param { { nodes: any; relationships: any; } } [ schema ]
+ * @param { { nodes: any; relationships: any; } | null } schema
  */
 export function typedefs (schema) {
   const typedefs = getSchemaTypedefs(schema)
@@ -554,7 +554,7 @@ ${ typedefs.query.RelationshipType }
 
 
 /**
- * @param { { nodes: any; relationships: any; } } [ schema ]
+ * @param { { nodes: any; relationships: any; } | null } schema
  */
 function getSchemaTypedefs (schema) {
   /** @type { Map<string, { schemaNodeName: string, schemaNodePropName: string, schemaProp: any }[]> }> } <relationshipName, ({ schemaNodeName, schemaNodePropName: string, schemaProp: AceSchemaBidirectionalRelationshipProp } | { schemaNodePropName: string, schemaProp: AceSchemaForwardRelationshipProp } | { schemaNodePropName: string, schemaProp: SchemaReverseRelationshipPro }p)[]> */

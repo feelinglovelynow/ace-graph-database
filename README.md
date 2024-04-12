@@ -168,13 +168,10 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 ## 🌟 Version 2 Roadmap 
 1. GitHub Issues + Foundation Ideas
 1. Contribution Documentation
-1. Self Hosting (Compile to Binary)
-    * Zig
-    * Store Key Value Data on Memory and @ Disk
-    * Build Input / Output Gates
-    * Worker
-    * Durable Object
-    * Lib Folder
+1. Self Hosting Ability
+    * Durable Object functionality compiled to binary w/ Zig
+        * Store Key Value Data on Memory and @ Disk
+        * Build Input / Output Gates
     * Call Zig code from:
         * Worker
         * Node
@@ -198,34 +195,32 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 
 ## ✨ Version 3 Roadmap 
 1. GitHub Issues + Foundation Ideas
-1. Ace Graph Database Foundation Hosting
+1. Ace Cloud
+    * via Ace Graph Database Foundation
     * Clean + Simple + Performant UX
-    * Host (a graph / graphs)
-        * Most hosting options in one place 
-        * Select Hosting Provider
-            * Self Hosting @ most (popular / affordable) providers
-            * Cloudflare Durable Object
-            * Free Tier (for providers that allow this)
-        * Simple hosting provider migration
-        * Simple hosting provider cost breakdowns
-            * Real time cost comparisons
-        * Components added to Studio just for Cloud customers
-            * Monitoring
-            * Backups
-            * Custom (Analytics / Alerts) via (Component / Email / Webhook / Slack)
-            * Collaboration
-        * Support
-            * Blog
-            * Forum
-            * StackOverflow
-            * Email
-            * Chat
-            * Phone
+    * Deploy / Monitor / Maintain graphs:
+        * @ Cloudflare
+        * @ Ace Cloud
+        * That are Self hosted
+      * Simple hosting provider migration
+      * Simple hosting provider cost breakdowns
+          * Real time cost comparisons
+      * Components added to Studio just for Cloud customers
+          * Monitoring
+          * Backups
+          * Custom (Analytics / Alerts) via (Component / Email / Webhook / Slack)
+          * Collaboration
+      * Support
+          * Blog
+          * Forum
+          * StackOverflow
+          * Email
+          * Chat
+          * Phone
 
 
 ## 😍 What options do I have to store my data?
 1. Cloudflare Durable Object
-    * Server Side
     * Version 1
     * Their $5 a month pricing tier allows:
         * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
@@ -234,8 +229,12 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
         * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
 1. Self Hosting (Zig)
     * Version 2
-1. Ace Hosting (Zig)
+    * Zig
+1. Ace Cloud (Cloudflare or Zig)
     * Version 3
+    * Deploy / Monitor graphs stored:
+        * @ Cloudflare
+        * @ Ace Hosting w/ Zig, or self hosted w/ Zig
 
 
 ## 💪 Version Update Plan

@@ -14,7 +14,7 @@ import { sortOptions } from '../enums/sortOptions.js'
 
 
 /**
- * @param { { nodes: any; relationships: any; } } [schema]
+ * @param { { nodes: any; relationships: any; } | null } schema
  * @returns {Map<string, Map<string, string> | Set<string>>}
  */
 function setEnumsMap (schema) {
@@ -41,7 +41,7 @@ function setEnumsMap (schema) {
 
 /**
  * Generate the code for .ace/enums.js
- * @param { { nodes: any; relationships: any; } } [ schema ]
+ * @param { { nodes: any; relationships: any; } | null } schema
  * @returns { string }
  */
 export function enums (schema) {
