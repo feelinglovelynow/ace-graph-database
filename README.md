@@ -236,17 +236,17 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 ## 💪 Version Update Plan
 1. Prototype to Beta
     * When all Version 1 road map items (other then unit tests & code reviews) are done
-        * Will not include a migration script
+    * Will not include a migration script
 1. Beta to Version 1
     * When all Version 1 Unit Tests pass
-        * Will not include a migration script
+    * Will not include a migration script
 1. Version 1 to Version 2
     * When all Version 2 Unit Tests pass
-        * Will include a migration script
+    * Will include a migration script
 1. Version 2 to Version 3
     * When Hosting options are available
     * When all Version 3 Unit Tests pass
-        * Will include a migration script
+    * Will include a migration script
 
 
 ## 💎 Dictionary
@@ -284,6 +284,7 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 * Defines how Ace graph data is structured, by defining the nodes, relationships and properties
 ### `ace()`
 * How to communicate with Ace Graph Databases
+
 
 ## 🎁 All Our Packages
 1. @feelinglovelynow/ace-graph-database: [NPM](https://www.npmjs.com/package/@feelinglovelynow/ace-graph-database) ⋅ [Github](https://github.com/feelinglovelynow/ace-graph-database)
