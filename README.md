@@ -227,14 +227,10 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
         * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
         * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
-1. Self Hosting (Zig)
+1. Self Hosting
     * Version 2
-    * Zig
-1. Ace Cloud (Cloudflare or Zig)
+1. Ace Cloud
     * Version 3
-    * Deploy / Monitor graphs stored:
-        * @ Cloudflare
-        * @ Ace Hosting w/ Zig, or self hosted w/ Zig
 
 
 ## 💪 Version Update Plan
