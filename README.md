@@ -93,8 +93,15 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 1. `ace()`
     * Function to communicate with the graph
     * Delete `cascadePropNames` array
+    * Can call from the CLI
+    * Sanitize / Validate Input
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
+    * BackupLoad Option: skipDataDelete: boolean
+    * BackupLoad Option: Public JWK: boolean
+    * BackupGet Option: Private JWK
+    * BackupFile Option: Is Encrypted
+    * BackupFile Option: Zip
     * To handle accessing values from a previous mutation
         * Id: 'MutationLoop'
         * Id: 'ResponsePropNameValue'
@@ -112,17 +119,21 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 1. Security
     * 2FA + Authy Support
     * AceUser > email > passwordless
-1. Node Typedefs (all optional props)
 1. Node or edge name may not start w/ [ Ace ] and no triple underscores (DELIMETER) b/c we use them as delimeters
     * Don't allow uid or _uid to be a prop
 1. Objects folder, b/c JSDoc is not good @ classes
     * graph
-    * transaction
     * log
         * Put [ Key, Original, Now, Request Item, API Token ]
         * Delete [ Key, API Token ]
 1. Move schema loops into schema data structures 
 1. loopOptions > switch 
+1. On Error Flow
+    * Retry: Count, MS Before Trying Again
+    * Log to KV
+    * Send Email
+    * Slack
+    * Custom
 1. Do not allow the forward and the reverse relationship propName to be the same propName
 1. Mutations that alter Schema and Data simultaneously (idsMutate)
 1. Function response types
@@ -134,19 +145,21 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 1. Relationship prop indexes
 1. Test relationship props update + guidance
 1. App Worker > Ace Durable Object
-1. Browser > Ace > Local Storage (stoage que?)
 1. Batch requests to storage to stay within storage required Maximum count
 1. KV (request cache) Integration
 1. REPL (event, storage, share)
 1. Comments (param, returns, description, example usage, why) for all index functions
-1. Deno Server
-1. Deno Edge
-1. Bun Server
+1. X > Ace > Cloudflare Worker > Cloudflare Durable Object
+    * Bun Server
+    * Deno Server
+    * Deno Edge
+    * Vercel Edge
 1. Proofread all comments
 1. Backup triggers (replica / sync graph)
 1. Independant Security Audit
 1. Independant Code Review
 1. Unit Tests
+1. Offline support > Response Allows Resume
 1. Studio
     * (View / Edit) data from multiple graphs, simultaneously in the browser
     * Q&A - Show questions that makes sense to ask about the graph and the answers
@@ -168,6 +181,11 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
 ## 🌟 Version 2 Roadmap 
 1. GitHub Issues + Foundation Ideas
 1. Contribution Documentation
+1. Simulator
+    * Fast forward time
+    * Replay
+    * Auto Create GitHub Bug
+1. Webhooks
 1. Self Hosting Ability
     * Durable Object functionality compiled to binary w/ Zig
         * Store Key Value Data on Memory and @ Disk

@@ -62,7 +62,7 @@ export async function core (passport) {
           nodeName: { id: 'Prop', x: { dataType: 'string' } },
           relationshipName: { id: 'Prop', x: { dataType: 'string' } },
           propName: { id: 'Prop', x: { dataType: 'string' } },
-          allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When Ace encounters a node or prop, Ace may find that this node or prop may not be queried (read) or mutated (write) b/c of this permission. However, Ace will allow the read or write when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
+          allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When `ace()` encounters a node, relationship or prop, Ace may learn that this item may not be acted upon (read/write/update/delete) as requested b/c of this permission. Ace will allow the action when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
           roles: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission' } },
         }
       },
