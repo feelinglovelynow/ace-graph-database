@@ -1,5 +1,5 @@
+import { td, enums } from '#ace'
 import { core } from './core.js'
-import { td, enums } from '#manifest'
 import { aceFetch } from '../aceFetch.js'
 import { many } from '../objects/AceCache.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
@@ -17,7 +17,10 @@ import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, de
  * @returns { Promise<td.AceFnResponse> }
  */
 export async function ace (options, request) {
-  return await aceFetch(options, '/ace', { body: { request, privateJWKs: options.privateJWKs, publicJWKs: options.publicJWKs } })
+  return await aceFetch({
+    url: options.worker + '/ace',
+    body: { request, privateJWKs: options.privateJWKs, publicJWKs: options.publicJWKs }
+  })
 }
 
 
@@ -96,7 +99,7 @@ export async function _ace (passport, body) {
           }
 
           if (request[i].id === enums.idsAce.SchemaAndDataDeleteNodes) {
-            /** @type { td.AceMutateRequestItemSchemaAndData } */(request[i]).x.nodes.forEach(nodeName => {
+            /** @type { td.AceMutateRequestItemSchemaAndData } */(request[i]).x.nodes.forEach((/** @type { string } */ nodeName) => {
               nodeNamesMap.set(getNodeUidsKey(nodeName), nodeName)
             })
           }
@@ -159,8 +162,8 @@ export async function _ace (passport, body) {
           case enums.idsAce.BackupGet:
             await backupGet(requestItem)
             break
-          case enums.idsAce.BackupSave:
-            await backupSave(requestItem)
+          case enums.idsAce.BackupLoad:
+            await backupLoad(requestItem)
             break
           case enums.idsAce.InsertNode:
           case enums.idsAce.UpdateNode:
@@ -189,7 +192,7 @@ export async function _ace (passport, body) {
       }
 
       if (passport.cache.deleteSet.size) {
-        passport.cache.deleteSet.forEach(uid => deletedKeys.push(uid))
+        passport.cache.deleteSet.forEach((/** @type { string } */ uid) => deletedKeys.push(uid))
         passport.cache.storage.delete(deletedKeys)
       }
 
@@ -212,9 +215,9 @@ export async function _ace (passport, body) {
       }
 
 
-      /** @param { td.AceQueryRequestItemAceBackup } requestItem */
+      /** @param { td.AceQueryRequestItemBackupGet } requestItem */
       async function backupGet (requestItem) {
-        passport.revokesAcePermissions?.forEach((value) => {
+        passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
           if (value.action === 'read' && value.nodeName) throw AceAuthError(enums.permissionActions.read, passport, { nodeName: value.nodeName })
           if (value.action === 'read' && value.relationshipName) throw AceAuthError(enums.permissionActions.read, passport, { relationshipName: value.relationshipName })
@@ -224,11 +227,11 @@ export async function _ace (passport, body) {
         const rList = {}
         const listMap = await passport.cache.storage.list()
 
-        listMap.forEach((value, key) => { // skip if in deleteSet AND see if in putMap first
+        listMap.forEach((/** @type { any } */value, /** @type { string } */key) => { // skip if in deleteSet AND see if in putMap first
           if (!passport.cache.deleteSet.has(key)) rList[key] = passport.cache.putMap.get(key) || value
         })
 
-        passport.cache.putMap.forEach((value, key) => { // if something is in putMap and not in listMap => add to rList
+        passport.cache.putMap.forEach((/** @type { any } */ value, /** @type { string } */ key) => { // if something is in putMap and not in listMap => add to rList
           if (!listMap.has(key)) rList[key] = value
         })
 
@@ -236,8 +239,8 @@ export async function _ace (passport, body) {
       }
 
 
-      /** @param { td.AceMutateRequestItemBackup } requestItem */
-      async function backupSave (requestItem) {
+      /** @param { td.AceMutateRequestItemBackupLoad } requestItem */
+      async function backupLoad (requestItem) {
         if (typeof requestItem?.x?.backup !== 'string') throw AceError('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
 
         throwIfAnyGenericRevokes()
@@ -247,7 +250,7 @@ export async function _ace (passport, body) {
 
 
       function throwIfAnyGenericRevokes () {
-        passport.revokesAcePermissions?.forEach(value => {
+        passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === enums.permissionActions.inup || value.action === enums.permissionActions.insert || value.action === enums.permissionActions.update || value.action === enums.permissionActions.delete) {
             if (value.schema === true) throw AceAuthError(value.action, passport, { schema: true })
             if (value.nodeName) throw AceAuthError(value.action, passport, { nodeName: value.nodeName })
@@ -259,7 +262,7 @@ export async function _ace (passport, body) {
 
 
     /**
-     * @param { td.AceQueryRequestItemAceSchema } requstItem 
+     * @param { td.AceQueryRequestItemSchemaGet } requstItem 
      */
     function schemaGet (requstItem) {
       if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
@@ -286,7 +289,7 @@ export async function _ace (passport, body) {
           const mustProps = requestItem.subId ? passport.schemaDataStructures?.mustPropsMap?.get(requestItem.subId) : null // the must props for a specific node or relationship
 
           if (mustProps) {
-            mustProps.forEach((prop, propName) => {
+            mustProps.forEach((/** @type { td.AceSchemaProp | td.AceSchemaRelationshipProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ prop, /** @type { string } */propName) => {
 
               switch (prop.id) {
                 case enums.idsSchema.Prop:
@@ -365,14 +368,14 @@ export async function _ace (passport, body) {
       const putObj = {}
 
       if (passport.cache.putMap.size) { // convert from map to object for do storage
-        passport.cache.putMap.forEach((v, k) => {
+        passport.cache.putMap.forEach((/** @type { string } */v, /** @type { string } */ k) => {
           if (!passport.cache.deleteSet.has(k)) putObj[k] = v // ensure this put is not being deleted
         })
 
         passport.cache.storage.put(putObj)
       }
 
-      if (newUidsMap.size) newUidsMap.forEach((v, k) => newUids[k] = v) // convert from map to object for response
+      if (newUidsMap.size) newUidsMap.forEach((/** @type { string } */ v, /** @type { string } */ k) => newUids[k] = v) // convert from map to object for response
 
       response.now.$ace = { newUids, deletedKeys }
 

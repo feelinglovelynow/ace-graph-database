@@ -6,23 +6,24 @@
 
 
 ## 🤔 What is Ace?
-1. Ace structures data in key value stores as a graph (nodes, relationships and properties)
+1. Ace structures data in encrypted key value stores as a graph (nodes, relationships and properties)
 1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
 1. Our cli scipt `ace types` creates TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
-1. The Ace query language is a typesafe (JS/TS) function called `ace()` that allows queries and transactional mutations
+1. The Ace query language is a typesafe (JS/TS) function called `ace()` that provides expressive queries and transactional mutations
 1. Easily configure users, passwords, roles and permissions by node, relationship or property, for the actions read, insert, update, upsert or delete
-1. Our cli scipt `ace backup` provides free graph backups and a simple way to load backups
+1. Our cli scipt `ace backup` provides free graph backups that may be stored locally, or in Cloudflare KV and a simple way to load backups
 
 
 ## 🎬 How to create a Movie Graph?
 ****Step 1: Bash****
 ``` bash
-pnpm add @feelinglovelynow/ace-graph-database && ace dev 8787
+pnpm add @feelinglovelynow/ace-graph-database # or npm
+ace local # start local graph
 ```
 ****Step 2: JavaScript****
 ```ts
 const response = await ace({
-  graphs: [ { workerUrl: 'http://localhost:8787' } ],
+  graphs: [ { worker: 'http://localhost:8787' } ],
 
   request: [
     {
@@ -84,7 +85,7 @@ const response = await ace({
 ```
 ****Step 3: Bash****
 ``` bash
-ace types #generate types that align with above schema
+ace types -w=http://localhost:8787 #generate types that align with above schema
 ```
 
 
@@ -107,26 +108,7 @@ ace types #generate types that align with above schema
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
-1. Manifest to cli
-    * Data structures that allow 1 loop in cli function
-    * `ace enums`
-    * `ace types`
-    * `ace types -w=http://localhost:8787`
-        * does `ace enums` first, b/c enums are used in types
-    * `ace backupSave -w=http://localhost:8787`
-    * `ace backupLoad -w=http://localhost:8787 -f=2024-03-24T19:44:36.492Z.json`
-    * `.ace` folder
-        * Folders: (types, enums, backups)
-1. Transaction
-    * IF mutation in ace() found and no transaction provided, create transaction w/ undefined holdCommit
-    * Logs
-    * createTransaction()
-    * save()
-    * clear() - putMap & deleteSet
-    * rollback()
-      * Rollback Options
-        * Retry
-        * Maintain data structures 
+1. Cli Loop schema once
 1. Security
     * 2FA + Authy Support
     * AceUser > email > passwordless
@@ -157,8 +139,11 @@ ace types #generate types that align with above schema
 1. KV (request cache) Integration
 1. REPL (event, storage, share)
 1. Comments (param, returns, description, example usage, why) for all index functions
-1. Deno
+1. Deno Server
+1. Deno Edge
+1. Bun Server
 1. Proofread all comments
+1. Backup triggers (replica / sync graph)
 1. Independant Security Audit
 1. Independant Code Review
 1. Unit Tests
@@ -172,26 +157,39 @@ ace types #generate types that align with above schema
     * Link to see / edit on GitHub
         * Doc Page
         * Functions Doc Page references
+1. Ace Graph Database Foundation
+    * Mission Statement: Create the Best Database for JavaScript Developers
+    * Principles:
+        * Open Governance
+        * Community Driven
+        * Welcome to all users and contributors
 
 
 ## 🌟 Version 2 Roadmap 
+1. GitHub Issues + Foundation Ideas
 1. Contribution Documentation
-1. Rust
+1. Self Hosting (Compile to Binary)
+    * Zig
+    * Store Key Value Data on Memory and @ Disk
+    * Build Input / Output Gates
     * Worker
     * Durable Object
     * Lib Folder
-    * Cargo Package
-    * JS (Call Rust code from JS) Support
-        * Edge
+    * Call Zig code from:
+        * Worker
         * Node
         * Deno
+        * Bun
 1. Vector Data Type
 1. VMWare Private Ai
     * Teach Ai w/ data from graph(s)
     * Ask Ai questions about graph(s)
-1. Backup triggers (replica graph)
 1. Rag support
 1. Studio
+    * Report Builder
+    * Report Scheduler
+    * Ai chart generation
+    * Ai Q&A generator
     * Collaboration Tools
 1. Docs
     * Explain Version 2
@@ -199,18 +197,13 @@ ace types #generate types that align with above schema
 
 
 ## ✨ Version 3 Roadmap 
-1. Ace Graph Database Foundation
-    * Open Governance
-    * Community Driven
-    * Welcome to all users and contributors
-1. ValKey Support
-    * Queue: (Input / Output ) Gates
-1. Ace Graph Database Cloud LLC
+1. GitHub Issues + Foundation Ideas
+1. Ace Graph Database Foundation Hosting
     * Clean + Simple + Performant UX
     * Host (a graph / graphs)
         * Most hosting options in one place 
         * Select Hosting Provider
-            * ValKey @ most (popular / affordable) providers
+            * Self Hosting @ most (popular / affordable) providers
             * Cloudflare Durable Object
             * Free Tier (for providers that allow this)
         * Simple hosting provider migration
@@ -228,13 +221,6 @@ ace types #generate types that align with above schema
             * Email
             * Chat
             * Phone
-1. Studio
-    * Report Builder
-    * Report Scheduler
-    * Ai chart generation
-    * Ai Q&A generator
-1. Docs
-    * Explain Version 3
 
 
 ## 😍 What options do I have to store my data?
@@ -245,14 +231,11 @@ ace types #generate types that align with above schema
         * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
         * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
-1. Local Storage
-    * Browser
-    * Version 1
-    * Free
-1. ValKey
-    * Server Side
+        * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
+1. Self Hosting (Zig)
     * Version 2
-    * Open Source
+1. Ace Hosting (Zig)
+    * Version 3
 
 
 ## 💪 Version Update Plan
@@ -266,7 +249,7 @@ ace types #generate types that align with above schema
     * When all Version 2 Unit Tests pass
         * Will include a migration script
 1. Version 2 to Version 3
-    * When Foundation and LLC have been created
+    * When Hosting options are available
     * When all Version 3 Unit Tests pass
         * Will include a migration script
 

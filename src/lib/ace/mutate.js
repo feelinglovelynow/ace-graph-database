@@ -1,4 +1,4 @@
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 import { sign } from '../security/hash.js'
 import { many, one } from '../objects/AceCache.js'
 import { validateSchema } from './validateSchema.js'
@@ -58,7 +58,7 @@ export async function inupNode (requestItem, passport, nodeUidsMap, sortIndexMap
 
       if (requestItem.id === 'UpdateNode') graphUid = requestItem.x.uid
       else {
-        if (startsWithUidPrefix) graphUid = getGraphUidAndAddToMapUids(requestItem.x.uid, startsWithUidPrefix)
+        if (requestItem.x.uid && startsWithUidPrefix) graphUid = getGraphUidAndAddToMapUids(requestItem.x.uid, startsWithUidPrefix)
         else if (!requestItem.x.uid) requestItem.x.uid = graphUid = crypto.randomUUID()
         else graphUid = String(requestItem.x.uid)
 

@@ -1,4 +1,4 @@
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 import { AceError } from './AceError.js'
 import { _ace  } from '../ace/ace.js'
 import { AceCache, one } from './AceCache.js'
@@ -64,9 +64,7 @@ export async function stamp (passport) {
 }
 
 
-/**
- * @param { td.AcePassport } passport 
- */
+/** @param { td.AcePassport } passport */
 export function setSchemaDataStructures (passport) {
   /** @type { td.AcePassportSchemaDataStructures } */
   passport.schemaDataStructures = {}

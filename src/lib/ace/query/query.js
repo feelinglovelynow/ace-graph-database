@@ -1,4 +1,4 @@
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 import { many, one } from '../../objects/AceCache.js'
 import { AceAuthError, AceError } from '../../objects/AceError.js'
 import { implementQueryOptions } from './implementQueryOptions.js'
@@ -77,7 +77,7 @@ async function getInitialUids (requestItem, passport) {
       uids = uid ? [uid ] : []
       if (!uids.length) isValid = false
     } else if (filterByUniques) {
-      const keys = filterByUniques.x.uniques.map((value) => {
+      const keys = filterByUniques.x.uniques.map(value => {
         return getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', value.property, value.value)
       })
 

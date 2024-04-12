@@ -15,7 +15,7 @@ export const idsAce = new Set([
   'QueryRelationship',
 
   'BackupGet',
-  'BackupSave',
+  'BackupLoad',
 
   'DataDeleteNodes',
   'DataDeleteRelationships',

@@ -1,4 +1,4 @@
-import { td } from '#manifest'
+import { td } from '#ace'
 import { AceError } from '../../objects/AceError.js'
 import { getXGeneratedByParent } from './getXGenerated.js'
 

@@ -1,4 +1,4 @@
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 import { verify } from '../../security/hash.js'
 import { AceError } from '../../objects/AceError.js'
 import { getRelationshipNode } from './getRelationshipNode.js'

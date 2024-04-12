@@ -1,7 +1,5 @@
 // INTERNAL OR EXTERNAL (So exported @ index.js)
 
-// import { enums } from "#manifest"
-
 export const ADD_NOW_DATE = 'now'
 export const REQUEST_UID_PREFIX = '_:'
 export const REQUEST_TOKEN_HEADER = 'ace_api_token'

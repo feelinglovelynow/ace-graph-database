@@ -1,98 +1,16 @@
-#!/usr/bin/env node
-
-import util from 'node:util'
-import fs from 'node:fs/promises'
-import { exec } from 'node:child_process'
-import { dataTypes } from './enums/dataTypes.js'
-import { has } from './enums/has.js'
-import { idsAce } from './enums/idsAce.js'
-import { idsQueryOptions } from './enums/idsQueryOptions.js'
-import { idsSchema } from './enums/idsSchema.js'
-import { passportSource } from './enums/passportSource.js'
-import { permissionActions } from './enums/permissionActions.js'
-import { queryDerivedSymbol } from './enums/queryDerivedSymbol.js'
-import { queryWhereGroupSymbol } from './enums/queryWhereGroupSymbol.js'
-import { queryWhereSymbol } from './enums/queryWhereSymbol.js'
-import { settings } from './enums/settings.js'
-import { sortOptions } from './enums/sortOptions.js'
-import { aceFetch } from './aceFetch.js'
-import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
+import { ACE_NODE_NAMES, DELIMITER } from '../variables.js'
 
 
 /**
- * Read Schema from locally running Ace Graph Database
- * Manifest enums, typedefs and types
- * If schema is defined alter above based on schema
- * If schema is not defined use defaults
+ * @param { { nodes: any; relationships: any; } } [ schema ]
  */
-(async function manifest () {
-  try {
-    let schema = /** @type { { nodes: { [propName: string]: any }, relationships?: { [k: string]: any } } | undefined } */ (undefined)
-    const enumsMap = /** @type { Map<string, Map<string, string> | Set<string>> } */ (new Map())
-    const bashEntries = [...process.argv.entries()]
-    const optionValue = bashEntries[2]?.[1]
-    const port = Number(optionValue)
-    const queryRequestItemNodeOptions = '(AceQueryPropertyAsResponse | AceQueryPropertyAdjacentToResponse | AceQueryLimit | AceQuerySort | AceQuerySumAsProperty | AceQueryAverageAsProperty | AceQueryMinAmountAsProperty | AceQueryMinNodeAsResponse | AceQueryMaxNodeAsResponse | AceQueryMinAmountAsResponse | AceQueryMaxAmountAsResponse | AceQuerySumAsResponse | AceQueryAverageAsResponse | AceQueryMaxAmountAsProperty | AceQueryCountAsProperty |  AceQueryCountAsResponse | AceQueryFind | AceQueryFilter | AceQueryFilterGroup | AceQueryFindGroup | AceQueryFilterDefined | AceQueryFilterUndefined | AceQueryFindDefined | AceQueryFindByUnique | AceQueryFindByUid | AceQueryFindBy_Uid | AceQueryFilterByUids | AceQueryFilterBy_Uids | AceQueryFilterByUniques | AceQueryFindUndefined | AceQueryDerivedProperty | AceQueryAliasProperty)[]'
-    const queryRequestItemRelationshipOptions = '(AceQueryPropertyAsResponse | AceQueryPropertyAdjacentToResponse | AceQueryLimit | AceQuerySort | AceQuerySumAsProperty | AceQueryAverageAsProperty | AceQueryMinAmountAsProperty | AceQueryMinNodeAsResponse | AceQueryMaxNodeAsResponse | AceQueryMinAmountAsResponse | AceQueryMaxAmountAsResponse | AceQuerySumAsResponse | AceQueryAverageAsResponse | AceQueryMaxAmountAsProperty | AceQueryCountAsProperty |  AceQueryCountAsResponse | AceQueryFind | AceQueryFilter | AceQueryFilterGroup | AceQueryFindGroup | AceQueryFilterDefined | AceQueryFilterUndefined | AceQueryFindDefined |  AceQueryFindBy_Uid | AceQueryFilterBy_Uids | AceQueryFindUndefined | AceQueryDerivedProperty | AceQueryAliasProperty)[]'
-
-    const files = {
-      dir: '.manifest',
-      src: 'src',
-      dist: 'dist',
-      enums: 'enums.js',
-      tsIndex: 'index.d.ts',
-      jsIndex: 'index.js',
-      tsconfig: 'tsconfig.json',
-      jsTypedefs: 'typedefs.js',
-      tsTypedefs: 'typedefs.d.ts',
-      tsTypes: 'index.d.ts',
-    }
-
-    if (port) await getSchema() 
-    else console.log('😅 Since no port was specified, your local Ace Graph Database was not called, to get an updated schema (helpful for generating schema compliant enums, typedefs and types). To run a local db, pnpm dev and to manifest with a port, pnpm manifest 8787')
-
-    setEnumsMap()
-    await initDirectories()
-    await manifestTypedefsEnumsAndTsconfig()
-    await util.promisify(exec)(`npx tsc -p ${ files.dir }/${ files.src }/${ files.tsconfig }`) // bash: npx tsc to create .manifest/dist and add .ts files into it
-    await manifestIndex()
-
-    console.log(`🌟 Manifested enums, typedefs (js) and types (ts)!`)
+export function typedefs (schema) {
+  const typedefs = getSchemaTypedefs(schema)
+  const queryRequestItemNodeOptions = '(AceQueryPropertyAsResponse | AceQueryPropertyAdjacentToResponse | AceQueryLimit | AceQuerySort | AceQuerySumAsProperty | AceQueryAverageAsProperty | AceQueryMinAmountAsProperty | AceQueryMinNodeAsResponse | AceQueryMaxNodeAsResponse | AceQueryMinAmountAsResponse | AceQueryMaxAmountAsResponse | AceQuerySumAsResponse | AceQueryAverageAsResponse | AceQueryMaxAmountAsProperty | AceQueryCountAsProperty |  AceQueryCountAsResponse | AceQueryFind | AceQueryFilter | AceQueryFilterGroup | AceQueryFindGroup | AceQueryFilterDefined | AceQueryFilterUndefined | AceQueryFindDefined | AceQueryFindByUnique | AceQueryFindByUid | AceQueryFindBy_Uid | AceQueryFilterByUids | AceQueryFilterBy_Uids | AceQueryFilterByUniques | AceQueryFindUndefined | AceQueryDerivedProperty | AceQueryAliasProperty)[]'
+  const queryRequestItemRelationshipOptions = '(AceQueryPropertyAsResponse | AceQueryPropertyAdjacentToResponse | AceQueryLimit | AceQuerySort | AceQuerySumAsProperty | AceQueryAverageAsProperty | AceQueryMinAmountAsProperty | AceQueryMinNodeAsResponse | AceQueryMaxNodeAsResponse | AceQueryMinAmountAsResponse | AceQueryMaxAmountAsResponse | AceQuerySumAsResponse | AceQueryAverageAsResponse | AceQueryMaxAmountAsProperty | AceQueryCountAsProperty |  AceQueryCountAsResponse | AceQueryFind | AceQueryFilter | AceQueryFilterGroup | AceQueryFindGroup | AceQueryFilterDefined | AceQueryFilterUndefined | AceQueryFindDefined |  AceQueryFindBy_Uid | AceQueryFilterBy_Uids | AceQueryFindUndefined | AceQueryDerivedProperty | AceQueryAliasProperty)[]'
 
 
-    /**
-     * Add imported enums, schema nodes and schema relationships to the enumsMap
-     * @returns { void }
-     */
-    function setEnumsMap() {
-      enumsMap.set('dataTypes', dataTypes)
-      enumsMap.set('has', has)
-      enumsMap.set('idsAce', idsAce)
-      enumsMap.set('idsSchema', idsSchema)
-      enumsMap.set('idsQueryOptions', idsQueryOptions)
-      enumsMap.set('passportSource', passportSource)
-      enumsMap.set('permissionActions', permissionActions)
-      enumsMap.set('queryDerivedSymbol', queryDerivedSymbol)
-      enumsMap.set('queryWhereGroupSymbol', queryWhereGroupSymbol)
-      enumsMap.set('queryWhereSymbol', queryWhereSymbol)
-      enumsMap.set('nodeNames', new Set(Object.keys(schema?.nodes || {})))
-      enumsMap.set('relationshipNames', new Set(Object.keys(schema?.relationships || {})))
-      enumsMap.set('settings', settings)
-      enumsMap.set('sortOptions', sortOptions)
-    }
-
-
-    /**
-     * Manifet typedefs.js
-     * Manifest enums.js
-     * Manifest tsconfig.json
-     */
-    async function manifestTypedefsEnumsAndTsconfig () {
-      const typedefs = getSchemaTypedefs()
-
-
-      return Promise.all([
-        fs.writeFile(`${files.dir}/${files.src}/${files.jsTypedefs}`, `import * as enums from './${ files.enums }'
+  return `import * as enums from './enums.js'
 
 
 /** AceGraph
@@ -127,12 +45,12 @@ import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
  * @property { AceFnRequest } request
  *
  * @typedef { object } AceFnOptions
- * @property { string } url - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @property { string } worker - URL for the Cloudflare Worker that points to your Ace Graph Database
  * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling \`id: 'Start'\` from \`mutate()\`
  * @property { { [jwkName: string]: string } } [ publicJWKs ]
  * @property { { [jwkName: string]: string } } [ privateJWKs ]
  *
- * @typedef { AceMutateRequestItem | AceQueryRequestItem | (AceMutateRequestItem | AceQueryRequestItem)[] } AceFnRequest
+ * @typedef { AceQueryRequestItem | AceMutateRequestItem | (AceQueryRequestItem | AceMutateRequestItem)[] } AceFnRequest
  *
  * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } AceFnFullResponse
  *
@@ -255,9 +173,14 @@ import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
  * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemSchemaAdd } AceMutateRequestItemSchema
+ * @typedef { AceMutateRequestItemBackupGet | AceMutateRequestItemBackupLoad } AceMutateRequestItemBackup
  * 
- * @typedef { object } AceMutateRequestItemBackup
- * @property { typeof enums.idsAce.BackupSave } id
+ * @typedef { object } AceMutateRequestItemBackupGet
+ * @property { typeof enums.idsAce.BackupGet } id
+ * @property { string } property
+ *
+ * @typedef { object } AceMutateRequestItemBackupLoad
+ * @property { typeof enums.idsAce.BackupLoad } id
  * @property { { backup: string } } x
  *
  * @typedef { object } AceMutateRequestItemEmpty
@@ -307,7 +230,7 @@ import { ACE_NODE_NAMES, DELIMITER } from './variables.js'
  *
  * @typedef { AceQueryRequestItem | AceQueryRequestItem[] } AceQueryRequest
  *
- * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemAceBackup | AceQueryRequestItemAceSchema } AceQueryRequestItem
+ * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemBackupGet | AceQueryRequestItemSchemaGet } AceQueryRequestItem
  *
 ${ typedefs.query.NodeType }
  *
@@ -318,11 +241,11 @@ ${ typedefs.query.RelationshipType }
  * @typedef { ${ queryRequestItemNodeOptions } } AceQueryRequestItemNodeOptions
  * @typedef { ${ queryRequestItemRelationshipOptions } } AceQueryRequestItemRelationshipOptions
  * 
- * @typedef { object } AceQueryRequestItemAceSchema
+ * @typedef { object } AceQueryRequestItemSchemaGet
  * @property { typeof enums.idsAce.SchemaGet } id
  * @property { string } property
  *
- * @typedef { object } AceQueryRequestItemAceBackup
+ * @typedef { object } AceQueryRequestItemBackupGet
  * @property { typeof enums.idsAce.BackupGet } id
  * @property { string } property
  *
@@ -626,14 +549,326 @@ ${ typedefs.query.RelationshipType }
  * @property { Map<string, any> } getMap
  * @property { Set<string> } deleteSet
  */
-`),
+`
+}
 
-        fs.writeFile(`${ files.dir }/${ files.src }/${ files.enums }`, getEnumsCode()),
 
-        fs.writeFile(`${ files.dir }/${ files.src }/${ files.tsconfig }`, `{
+/**
+ * @param { { nodes: any; relationships: any; } } [ schema ]
+ */
+function getSchemaTypedefs (schema) {
+  /** @type { Map<string, { schemaNodeName: string, schemaNodePropName: string, schemaProp: any }[]> }> } <relationshipName, ({ schemaNodeName, schemaNodePropName: string, schemaProp: AceSchemaBidirectionalRelationshipProp } | { schemaNodePropName: string, schemaProp: AceSchemaForwardRelationshipProp } | { schemaNodePropName: string, schemaProp: SchemaReverseRelationshipPro }p)[]> */
+  const relationshipMap = new Map()
+
+  const typedefs = {
+    query: {
+      Nodes: '',
+      NodeType: '',
+      NodeProps: '',
+      NodePipes: '',
+      Relationships: '',
+      RelationshipType: '',
+      RelationshipProps: '',
+      RelationshipPipes: '',
+      RelationshipPropTypes: '',
+    },
+    mutate: {
+      InsertNodeType: '',
+      UpdateNodeType: '',
+      InsertNodePipes: '',
+      UpdateNodePipes: '',
+      InsertNodeTypes: '',
+      UpdateNodeTypes: '',
+      InsertRelationshipType: '',
+      UpdateRelationshipType: '',
+      InsertRelationshipPipes: '',
+      UpdateRelationshipPipes: '',
+      InsertRelationshipTypes: '',
+      UpdateRelationshipTypes: '',
+      SchemaAndDataDeleteNodesType: ''
+    }
+  }
+
+
+  if (schema?.nodes) {
+    typedefs.mutate.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
+    typedefs.mutate.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
+
+    for (const schemaNodeName in schema.nodes) {
+      typedefs.query.NodeProps = '' // reset props from previous loop
+
+      typedefs.query.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
+
+      typedefs.mutate.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
+
+      typedefs.mutate.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
+
+      if (!ACE_NODE_NAMES.has(schemaNodeName)) typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
+
+      typedefs.mutate.InsertNodeTypes += `\n *
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
+ * @property { typeof enums.idsAce.InsertNode } id - Insert Node
+ * @property { '${ schemaNodeName}' } nodeName - Insert \`${ schemaNodeName }\` node
+ * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
+ * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
+ * @property { string } [ uid ] - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
+
+      typedefs.mutate.UpdateNodeTypes += `\n *
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
+ * @property { typeof enums.idsAce.UpdateNode } id - Update Node
+ * @property { '${ schemaNodeName }' } nodeName - Update \`${ schemaNodeName }\` node
+ * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
+ * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
+ * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
+ * @property { string } uid - The node's unique identifier`
+
+      for (const schemaNodePropName in schema.nodes[schemaNodeName]) {
+        const schemaProp = schema.nodes[schemaNodeName][schemaNodePropName]
+
+        switch (schemaProp.id) {
+          case 'Prop':
+            const dataType = getDataType(schemaProp.x.dataType)
+            typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+            typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+            typedefs.query.NodeProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
+            break
+          case 'ForwardRelationshipProp':
+          case 'ReverseRelationshipProp':
+          case 'BidirectionalRelationshipProp':
+            const relationshipMapValue = relationshipMap.get(schemaProp.x.relationshipName) || []
+
+            relationshipMapValue.push({ schemaNodeName, schemaNodePropName, schemaProp })
+            relationshipMap.set(schemaProp.x.relationshipName, relationshipMapValue)
+
+            let queryProps = ''
+
+            for (const relationshipNodePropName in schema.nodes[schemaProp.x.nodeName]) {
+              const rSchemaProp = schema.nodes[schemaProp.x.nodeName][relationshipNodePropName]
+
+              queryProps += rSchemaProp.id === 'Prop' ?
+                `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.nodeName, schemaPropDescription: rSchemaProp.x.description }) }` :
+                `\n * @property { ${ getNodePropXPropName(schemaProp.x.nodeName, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaProp.x.nodeName, relationshipNodePropName, rSchemaProp) }`
+            }
+
+            if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
+              const props = schema.relationships?.[schemaProp.x.relationshipName].x.props
+
+              for (const relationshipPropName in props) {
+                queryProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationshipName, schemaPropDescription: props[relationshipPropName].x.description })}`
+              }
+            }
+
+            const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
+
+            typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName} } [ ${schemaNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+
+            if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
+
+            typedefs.query.RelationshipPropTypes += `
+ * @typedef { object } ${ relationshipPropName }
+ * @property { AceQueryRequestItemNodeOptions } [ $options ]
+ * @property { boolean | AceQueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
+ * @property { boolean | AceQueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
+ *`
+            break
+        }
+      }
+
+      if (!typedefs.query.Nodes) typedefs.query.Nodes += `\n\n\n/** Query: Node's (from schema)\n`
+
+      typedefs.query.Nodes +=` *
+ * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
+ * @property { typeof enums.idsAce.QueryNode } id
+ * @property { '${ schemaNodeName }' } nodeName
+ * @property { string } property
+ * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
+ * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
+ * @property { boolean | AceQueryAliasProperty } [ uid ]
+ * @property { AceQueryRequestItemNodeOptions } [ $options ]${ typedefs.query.NodeProps }
+`
+    }
+  }
+
+
+  if (schema?.relationships) {
+    typedefs.mutate.InsertRelationshipTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
+    typedefs.mutate.UpdateRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
+
+    for (const schemaRelationshipName in schema.relationships) {
+      typedefs.query.RelationshipProps = '' // reset props from previous loop
+
+      typedefs.query.RelationshipPipes += `${ schemaRelationshipName }QueryRequestItemRelationship | `
+
+      typedefs.mutate.InsertRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemInsertRelationship | `
+
+      typedefs.mutate.UpdateRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
+
+      typedefs.mutate.UpdateRelationshipType += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
+
+      const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ schemaRelationshipName }\` => \`_:node2\``
+
+      typedefs.mutate.InsertRelationshipTypes += `\n *
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationship
+ * @property { typeof enums.idsAce.InsertRelationship } id - Insert Relationship
+ * @property { '${ schemaRelationshipName }' } relationshipName - Insert \`${ schemaRelationshipName }\` relationship
+ * @property { ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX } x
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX
+ * @property { string } a - ${ abDescription }
+ * @property { string } b - ${ abDescription }`
+  
+      typedefs.mutate.UpdateRelationshipTypes += `\n *
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationship
+ * @property { typeof enums.idsAce.UpdateRelationship } id - Update Relationship
+ * @property { '${ schemaRelationshipName }' } relationshipName - Update \`${ schemaRelationshipName }\` relationship
+ * @property { ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX } x
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX
+ * @property { string } _uid - The relationship uid you would love to update
+ * @property { string } [ a ] - ${ abDescription }
+ * @property { string } [ b ] - ${ abDescription }`
+
+      if (schema.relationships[schemaRelationshipName]?.x?.props) {
+        for (const schemaRelationshipPropName in schema.relationships[schemaRelationshipName].x.props) {
+          const schemaProp = schema.relationships[schemaRelationshipName].x.props[schemaRelationshipPropName]
+          const dataType = getDataType(schemaProp.x.dataType)
+          const description = `Set to a ${ dataType } value if you would love to update this relationship property, \`${schemaRelationshipPropName}\`, in the graph`
+
+          typedefs.query.RelationshipProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${schemaRelationshipPropName } ] - ${ getQueryPropDescription({ propName: schemaRelationshipPropName, relationshipName: schemaRelationshipName, schemaPropDescription: schemaProp.x.description }) }`
+          typedefs.mutate.InsertRelationshipTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]'} - ${description}`
+          typedefs.mutate.UpdateRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
+        }
+      }
+
+      const relationshipMapValue = relationshipMap.get(schemaRelationshipName)
+
+      if (relationshipMapValue) {
+        for (const { schemaNodeName, schemaNodePropName, schemaProp } of relationshipMapValue) {
+          typedefs.query.RelationshipProps += `\n * @property { ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+        }
+      }
+
+
+      if (!typedefs.query.Relationships) typedefs.query.Relationships += `\n\n\n/** Query: Relationship's (from schema)\n`
+
+      typedefs.query.Relationships += ` *
+ * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationship
+ * @property { typeof enums.idsAce.QueryRelationship } id
+ * @property { '${ schemaRelationshipName }' } relationshipName
+ * @property { string } property
+ * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } x
+ * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationshipX
+ * @property { boolean | AceQueryAliasProperty } [ _uid ]
+ * @property { AceQueryRequestItemRelationshipOptions } [ $options ]${ typedefs.query.RelationshipProps }
+`
+    }
+  }
+
+
+  if (typedefs.query.Nodes) typedefs.query.Nodes += ' */'
+  if (typedefs.query.Relationships) typedefs.query.Relationships += ' */'
+  if (typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '/'
+  if (typedefs.mutate.InsertNodeTypes) typedefs.mutate.InsertNodeTypes += '\n */'
+  if (typedefs.mutate.UpdateNodeTypes) typedefs.mutate.UpdateNodeTypes += '\n */'
+  if (typedefs.mutate.InsertRelationshipTypes) typedefs.mutate.InsertRelationshipTypes += '\n */'
+  if (typedefs.mutate.UpdateRelationshipTypes) typedefs.mutate.UpdateRelationshipTypes += '\n */'
+  if (typedefs.query.NodePipes) typedefs.query.NodePipes = typedefs.query.NodePipes.slice(0, -3)
+  if (typedefs.mutate.InsertNodePipes) typedefs.mutate.InsertNodePipes = typedefs.mutate.InsertNodePipes.slice(0, -3)
+  if (typedefs.mutate.UpdateNodePipes) typedefs.mutate.UpdateNodePipes = typedefs.mutate.UpdateNodePipes.slice(0, -3)
+  if (typedefs.query.RelationshipPipes) typedefs.query.RelationshipPipes = typedefs.query.RelationshipPipes.slice(0, -3)
+  if (typedefs.mutate.InsertRelationshipPipes) typedefs.mutate.InsertRelationshipPipes = typedefs.mutate.InsertRelationshipPipes.slice(0, -3)
+  if (typedefs.mutate.UpdateRelationshipPipes) typedefs.mutate.UpdateRelationshipPipes = typedefs.mutate.UpdateRelationshipPipes.slice(0, -3)
+  if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')[]'
+
+
+  typedefs.query.NodeType = plop({
+    now: typedefs.query.NodePipes,
+    left: ' * @typedef { ',
+    right: ' } AceQueryRequestItemNode',
+    default: ` * @typedef { object } AceQueryRequestItemNode
+ * @property { typeof enums.idsAce.QueryNode } id
+ * @property { string } nodeName
+ * @property { string } property
+ * @property { AceQueryRequestItemNodeX } x`
+  })
+
+
+  typedefs.query.RelationshipType = plop({
+    now: typedefs.query.RelationshipPipes,
+    left: ' * @typedef { ',
+    right: ' } AceQueryRequestItemRelationship',
+    default: ` * @typedef { object } AceQueryRequestItemRelationship
+ * @property { typeof enums.idsAce.QueryRelationship } id
+ * @property { string } relationshipName
+ * @property { string } property
+ * @property { AceQueryRequestItemRelationshipX } x`
+  })
+
+
+  typedefs.mutate.InsertNodeType = plop({
+    now: typedefs.mutate.InsertNodePipes,
+    left: '\n *\n * @typedef { ',
+    right: ' } AceMutateRequestItemInsertNode',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemInsertNode
+ * @property { typeof enums.idsAce.InsertNode } id
+ * @property { string } nodeName
+ * @property { { uid?: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+  })
+
+  typedefs.mutate.UpdateNodeType = plop({
+    now: typedefs.mutate.UpdateNodePipes,
+    left: '\n *\n * @typedef { ',
+    right: ' } AceMutateRequestItemUpdateNode',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateNode
+ * @property { typeof enums.idsAce.UpdateNode } id
+ * @property { string } nodeName
+ * @property { { uid: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+  })
+
+  typedefs.mutate.InsertRelationshipType = plop({
+    now: typedefs.mutate.InsertRelationshipPipes,
+    left: '\n *\n * @typedef { ',
+    right: ' } AceMutateRequestItemInsertRelationship',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemInsertRelationship
+ * @property { typeof enums.idsAce.InsertRelationship } id
+ * @property { string } relationshipName
+ * @property { { a: string, b: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+  })
+
+  typedefs.mutate.UpdateRelationshipType = plop({
+    now: typedefs.mutate.UpdateRelationshipPipes,
+    left: '\n *\n * @typedef { ',
+    right: ' } AceMutateRequestItemUpdateRelationship',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateRelationship
+ * @property { typeof enums.idsAce.UpdateRelationship } id
+ * @property { string } relationshipName
+ * @property { { a: string, b: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+  })
+
+  return typedefs
+
+
+  /**
+   * Plop (place between left and right) or default
+   * @param { { now: string, left: string, right: string, default: string } } options 
+   * @returns { string }
+   */
+  function plop (options) {
+    let response = ''
+    let now = options.now
+
+    if (!now) response = options.default
+    else response = options.left + now + options.right
+
+    return response
+  }
+}
+
+
+export function tsConfig () {
+  return `{
   "files": [
-    "${ files.jsTypedefs }",
-    "${ files.enums }"
+    "typedefs.js",
+    "enums.js"
   ],
   "compilerOptions": {
     "allowJs": true,
@@ -644,457 +879,74 @@ ${ typedefs.query.RelationshipType }
     "declaration": true,
     "sourceMap": true,
     "strict": true,
-    "outDir": "../${ files.dist }",
+    "outDir": "tsc",
     "module": "NodeNext",
     "target": "ES2017"
   }
-}`)
-      ])
-    }
+}`
+}
 
 
-
-    function getSchemaTypedefs () {
-      /** @type { Map<string, { schemaNodeName: string, schemaNodePropName: string, schemaProp: any }[]> }> } <relationshipName, ({ schemaNodeName, schemaNodePropName: string, schemaProp: AceSchemaBidirectionalRelationshipProp } | { schemaNodePropName: string, schemaProp: AceSchemaForwardRelationshipProp } | { schemaNodePropName: string, schemaProp: SchemaReverseRelationshipPro }p)[]> */
-      const relationshipMap = new Map()
-
-      const typedefs = {
-        query: {
-          Nodes: '',
-          NodeType: '',
-          NodeProps: '',
-          NodePipes: '',
-          Relationships: '',
-          RelationshipType: '',
-          RelationshipProps: '',
-          RelationshipPipes: '',
-          RelationshipPropTypes: '',
-        },
-        mutate: {
-          InsertNodeType: '',
-          UpdateNodeType: '',
-          InsertNodePipes: '',
-          UpdateNodePipes: '',
-          InsertNodeTypes: '',
-          UpdateNodeTypes: '',
-          InsertRelationshipType: '',
-          UpdateRelationshipType: '',
-          InsertRelationshipPipes: '',
-          UpdateRelationshipPipes: '',
-          InsertRelationshipTypes: '',
-          UpdateRelationshipTypes: '',
-          SchemaAndDataDeleteNodesType: ''
-        }
-      }
-
-
-      if (schema?.nodes) {
-        typedefs.mutate.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
-        typedefs.mutate.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
-
-        for (const schemaNodeName in schema.nodes) {
-          typedefs.query.NodeProps = '' // reset props from previous loop
-
-          typedefs.query.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
-
-          typedefs.mutate.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
-
-          typedefs.mutate.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
-
-          if (!ACE_NODE_NAMES.has(schemaNodeName)) typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
-
-          typedefs.mutate.InsertNodeTypes += `\n *
- * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
- * @property { typeof enums.idsAce.InsertNode } id - Insert Node
- * @property { '${ schemaNodeName}' } nodeName - Insert \`${ schemaNodeName }\` node
- * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
- * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
- * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
- * @property { string } [ uid ] - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
-
-          typedefs.mutate.UpdateNodeTypes += `\n *
- * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
- * @property { typeof enums.idsAce.UpdateNode } id - Update Node
- * @property { '${ schemaNodeName }' } nodeName - Update \`${ schemaNodeName }\` node
- * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
- * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
- * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
- * @property { string } uid - The node's unique identifier`
-
-          for (const schemaNodePropName in schema.nodes[schemaNodeName]) {
-            const schemaProp = schema.nodes[schemaNodeName][schemaNodePropName]
-
-            switch (schemaProp.id) {
-              case 'Prop':
-                const dataType = getDataType(schemaProp.x.dataType)
-                typedefs.mutate.InsertNodeTypes += `\n * @property { ${dataType} } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${dataType}\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-                typedefs.query.NodeProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
-                break
-              case 'ForwardRelationshipProp':
-              case 'ReverseRelationshipProp':
-              case 'BidirectionalRelationshipProp':
-                const relationshipMapValue = relationshipMap.get(schemaProp.x.relationshipName) || []
-
-                relationshipMapValue.push({ schemaNodeName, schemaNodePropName, schemaProp })
-                relationshipMap.set(schemaProp.x.relationshipName, relationshipMapValue)
-
-                let queryProps = ''
-
-                for (const relationshipNodePropName in schema.nodes[schemaProp.x.nodeName]) {
-                  const rSchemaProp = schema.nodes[schemaProp.x.nodeName][relationshipNodePropName]
-
-                  queryProps += rSchemaProp.id === 'Prop' ?
-                    `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.nodeName, schemaPropDescription: rSchemaProp.x.description }) }` :
-                    `\n * @property { ${ getNodePropXPropName(schemaProp.x.nodeName, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaProp.x.nodeName, relationshipNodePropName, rSchemaProp) }`
-                }
-
-                if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
-                  const props = schema.relationships?.[schemaProp.x.relationshipName].x.props
-
-                  for (const relationshipPropName in props) {
-                    queryProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationshipName, schemaPropDescription: props[relationshipPropName].x.description })}`
-                  }
-                }
-
-                const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
-
-                typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName} } [ ${schemaNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
-
-                if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
-
-                typedefs.query.RelationshipPropTypes += `
- * @typedef { object } ${ relationshipPropName }
- * @property { AceQueryRequestItemNodeOptions } [ $options ]
- * @property { boolean | AceQueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
- * @property { boolean | AceQueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
- *`
-                break
-            }
-          }
-
-          if (!typedefs.query.Nodes) typedefs.query.Nodes += `\n\n\n/** Query: Node's (from schema)\n`
-
-          typedefs.query.Nodes +=` *
- * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
- * @property { typeof enums.idsAce.QueryNode } id
- * @property { '${ schemaNodeName }' } nodeName
- * @property { string } property
- * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
- * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
- * @property { boolean | AceQueryAliasProperty } [ uid ]
- * @property { AceQueryRequestItemNodeOptions } [ $options ]${ typedefs.query.NodeProps }
+export function tsIndex () {
+  return `// type checking only works in ts projects that import ace if we specify .d.ts as the extension below
+export * as td from './tsc/typedefs.d.ts'
+export * as enums from './tsc/enums.d.ts'
 `
-        }
-      }
+}
 
 
-      if (schema?.relationships) {
-        typedefs.mutate.InsertRelationshipTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
-        typedefs.mutate.UpdateRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
-
-        for (const schemaRelationshipName in schema.relationships) {
-          typedefs.query.RelationshipProps = '' // reset props from previous loop
-
-          typedefs.query.RelationshipPipes += `${ schemaRelationshipName }QueryRequestItemRelationship | `
-
-          typedefs.mutate.InsertRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemInsertRelationship | `
-
-          typedefs.mutate.UpdateRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
-
-          typedefs.mutate.UpdateRelationshipType += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
-
-          const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ schemaRelationshipName }\` => \`_:node2\``
-
-          typedefs.mutate.InsertRelationshipTypes += `\n *
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationship
- * @property { typeof enums.idsAce.InsertRelationship } id - Insert Relationship
- * @property { '${ schemaRelationshipName }' } relationshipName - Insert \`${ schemaRelationshipName }\` relationship
- * @property { ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX } x
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX
- * @property { string } a - ${ abDescription }
- * @property { string } b - ${ abDescription }`
-     
-          typedefs.mutate.UpdateRelationshipTypes += `\n *
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationship
- * @property { typeof enums.idsAce.UpdateRelationship } id - Update Relationship
- * @property { '${ schemaRelationshipName }' } relationshipName - Update \`${ schemaRelationshipName }\` relationship
- * @property { ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX } x
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX
- * @property { string } _uid - The relationship uid you would love to update
- * @property { string } [ a ] - ${ abDescription }
- * @property { string } [ b ] - ${ abDescription }`
-
-          if (schema.relationships[schemaRelationshipName]?.x?.props) {
-            for (const schemaRelationshipPropName in schema.relationships[schemaRelationshipName].x.props) {
-              const schemaProp = schema.relationships[schemaRelationshipName].x.props[schemaRelationshipPropName]
-              const dataType = getDataType(schemaProp.x.dataType)
-              const description = `Set to a ${ dataType } value if you would love to update this relationship property, \`${schemaRelationshipPropName}\`, in the graph`
-
-              typedefs.query.RelationshipProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${schemaRelationshipPropName } ] - ${ getQueryPropDescription({ propName: schemaRelationshipPropName, relationshipName: schemaRelationshipName, schemaPropDescription: schemaProp.x.description }) }`
-              typedefs.mutate.InsertRelationshipTypes += `\n * @property { ${dataType} } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]'} - ${description}`
-              typedefs.mutate.UpdateRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
-            }
-          }
-
-          const relationshipMapValue = relationshipMap.get(schemaRelationshipName)
-
-          if (relationshipMapValue) {
-            for (const { schemaNodeName, schemaNodePropName, schemaProp } of relationshipMapValue) {
-              typedefs.query.RelationshipProps += `\n * @property { ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
-            }
-          }
-
-
-          if (!typedefs.query.Relationships) typedefs.query.Relationships += `\n\n\n/** Query: Relationship's (from schema)\n`
-
-          typedefs.query.Relationships += ` *
- * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationship
- * @property { typeof enums.idsAce.QueryRelationship } id
- * @property { '${ schemaRelationshipName }' } relationshipName
- * @property { string } property
- * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } x
- * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationshipX
- * @property { boolean | AceQueryAliasProperty } [ _uid ]
- * @property { AceQueryRequestItemRelationshipOptions } [ $options ]${ typedefs.query.RelationshipProps }
+export function jsIndex () {
+  return `export * as td from './typedefs.js'
+export * as enums from './enums.js'
 `
-        }
-      }
+}
 
-
-      if (typedefs.query.Nodes) typedefs.query.Nodes += ' */'
-      if (typedefs.query.Relationships) typedefs.query.Relationships += ' */'
-      if (typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '/'
-      if (typedefs.mutate.InsertNodeTypes) typedefs.mutate.InsertNodeTypes += '\n */'
-      if (typedefs.mutate.UpdateNodeTypes) typedefs.mutate.UpdateNodeTypes += '\n */'
-      if (typedefs.mutate.InsertRelationshipTypes) typedefs.mutate.InsertRelationshipTypes += '\n */'
-      if (typedefs.mutate.UpdateRelationshipTypes) typedefs.mutate.UpdateRelationshipTypes += '\n */'
-      if (typedefs.query.NodePipes) typedefs.query.NodePipes = typedefs.query.NodePipes.slice(0, -3)
-      if (typedefs.mutate.InsertNodePipes) typedefs.mutate.InsertNodePipes = typedefs.mutate.InsertNodePipes.slice(0, -3)
-      if (typedefs.mutate.UpdateNodePipes) typedefs.mutate.UpdateNodePipes = typedefs.mutate.UpdateNodePipes.slice(0, -3)
-      if (typedefs.query.RelationshipPipes) typedefs.query.RelationshipPipes = typedefs.query.RelationshipPipes.slice(0, -3)
-      if (typedefs.mutate.InsertRelationshipPipes) typedefs.mutate.InsertRelationshipPipes = typedefs.mutate.InsertRelationshipPipes.slice(0, -3)
-      if (typedefs.mutate.UpdateRelationshipPipes) typedefs.mutate.UpdateRelationshipPipes = typedefs.mutate.UpdateRelationshipPipes.slice(0, -3)
-      if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')[]'
-
-
-      typedefs.query.NodeType = plop({
-        now: typedefs.query.NodePipes,
-        left: ' * @typedef { ',
-        right: ' } AceQueryRequestItemNode',
-        default: ` * @typedef { object } AceQueryRequestItemNode
- * @property { 'QueryNode' } id
- * @property { string } nodeName
- * @property { string } property
- * @property { AceQueryRequestItemNodeX } x`
-      })
-
-
-      typedefs.query.RelationshipType = plop({
-        now: typedefs.query.RelationshipPipes,
-        left: ' * @typedef { ',
-        right: ' } AceQueryRequestItemRelationship',
-        default: ` * @typedef { object } AceQueryRequestItemRelationship
- * @property { typeof enums.idsAce.QueryRelationship } id
- * @property { string } relationshipName
- * @property { string } property
- * @property { AceQueryRequestItemRelationshipX } x`
-      })
-
-
-      typedefs.mutate.InsertNodeType = plop({
-        now: typedefs.mutate.InsertNodePipes,
-        left: '\n *\n * @typedef { ',
-        right: ' } AceMutateRequestItemInsertNode',
-        default: `\n *\n * @typedef { object } AceMutateRequestItemInsertNode
- * @property { typeof enums.idsAce.InsertNode } id
- * @property { string } nodeName
- * @property { { uid?: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
-      })
-
-      typedefs.mutate.UpdateNodeType = plop({
-        now: typedefs.mutate.UpdateNodePipes,
-        left: '\n *\n * @typedef { ',
-        right: ' } AceMutateRequestItemUpdateNode',
-        default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateNode
- * @property { typeof enums.idsAce.UpdateNode } id
- * @property { string } nodeName
- * @property { { uid: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
-      })
-
-      typedefs.mutate.InsertRelationshipType = plop({
-        now: typedefs.mutate.InsertRelationshipPipes,
-        left: '\n *\n * @typedef { ',
-        right: ' } AceMutateRequestItemInsertRelationship',
-        default: `\n *\n * @typedef { object } AceMutateRequestItemInsertRelationship
- * @property { typeof enums.idsAce.InsertRelationship } id
- * @property { string } relationshipName
- * @property { { a: string, b: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
-      })
-
-      typedefs.mutate.UpdateRelationshipType = plop({
-        now: typedefs.mutate.UpdateRelationshipPipes,
-        left: '\n *\n * @typedef { ',
-        right: ' } AceMutateRequestItemUpdateRelationship',
-        default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateRelationship
- * @property { typeof enums.idsAce.UpdateRelationship } id
- * @property { string } relationshipName
- * @property { { a: string, b: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
-      })
-
-      return typedefs
-
-
-      /**
-       * Plop (place between left and right) or default
-       * @param { { now: string, left: string, right: string, default: string } } options 
-       * @returns { string }
-       */
-      function plop (options) {
-        let response = ''
-        let now = options.now
-
-        if (!now) response = options.default
-        else response = options.left + now + options.right
-
-        return response
-      }
-    }
-
-
-    /**
-     * Generate the code for .manifest/src/lib/enums.js
-     * @returns { string }
-     */
-    function getEnumsCode () {
-      let result = ''
-
-      /**
-       * @param { string } enumStr 
-       * @param { string } a 
-       * @param { string } b 
-       */
-      const getKeyAndValue = (enumStr, a, b) => {
-        if (enumStr === 'dataTypes') return { key: b, value: b }
-        else return { key: b, value: a }
-      }
-
-      enumsMap.forEach((enumDataStructure, enumStr) => {
-        if (!enumDataStructure.size) {
-          result += `\n/** @typedef { string } ${ enumStr } */
-export const ${ enumStr } =  ''\n\n\n`
-        } else {
-          result += `/** @typedef {`
-
-          let typedef = ''
-          let enumProps = ''
-
-          enumDataStructure.forEach((a, b) => {
-            const { key, value } = getKeyAndValue(enumStr, a, b)
-            typedef += ` '${ key }' |`
-            enumProps += `  ${ key }: /** @type { '${ value }' } */ ('${ value }'),\n`
-          })
-
-          result += typedef
-          result = result.slice(0, -1) // remove trailing pipe
-          result += `} ${ enumStr } */\nexport const ${ enumStr } = {\n`
-          result += enumProps
-          result += '}\n\n\n'
-        }
-      })
-
-      return result.trim()
-    }
-
-
-    /**
-     * Call local Ace Graph Database to get the most recent schema
-     * Allow the fetch to wait 6 seconds on a response before aborting the fetch
-     * @returns { Promise<void> }
-     */
-    async function getSchema () {
-      try {
-        const r = await aceFetch({ url: `http://localhost:${ port }` }, '/ace', { body: { request: { id: 'SchemaGet', property: 'schema' } } })
-        schema = r.schema
-      } catch (e) {
-        console.log('🔥 Ace Graph Database Fetch Failed, your enums, typedefs and types do not include schema information!', e)
-      }
-    }
-
-
-    /**
-     * Get directories ready to write files
-     * @returns { Promise<void> }
-     */
-    async function initDirectories () {
-      await util.promisify(exec)(`rm -rf ${ files.dir }`) // delete .manifest directory
-      await fs.mkdir(files.dir) // create .manifest directory
-      await fs.mkdir(`${ files.dir }/${ files.src }`) // create .manifest/src directory
-    }
-
-
-    /**
-     * Manifet index.js
-     * Manifest index.ts
-     * @returns { Promise<[any, any]> }
-     */
-    async function manifestIndex () {
-      return Promise.all([
-        fs.writeFile(`${ files.dir }/${ files.dist }/${ files.tsIndex }`, `export * as enums from './enums.d.ts'\nexport * as td from './typedefs.d.ts'`),
-        fs.writeFile(`${ files.dir }/${ files.dist }/${ files.jsIndex }`, `export * as enums from './enums.js'\nexport * as td from './typedefs.js'`)
-      ])
-    }
-
-
-    /**
-     * @param { string } nodeName
-     * @param { string } propName
-     * @returns { string }
-     */
-    function getNodePropXPropName (nodeName, propName) {
-      return nodeName + DELIMITER + propName + DELIMITER + 'X'
-    }
-
-
-    /**
-     * Convert a node data type to an add data data type
-     * @param { string } dataType 
-     */
-    function getDataType (dataType) {
-      switch (dataType) {
-        case 'hash':
-        case 'isoString':
-          return 'string'
-        default:
-          return dataType
-      }
-    }
-
-    /**
-     * @typedef { object } GetPropDescriptionOptions
-     * @property { string } propName
-     * @property { string } [ nodeName ]
-     * @property { string } [ relationshipName ]
-     * @property { string } [ schemaPropDescription ]
-     *
-     * @param { GetPropDescriptionOptions } options 
-     * @returns { string }
-     */
-    function getQueryPropDescription (options) {
-      return `Set to true to see ${ options.nodeName ? 'node' : 'relationship' } name \`${ options.nodeName ? options.nodeName : options.relationshipName }\` & property name \`${ options.propName }\` in the response. A \`AceQueryAliasProperty\` object is also available. ${ options.schemaPropDescription || '' }`
-    }
-
-
-    /**
-     * @param { string } schemaNodeName 
-     * @param { string } schemaNodePropName 
-     * @param {*} schemaProp 
-     * @returns 
-     */
-    function getQueryRelationshipPropDescription (schemaNodeName, schemaNodePropName, schemaProp) {
-      return `Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
-    }
-  } catch (error) {
-    console.log('error', error)
+/**
+ * @param { string } dataType 
+ * @returns { string }
+ */
+function getDataType (dataType) {
+  switch (dataType) {
+    case 'hash':
+    case 'isoString':
+      return 'string'
+    default:
+      return dataType
   }
-})()
+}
+
+
+/**
+ * @param { string } nodeName
+ * @param { string } propName
+ * @returns { string }
+ */
+function getNodePropXPropName(nodeName, propName) {
+  return nodeName + DELIMITER + propName + DELIMITER + 'X'
+}
+
+
+/**
+ * @typedef { object } GetPropDescriptionOptions
+ * @property { string } propName
+ * @property { string } [ nodeName ]
+ * @property { string } [ relationshipName ]
+ * @property { string } [ schemaPropDescription ]
+ *
+ * @param { GetPropDescriptionOptions } options 
+ * @returns { string }
+ */
+function getQueryPropDescription (options) {
+  return `Set to true to see ${ options.nodeName ? 'node' : 'relationship' } name \`${ options.nodeName ? options.nodeName : options.relationshipName }\` & property name \`${ options.propName }\` in the response. A \`AceQueryAliasProperty\` object is also available. ${ options.schemaPropDescription || '' }`
+}
+
+
+/**
+ * @param { string } schemaNodeName 
+ * @param { string } schemaNodePropName 
+ * @param {*} schemaProp 
+ * @returns 
+ */
+function getQueryRelationshipPropDescription (schemaNodeName, schemaNodePropName, schemaProp) {
+  return `Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
+}

@@ -1,4 +1,4 @@
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 import { _ace } from './lib/ace/ace.js'
 import { AceError } from './lib/objects/AceError.js'
 import { AcePassport } from './lib/objects/AcePassport.js'

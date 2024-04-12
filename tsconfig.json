@@ -11,6 +11,11 @@
     "src/lib/ace/mutate.js",
     "src/lib/ace/validateSchema.js",
 
+    "src/lib/cli/backup.js",
+    "src/lib/cli/cli.js",
+    "src/lib/cli/enums.js",
+    "src/lib/cli/types.js",
+
     "src/lib/objects/AceCache.js",
     "src/lib/objects/AceError.js",
     "src/lib/objects/AcePassport.js",
@@ -20,13 +25,10 @@
     "src/lib/security/hash.js",
 
     "src/lib/aceFetch.js",
-    "src/lib/backup.js",
-    "src/lib/getBashMap.js",
-    "src/lib/manifest.js",
     "src/lib/variables.js",
 
-    "src/index.js",
     "src/worker.js",
+    "src/index.js",
   ], // all src files with a .js extension
   "compilerOptions": {
     "noEmit": true,
@@ -40,8 +42,8 @@
     "target": "ES2017",
     "rootDir": ".",
     "paths": {
-      "#manifest": [
-        "../.manifest/dist/index.js"
+      "#ace": [
+        "./src/index.js"
       ]
     }
   }

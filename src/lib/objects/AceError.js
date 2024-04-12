@@ -1,4 +1,4 @@
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 
 
 /**
@@ -43,4 +43,16 @@ export function AceAuthError (action, passport, options) {
   }
 
   return AceError(id, message + 'is revoked from your AcePermissions, you cannot do this', { token: passport.token, source: passport.source })
+}
+
+
+
+/**
+ * @param { string } name 
+ * @param { string } option1 
+ * @param { string } option2 
+ * @param { string } [ val ]
+ */
+export function CLIFalsyError (name, option1, option2, val) {
+  if (!val) throw AceError(`cli__${ name }-falsy`, `Ace CLI is throwing an error b/c the option ${ option1 } which may be also specified like this ${ option2 } is falsy`, { [ name ]: '' })
 }

@@ -1,5 +1,5 @@
 import { _ace } from './ace.js'
-import { td, enums } from '#manifest'
+import { td, enums } from '#ace'
 import { addToSchema } from './mutate.js'
 import { createJWKs } from '../security/createJWKs.js'
 

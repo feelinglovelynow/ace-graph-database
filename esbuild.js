@@ -27,9 +27,6 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/security/hash.js',
 
     './tsc/src/lib/aceFetch.js',
-    './tsc/src/lib/backup.js',
-    './tsc/src/lib/getBashMap.js',
-    './tsc/src/lib/manifest.js',
     './tsc/src/lib/variables.js',
 
     './tsc/src/index.js',

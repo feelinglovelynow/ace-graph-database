@@ -20,12 +20,9 @@
     "src/lib/security/hash.js",
 
     "src/lib/aceFetch.js",
-    "src/lib/backup.js",
-    "src/lib/getBashMap.js",
-    "src/lib/manifest.js",
     "src/lib/variables.js",
 
-    "src/index.js",
+    "src/index.js"
   ], // all src files (including index.js) (not including .test.js)
   "compilerOptions": {
     "allowJs": true,
@@ -42,8 +39,8 @@
     "target": "ES2017",
     "rootDir": ".",
     "paths": {
-      "#manifest": [
-        "../.manifest/dist/index.js"
+      "#ace": [
+        "../.ace/index.js"
       ]
     }
   }

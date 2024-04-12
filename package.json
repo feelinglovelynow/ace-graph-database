@@ -5,13 +5,13 @@
   "description": "Greetings JavaScript developer! If you are looking for a database, you just found the best one! Thanks to JSDoc comments and TypeScript types that Ace generates based on your JSON schema, autocomplete and pre save errors work beautifully for TypeScript AND JavaScript developers! Ace is a Graph Database... So one to one, one to many AND many to many relationships in your schema may be queried with 0 joins... So (typesafe) queries with relationships that span many levels are fast!",
   "license": "MIT",
   "type": "module",
-  "types": "./dist/index.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     "svelte": "./dist/index.js",
     "default": "./dist/index.js"
   },
   "files": [
-    ".manifest",
+    ".ace",
     "dist",
     "tsc",
     "src"
@@ -29,7 +29,7 @@
     "cloudflare"
   ],
   "imports": {
-    "#manifest": "./.manifest/dist/index.js"
+    "#ace": "./.ace/index.js"
   },
   "repository": {
     "type": "git",
@@ -43,10 +43,10 @@
     "build": "bash ./build.sh",
     "npmCloud": "pnpm build && pnpm publish --access public .",
     "test": "NODE_OPTIONS=--experimental-vm-modules pnpm jest",
-    "dbCloud": "wrangler deploy",
-    "dev": "wrangler dev",
-    "manifest": "node src/lib/manifest.js",
-    "backup": "node src/backup.js"
+    "dbCloud": "wrangler deploy"
+  },
+  "bin": {
+    "ace": "src/lib/cli/cli.js"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
