@@ -129,8 +129,8 @@ curl --header "Content-Type: application/json" \
 1. `ace()`
     * Function to communicate with the graph
     * Delete `cascadePropNames` array
-    * Can call from the CLI
     * Sanitize / Validate Input
+    * Must relationship (storage fallback)
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
     * BackupLoad Option: skipDataDelete: boolean
@@ -138,6 +138,7 @@ curl --header "Content-Type: application/json" \
     * BackupGet Option: Private JWK
     * BackupFile Option: Is Encrypted
     * BackupFile Option: Zip
+    * Mutations that alter Schema and Data simultaneously (idsMutate)
     * To handle accessing values from a previous mutation
         * Id: 'MutationLoop'
         * Id: 'ResponsePropNameValue'
@@ -152,34 +153,32 @@ curl --header "Content-Type: application/json" \
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
-1. Cli Loop schema once
-1. Security
-    * 2FA + Authy Support
-    * AceUser > email > passwordless
-1. Node or edge name may not start w/ [ Ace ] and no triple underscores (DELIMETER) b/c we use them as delimeters
+1. Validate Schema Additions 
+    * Node or edge name may not start w/ [ Ace ]
+    * No triple underscores (DELIMETER) b/c we use them as delimeters
     * Don't allow uid or _uid to be a prop
-1. Objects folder, b/c JSDoc is not good @ classes
-    * graph
-    * log
-        * Put [ Key, Original, Now, Request Item, API Token ]
-        * Delete [ Key, API Token ]
-1. Move schema loops into schema data structures 
-1. loopOptions > switch 
+    * Do not allow the forward and the reverse relationship propName to be the same propName
 1. On Error Flow
     * Retry: Count, MS Before Trying Again
     * Log to KV
     * Send Email
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
-1. Do not allow the forward and the reverse relationship propName to be the same propName
-1. Mutations that alter Schema and Data simultaneously (idsMutate)
-1. Must relationship (storage fallback)
+1. Logs
+    * Put [ Key, Original, Now, Request Item, API Token ]
+    * Delete [ Key, API Token ]
 1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
+1. Security
+    * 2FA + Authy Support
+    * AceUser > email > passwordless
 1. Test relationship props update + guidance
 1. App Worker > Ace Durable Object
 1. Batch requests to storage to stay within storage required Maximum count
 1. Comments (param, returns, description, example usage, why) for all index functions
 1. Proofread all comments
+1. loopOptions > switch 
+1. Cli Loop schema once
+1. Move schema loops into schema data structures 
 1. Independant Security Audit
 1. Independant Code Review
 1. Unit Tests
