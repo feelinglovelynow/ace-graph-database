@@ -29,7 +29,8 @@ ace local # start local graph
     1. Add `actsInMovie` relationship to schema
     1. Add `Avatar` and `Matrix` nodes to graph
     1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by using enums placed after _: (this can also be done w/ the actual uid)
-    1. Query the graph
+    1. Place a query into the response @ `response.movies`
+    1. Place a backup into the response @ `response.backup`
 ```ts
 const response = await ace({ worker: 'http://localhost:8787' }, [
   {
@@ -51,7 +52,7 @@ const response = await ace({ worker: 'http://localhost:8787' }, [
           id: 'ManyToMany',
           x: {
             props: {
-              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
+              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // In queries relationship props starting w/ an underscore helps identify which props are node props and which props are relationship props
             }
           }
         },
@@ -76,22 +77,25 @@ const response = await ace({ worker: 'http://localhost:8787' }, [
   { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
 
 
-  // query all movies and their actors & place this information @ response.movies
+  // query all movies and their actors, only get the properties we request and place this information @ response.movies
   {
     id: 'QueryNode',
     nodeName: 'Movie',
     property: 'movies',
-    x: {
+    x: { // the first node shape we define is for the Movie node name
       uid: true,
       name: true,
       actors: {
         _uid : true, // relationship prop (actsInMovie)
-        _salary: true, // relationship prop (actsInMovie)
+        _salary: { id: 'Alias', property: 'salary' }, // alias property will be in response
         uid: true, // node prop (Actor)
         name: true, // node prop (Actor)
       }
     }
-  }
+  },
+
+  // place a backup of the graph into the response @ response.backup
+  { id: 'BackupGet', property: 'backup' },
 ])
 ```
 ****Step 3: Bash****
@@ -217,6 +221,8 @@ curl --header "Content-Type: application/json" \
     * Fast forward time
     * Replay
     * Auto Create GitHub Bug
+1. Query Planner
+1. Optimize Queries
 1. KV (request cache) Integration
 1. Webhooks
 1. Studio
@@ -245,6 +251,7 @@ curl --header "Content-Type: application/json" \
     * Durable Object functionality compiled to binary w/ Zig
         * Store Key Value Data on Memory and @ Disk
         * Build Input / Output Gates
+        * Optimize Queries & Sorting
     * Call `ace()` Zig code from the following servers + edge environments:
         * Zig
         * Worker

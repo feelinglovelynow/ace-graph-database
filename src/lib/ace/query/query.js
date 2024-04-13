@@ -196,7 +196,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
       if (isRevokesAllowed(responseOriginalItem, revokesOptions, passport)) {
         const xValue = xGenerated.x[xKey]
         const isTruthy = xValue === true
-        const alias = xValue?.id === enums.idsQueryOptions.Alias ? xValue.x?.alias : null
+        const alias = xValue?.id === enums.idsQueryOptions.Alias ? xValue.property : null
 
         /** @type { { schemaNodeProp?: td.AceSchemaProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp, schemaRelationshipProp?: td.AceSchemaRelationshipProp } } - If graphItemType is node, add node info to this object  */
         const parentNodeOptions = {}

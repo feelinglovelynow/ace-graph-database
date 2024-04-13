@@ -86,7 +86,7 @@ function loopOptions (x) {
   if (x?.$options?.length) {
     for (const $o of x.$options) {
       if ($o.id === 'Sort') priorityOptions.set('Sort', $o)
-      else if ($o.id === 'Alias') aliasPropName = $o.x.alias
+      else if ($o.id === 'Alias') aliasPropName = $o.property
       else if ($o.id === 'Limit') { if ($o.x.count === 1) hasCountOne = true }
       else if ($o.id === 'FilterByUids') { priorityOptions.set('FilterByUids', $o); sets.set('FilterByUids', new Set($o.x.uids)) }
       else if ($o.id === 'FilterBy_Uids') { priorityOptions.set('FilterBy_Uids', $o); sets.set('FilterBy_Uids', new Set($o.x._uids)) }

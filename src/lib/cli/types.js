@@ -273,7 +273,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryRequestItemGeneratedXSectionPriorityOptions } priorityOptions *
  * 
  * @typedef { { id: typeof enums.idsQueryOptions.Value, x: { value: any } } } AceQueryValue
- * @typedef { { id: typeof enums.idsQueryOptions.Alias, x: { alias: string } } } AceQueryAliasProperty
+ * @typedef { { id: typeof enums.idsQueryOptions.Alias, property: string } } AceQueryAliasProperty
  * @typedef { { id: typeof enums.idsQueryOptions.Limit, x: { skip?: number, count?: number } } } AceQueryLimit
  * @typedef { { id: typeof enums.idsQueryOptions.Sort, x: { direction: 'asc' | 'dsc', property: string } } } AceQuerySort
  * @typedef { { id: typeof enums.idsQueryOptions.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (AceQueryProperty | AceQueryValue | AceQueryDerivedGroup)[] } } } AceQueryDerivedGroup
