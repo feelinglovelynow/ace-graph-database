@@ -9,79 +9,90 @@
 1. Ace structures data in encrypted key value stores as a graph (nodes, relationships and properties)
 1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
 1. Our cli scipt `ace types` creates TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
+
+
+## 🙋‍♀️ Queries, Mutations and Data Management
 1. The Ace query language is a typesafe (JS/TS) function called `ace()` that provides expressive queries and transactional mutations
 1. Easily configure users, passwords, roles and permissions by node, relationship or property, for the actions read, insert, update, upsert or delete
-1. Our cli scipt `ace backup` provides free graph backups that may be stored locally, or in Cloudflare KV and a simple way to load backups
+1. Our cli scipt provides a way to save encrypted backups locally to a file or to Cloudflare KV for free applying backups to a graph is simple with our cli too
 
 
-## 🎬 Create a Movie Graph
+## 🎬 Create a Movie Graph 
 ****Step 1: Bash****
 ``` bash
 pnpm add @feelinglovelynow/ace-graph-database # or npm
 ace local # start local graph
 ```
 ****Step 2: JavaScript****
+* 1 transactional function call to `ace()`
+    1. Add `Actor` and `Movie` nodes to schema
+    1. Add `actsInMovie` relationship to schema
+    1. Add `Avatar` and `Matrix` nodes to graph
+    1. Add `Keanu`, `Laurence` and `Carrie` nodes and their relationships to the `Matrix` to the graph thanks to enums placed after _:
+    1. Query the graph
 ```ts
-const response = await ace({
-  graphs: [ { worker: 'http://localhost:8787' } ],
-
-  request: [
-    {
-      id: 'SchemaAdd', // add to schema & place 'SchemaAdd' response items @ response.additionToSchema
-      property: 'additionToSchema',
-      x: {
-        nodes: {
-          Actor: {
-            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
-          },
-          Movie: {
-            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
-          },
+const response = await ace({ worker: 'http://localhost:8787' }, [
+  {
+    id: 'SchemaAdd', // add to schema the nodes, relationships and properties here and place 'SchemaAdd' response items @ response.additionToSchema
+    property: 'additionToSchema',
+    x: {
+      nodes: {
+        Actor: {
+          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+          actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
         },
-        relationships: {
-          actsInMovie: {
-            id: 'ManyToMany',
-            x: {
-              props: {
-                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // relationship prop
-              }
+        Movie: {
+          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+          actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
+        },
+      },
+      relationships: {
+        actsInMovie: {
+          id: 'ManyToMany',
+          x: {
+            props: {
+              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
             }
-          },
-        }
-      }
-    },
-
-    // add nodes and node props to graph
-    { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
-    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
-    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
-    { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
-
-    // add relationships and relationship props to graph
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
-
-    // query all movies and their actors & place this information @ response.movies
-    {
-      id: 'QueryNode',
-      nodeName: 'Movie',
-      property: 'movies',
-      x: {
-        uid: true,
-        name: true,
-        actors: {
-          _uid : true, // relationship prop (actsInMovie)
-          _salary: true, // relationship prop (actsInMovie)
-          uid: true, // node prop (Actor)
-          name: true, // node prop (Actor)
-        }
+          }
+        },
       }
     }
-  ]
-})
+  },
+
+  // A uid for this movie node will be generated by Ace and assigned to this node b/c a uid property was not specified
+  { id: 'InsertNode', nodeName: 'Movie', x: { name: 'Avatar' } },
+
+  // Ace will generate uids for the following Movie and Actor nodes, and unite them in relationships further below, thanks to enums placed after _:
+  { id: 'InsertNode', nodeName: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } }, 
+  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Keanu', name: 'Keanu Reeves' } },
+  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Laurence', name: 'Laurence Fishburne' } },
+  { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
+
+  // uids generated by Ace above are used in relationships below, thanks to enums placed after _:
+  // The ordering (which uid is a and which uid is b) is important here b/c the relationship actsInMovie has a ForwardRelationshipProp and a ReverseRelationshipProp
+  // If the relationship name was friends, and we only had 1 BidirectionalRelationshipProp friends prop on a User node, the ordering would not matter b/c from each node perspective of the relationship the name is the same, friends
+  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
+  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
+  { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
+
+
+  // query all movies and their actors & place this information @ response.movies
+  {
+    id: 'QueryNode',
+    nodeName: 'Movie',
+    property: 'movies',
+    x: {
+      uid: true,
+      name: true,
+      actors: {
+        _uid : true, // relationship prop (actsInMovie)
+        _salary: true, // relationship prop (actsInMovie)
+        uid: true, // node prop (Actor)
+        name: true, // node prop (Actor)
+      }
+    }
+  }
+])
 ```
 ****Step 3: Bash****
 ``` bash
@@ -173,8 +184,7 @@ curl --header "Content-Type: application/json" \
 1. Unit Tests
 1. Offline support > Response Allows Resume
 1. Studio
-    * (View / Edit) data from multiple graphs, simultaneously in the browser
-    * Q&A - Show questions that makes sense to ask about the graph and the answers
+    * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
 1. Lovely Unity 1.0
 1. Real project benchmarks
 1. Docs
@@ -210,8 +220,11 @@ curl --header "Content-Type: application/json" \
 1. KV (request cache) Integration
 1. Webhooks
 1. Studio
+    * Website (Not just local anymore) (sign in) (make data adjustments anywhere)
     * Report Builder
     * Report Scheduler
+    * Q&A - Show questions that makes sense to ask about the graph and the answers
+    * Analytics
 1. Backup triggers (replica / sync graph)
 1. On Error Flow
     * Slack
@@ -232,7 +245,7 @@ curl --header "Content-Type: application/json" \
     * Durable Object functionality compiled to binary w/ Zig
         * Store Key Value Data on Memory and @ Disk
         * Build Input / Output Gates
-    * Call `ace()` Zig code from the following servers / edge environments:
+    * Call `ace()` Zig code from the following servers + edge environments:
         * Zig
         * Worker
         * Node
@@ -269,6 +282,8 @@ curl --header "Content-Type: application/json" \
           * Chat
           * Phone
 1. Studio
+    * (Desktop / Android / Mobile) Applications 
+        * Data Alerts (Notifications)
     * Ai chart generation
     * Ai Q&A generator
     * Collaboration Tools
@@ -288,20 +303,19 @@ curl --header "Content-Type: application/json" \
     * Version 3
 
 
-## 💪 Version Update Plan
-1. Prototype to Beta
-    * When all Version 1 road map items (other then unit tests & code reviews) are done
+## 🧐 Version Update Plan
+1. 0.0.x (Prototype) to 0.1.0 (Beta)
+    * When all 1.0 road map items are in testing
     * Will not include a migration script
-1. Beta to Version 1
-    * When all Version 1 Unit Tests pass
+1. 0.x.0 to 1.0
+    * When all 1.0 road map items pass testing
     * Will not include a migration script
-1. Version 1 to Version 2
-    * When all Version 2 Unit Tests pass
-    * Will include a migration script
-1. Version 2 to Version 3
-    * When Hosting options are available
-    * When all Version 3 Unit Tests pass
-    * Will include a migration script
+1. 1.x to 2.0
+    * When all 2.0 road map items pass testing
+    * Will include a 1.x to 2.0 migration script
+1. 2.x to 3.0
+    * When all 3.0 road map items pass testing
+    * Will include a 2.x to 3.0 migration script
 
 
 ## 💎 Dictionary
@@ -332,7 +346,7 @@ curl --header "Content-Type: application/json" \
     1. Ace will hash the string and store the hash value in your graph
     1. When performing `ace()` queries, provide a public jwk to `Find` a node only if it matches a stored hash
 * isoString
-    * (new Date()).toISOString()
+    * `(new Date()).toISOString()`
     * When doing a node or relationship mutation, provide a value of `'now'` to tell Ace to add the `isoString` now date as the value, example:
         * `{ id: 'InsertNode', nodeName: 'Movie', x: { name: 'The Matrix', createdAt: 'now' } }`
 ### Schema

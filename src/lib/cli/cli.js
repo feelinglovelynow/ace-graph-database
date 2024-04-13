@@ -111,19 +111,19 @@ import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
 
    function help () {
      hr()
-     console.log(`🤓 Get backup from file -f, in the folder ${ files.backups } and load the backup to the worker url -w`)
+     console.log(`🤓 In the folder ${ files.backups } read backup from file (-f) and load the backup to the worker url (-w)`)
      bold('ace fileToGraph -f=2024-03-24T19:44:36.492Z.json -w=http://localhost:8787')
      bold('ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --worker=http://localhost:8787')
      hr()
 
 
-     console.log(`🤓 Create backup from the worker url -w, and save the backup as a json file here: ${ files.backups }`)
-     bold('ace graphToFile -w=http://localhost:8787 -e=true')
-     bold('ace graphToFile --worker=http://localhost:8787 --encrypted=true')
+     console.log(`🤓 Generate backup at worker (-w), recieve backup from worker and write backup to a json file here: ${ files.backups }`)
+     bold('ace graphToFile -w=http://localhost:8787')
+     bold('ace graphToFile --worker=http://localhost:8787')
      hr()
 
 
-     console.log('🤓 Create types (TS) and typedefs (JSDoc) that will call the schema at the worker url -w, and add this schema information to the types')
+     console.log('🤓 Create types (TS) and typedefs (JSDoc) that will call the schema at the worker url (-w), and add this schema information to the types')
      bold('ace types -w=http://localhost:8787')
      bold('ace types --worker=http://localhost:8787')
      hr()
