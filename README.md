@@ -14,7 +14,7 @@
 1. Our cli scipt `ace backup` provides free graph backups that may be stored locally, or in Cloudflare KV and a simple way to load backups
 
 
-## 🎬 How to create a Movie Graph?
+## 🎬 Create a Movie Graph
 ****Step 1: Bash****
 ``` bash
 pnpm add @feelinglovelynow/ace-graph-database # or npm
@@ -60,9 +60,9 @@ const response = await ace({
     { id: 'InsertNode', nodeName: 'Actor', x: { uid: '_:Carrie', name: 'Carrie-Anne Moss' } },
 
     // add relationships and relationship props to graph
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 99.9 } },
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 99 } },
-    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 99 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
+    { id: 'InsertRelationship', relationshipName: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
 
     // query all movies and their actors & place this information @ response.movies
     {
@@ -88,6 +88,31 @@ const response = await ace({
 ace types -w=http://localhost:8787 #generate types that align with above schema
 ```
 
+
+## 💪 Call `ace()` with cURL
+* The Ace query language with cURL, is the same as above in `JS/TS`
+* Thanks to `ace types`, above is easier, thanks to intellisense
+* To format the JSON response, `npm i -g json` and then @ the end of a cURL add ` | json`
+``` bash
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{
+    "request": [
+      { "id": "InsertNode", "nodeName": "Movie",  "x": { "name": "Hercules" } },
+
+      {
+        "id": "QueryNode",
+        "nodeName": "Movie",
+        "property": "movies",
+        "x": {
+          "uid": true,
+          "name": true
+        }
+      }
+    ]
+  }' \
+  http://localhost:8787/ace
+```
 
 ## 🤓 Version 1 Roadmap 
 1. `ace()`
@@ -132,30 +157,17 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
     * Retry: Count, MS Before Trying Again
     * Log to KV
     * Send Email
-    * Slack
-    * Custom
+    * Provide `ace()`, `request`  for how to get graph back to how it was before this error
 1. Do not allow the forward and the reverse relationship propName to be the same propName
 1. Mutations that alter Schema and Data simultaneously (idsMutate)
-1. Function response types
 1. Must relationship (storage fallback)
 1. Full Text Index, Mutation and Query
-1. Geojson support
-    * Coordinates data type (Multidimensional array with longitude and latitude array)
-1. Timeseries data types
 1. Relationship prop indexes
 1. Test relationship props update + guidance
 1. App Worker > Ace Durable Object
 1. Batch requests to storage to stay within storage required Maximum count
-1. KV (request cache) Integration
-1. REPL (event, storage, share)
 1. Comments (param, returns, description, example usage, why) for all index functions
-1. X > Ace > Cloudflare Worker > Cloudflare Durable Object
-    * Bun Server
-    * Deno Server
-    * Deno Edge
-    * Vercel Edge
 1. Proofread all comments
-1. Backup triggers (replica / sync graph)
 1. Independant Security Audit
 1. Independant Code Review
 1. Unit Tests
@@ -171,48 +183,69 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
         * Doc Page
         * Functions Doc Page references
 1. Ace Graph Database Foundation
-    * Mission Statement: Create the Best Database for JavaScript Developers
-    * Principles:
+    * Mission Statement
+        * Create the Best Database for JavaScript Developers
+    * Principles
         * Open Governance
         * Community Driven
         * Welcome to all users and contributors
+    * Council
+        * Those that align with our roadmap and have ideas how it may improve
 
 
 ## 🌟 Version 2 Roadmap 
-1. GitHub Issues + Foundation Ideas
+1. Community Ideas
+1. GitHub Issues
+1. Foundation Ideas
+1. X > AceFn > Cloudflare Worker > Cloudflare Durable Object
+    * Bun Server
+    * Deno Server
+    * Deno Edge
+    * Vercel Edge
 1. Contribution Documentation
 1. Simulator
     * Fast forward time
     * Replay
     * Auto Create GitHub Bug
+1. KV (request cache) Integration
 1. Webhooks
-1. Self Hosting Ability
-    * Durable Object functionality compiled to binary w/ Zig
-        * Store Key Value Data on Memory and @ Disk
-        * Build Input / Output Gates
-    * Call Zig code from:
-        * Worker
-        * Node
-        * Deno
-        * Bun
-1. Vector Data Type
-1. VMWare Private Ai
-    * Teach Ai w/ data from graph(s)
-    * Ask Ai questions about graph(s)
-1. Rag support
 1. Studio
     * Report Builder
     * Report Scheduler
-    * Ai chart generation
-    * Ai Q&A generator
-    * Collaboration Tools
+1. Backup triggers (replica / sync graph)
+1. On Error Flow
+    * Slack
+    * Custom
+1. Geojson support
+    * Coordinates data type (Multidimensional array with longitude and latitude array)
+1. Timeseries data types
 1. Docs
     * Explain Version 2
     * Ask Ai
 
 
 ## ✨ Version 3 Roadmap 
-1. GitHub Issues + Foundation Ideas
+1. Community Ideas
+1. GitHub Issues
+1. Foundation Ideas
+1. Self Hosting Ability
+    * Durable Object functionality compiled to binary w/ Zig
+        * Store Key Value Data on Memory and @ Disk
+        * Build Input / Output Gates
+    * Call `ace()` Zig code from the following servers / edge environments:
+        * Zig
+        * Worker
+        * Node
+        * Deno
+        * Bun
+        * Vercel
+1. REPL (event, storage, share)
+    1. WASM (Zig DB In Browser on users machine)
+1. Vector Data Type
+1. VMWare Private Ai
+    * Teach Ai w/ data from graph(s)
+    * Ask Ai questions about graph(s)
+1. Rag support
 1. Ace Cloud
     * via Ace Graph Database Foundation
     * Clean + Simple + Performant UX
@@ -235,6 +268,10 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
           * Email
           * Chat
           * Phone
+1. Studio
+    * Ai chart generation
+    * Ai Q&A generator
+    * Collaboration Tools
 
 
 ## 😍 What options do I have to store my data?
@@ -246,7 +283,7 @@ ace types -w=http://localhost:8787 #generate types that align with above schema
         * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
         * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
 1. Self Hosting
-    * Version 2
+    * Version 3
 1. Ace Cloud
     * Version 3
 
