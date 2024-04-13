@@ -12,9 +12,9 @@
 
 
 ## 🙋‍♀️ Queries, Mutations and Data Management
-1. The Ace query language is a typesafe (JS/TS) function called `ace()` that provides expressive queries and transactional mutations
-1. Easily configure users, passwords, roles and permissions by node, relationship or property, for the actions read, insert, update, upsert or delete
-1. Our cli scipt provides a way to save encrypted backups locally to a file or to Cloudflare KV for free applying backups to a graph is simple with our cli too
+1. The Ace query language is a typesafe (JS/TS) function called `ace()`, that provides expressive queries and transactional mutations
+1. Roles and permissions by node, relationship or property, for the actions read, insert, update, upsert, or delete can be easily configured thanks to the `AceCore` plugin
+1. Our cli scipt provides a way to save encrypted backups locally to a file or to Cloudflare KV for free... & applying backups to a graph is simple with our cli too
 
 
 ## 🎬 Create a Movie Graph 
@@ -24,11 +24,11 @@ pnpm add @feelinglovelynow/ace-graph-database # or npm
 ace local # start local graph
 ```
 ****Step 2: JavaScript****
-* 1 transactional function call to `ace()`
+* 1 transactional function call to `ace()` below does:
     1. Add `Actor` and `Movie` nodes to schema
     1. Add `actsInMovie` relationship to schema
     1. Add `Avatar` and `Matrix` nodes to graph
-    1. Add `Keanu`, `Laurence` and `Carrie` nodes and their relationships to the `Matrix` to the graph thanks to enums placed after _:
+    1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by using enums placed after _: (this can also be done w/ the actual uid)
     1. Query the graph
 ```ts
 const response = await ace({ worker: 'http://localhost:8787' }, [
@@ -96,7 +96,7 @@ const response = await ace({ worker: 'http://localhost:8787' }, [
 ```
 ****Step 3: Bash****
 ``` bash
-ace types -w=http://localhost:8787 #generate types that align with above schema
+ace types -w=http://localhost:8787 #generate types that align with above schema for intellisense during all future ace() calls
 ```
 
 
@@ -142,6 +142,7 @@ curl --header "Content-Type: application/json" \
         * Id: 'MutationLoop'
         * Id: 'ResponsePropNameValue'
     * throwIfMissingMustProps -> update / delete 
+    * Install / Uninstall Plugins (Core) (JWKs)
     * Properties:
       * Options:
           * Graphs
