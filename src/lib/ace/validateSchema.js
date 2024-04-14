@@ -119,6 +119,7 @@ export function validateSchema ({ schema, allowAcePrefix }) {
       if (directions.length === 2) {
         if ((directions[0].id === enums.idsSchema.ReverseRelationshipProp && directions[1].id !== enums.idsSchema.ReverseRelationshipProp) && (directions[0].id !== enums.idsSchema.ReverseRelationshipProp && directions[1].id === enums.idsSchema.ReverseRelationshipProp)) throw notify()
         if (directions[0].id === enums.idsSchema.BidirectionalRelationshipProp || directions[1].id === enums.idsSchema.BidirectionalRelationshipProp) throw notify()
+        if (directions[0].nodePropName === directions[1].nodePropName) throw AceError('schema__invalid-relationship-prop-name', 'Prop names for a relationship must be different so we may do relationship queries', { relationshipName, directions })
       }
     }
   }

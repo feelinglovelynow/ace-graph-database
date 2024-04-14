@@ -166,11 +166,12 @@ curl --header "Content-Type: application/json" \
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
-1. Schema: Do not allow the forward and the reverse relationship propName to be the same propName
 1. On Error Flow
     * Retry: Count, MS Before Trying Again
     * Log to KV
-    * Send Email
+    * Backup To KV
+    * Email Log
+    * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
 1. Logs
     * Put [ Key, Original, Now, Request Item, API Token ]
