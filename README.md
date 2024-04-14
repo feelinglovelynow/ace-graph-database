@@ -21,41 +21,43 @@
 ****Step 1: Bash****
 ``` bash
 pnpm add @feelinglovelynow/ace-graph-database # or npm
-ace local # start local graph
+ace dev # start local graph
 ```
 ****Step 2: JavaScript****
-* 1 transactional function call to `ace()` below does:
-    1. Add `Actor` and `Movie` nodes to schema
-    1. Add `actsInMovie` relationship to schema
-    1. Add `Avatar` and `Matrix` nodes to graph
-    1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by using enums placed after _: (this can also be done w/ the actual uid)
+* The 1 transactional function call to `ace()` below will:
+    1. Add to schema, node `Actor`, node `Movie` and relationship `actsInMovie`
+    1. Add nodes to graph, `Avatar` and `The Matrix` 
+    1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by using enums placed after `_:` (relationship inserts can also be done w/ uids)
     1. Place a query into the response @ `response.movies`
     1. Place a backup into the response @ `response.backup`
+    1. Place the schema into the response @ `response.schema`
 ```ts
 const response = await ace({ worker: 'http://localhost:8787' }, [
   {
     id: 'SchemaAdd', // add to schema the nodes, relationships and properties here and place 'SchemaAdd' response items @ response.additionToSchema
     property: 'additionToSchema',
     x: {
-      nodes: {
-        Actor: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
+      schema: {
+        nodes: {
+          Actor: {
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
+          },
+          Movie: {
+            name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
+          },
         },
-        Movie: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
-        },
-      },
-      relationships: {
-        actsInMovie: {
-          id: 'ManyToMany',
-          x: {
-            props: {
-              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // In queries relationship props starting w/ an underscore helps identify which props are node props and which props are relationship props
+        relationships: {
+          actsInMovie: {
+            id: 'ManyToMany',
+            x: {
+              props: {
+                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // In queries relationship props starting w/ an underscore helps identify which props are node props and which props are relationship props
+              }
             }
           }
-        },
+        }
       }
     }
   },
@@ -96,6 +98,9 @@ const response = await ace({ worker: 'http://localhost:8787' }, [
 
   // place a backup of the graph into the response @ response.backup
   { id: 'BackupGet', property: 'backup' },
+
+  // place the current graph schema into the response @ response.schema
+  { id: 'SchemaGet', property: 'schema' },
 ])
 ```
 ****Step 3: Bash****
@@ -177,6 +182,7 @@ curl --header "Content-Type: application/json" \
     * 2FA + Authy Support
     * AceUser > email > passwordless
 1. Test relationship props update + guidance
+1. Prep loop called in deligate and _ace
 1. App Worker > Ace Durable Object
 1. Batch requests to storage to stay within storage required Maximum count
 1. Comments (param, returns, description, example usage, why) for all index functions

@@ -192,8 +192,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 /** AceMutate
  *
  * @typedef { AceMutateRequestItem | AceMutateRequestItem[] } AceMutateRequest
- * @typedef { AceMutateRequestItemBackup | AceMutateRequestItemPlugin | AceMutateRequestItemBoot | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemSchema } AceMutateRequestItem
- * @typedef { AceMutateRequestItemEmpty | AceMutateRequestItemCore } AceMutateRequestItemBoot
+ * @typedef { AceMutateRequestItemBackup | AceMutateRequestItemPlugin | AceMutateRequestItemEmpty | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemSchema } AceMutateRequestItem
  * @typedef { AceMutateRequestItemInsertNode | AceMutateRequestItemInsertRelationship } AceMutateRequestItemInsert
  * @typedef { AceMutateRequestItemUpdateNode | AceMutateRequestItemUpdateRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
@@ -217,16 +216,15 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AceMutateRequestItemPluginInstall
  * @property { typeof enums.idsAce.PluginInstall } id
  * @property { string } [ property ]
- * @property { { install: AcePluginInstall } } x
+ * @property { AceMutateRequestItemPluginInstallX } x
+ * @typedef { object } AceMutateRequestItemPluginInstallX
+ * @property { AcePluginInstall } install
+ *
  *
  * @typedef { object } AceMutateRequestItemPluginUninstall
  * @property { typeof enums.idsAce.PluginUninstall } id
  * @property { string } [ property ]
- * @property { { request: AceFnRequest } } x
- *
- * @typedef { object } AceMutateRequestItemCore
- * @property { typeof enums.idsAce.Core } id
- * @property { string } [ property ]${ typedefs.mutate.InsertNodeType }${ typedefs.mutate.InsertRelationshipType }${ typedefs.mutate.UpdateNodeType }${ typedefs.mutate.UpdateRelationshipType }
+ * @property { { request: AceFnRequest } } x${ typedefs.mutate.InsertNodeType }${ typedefs.mutate.InsertRelationshipType }${ typedefs.mutate.UpdateNodeType }${ typedefs.mutate.UpdateRelationshipType }
  * 
  * @typedef { AceMutateRequestItemUpdateNode & { [relationshipProp: string]: string[] } } AceMutateRequestItemNodeWithRelationships
  * 
@@ -253,7 +251,10 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AceMutateRequestItemSchemaAdd
  * @property { typeof enums.idsAce.SchemaAdd } id
  * @property { string } [ property ]
- * @property { AceSchema } x
+ * @property { AceMutateRequestItemSchemaAddX } x
+ * @typedef { object } AceMutateRequestItemSchemaAddX
+ * @property { boolean } [ allowAcePrefix ]
+ * @property { AceSchema } schema
  *
  * @typedef { object } AceMutateRequestPrivateJWKOption
  * @property { 'PrivateJWK' } id
@@ -556,19 +557,6 @@ ${ typedefs.query.RelationshipType }
  *
  * @typedef { object } Ace_CF_DO_State
  * @property { Ace_CF_DO_Storage } storage
- */
-
-
-/** AceCore
- *
- * @typedef { object } AceCoreResponse
- * @property { AceFn$ } $ace
- * @property { AceCoreResponseAdmin } admin
- * 
- * @typedef { object } AceCoreResponseAdmin
- * @property { string } uid
- * @property { string } username
- * @property { string } token
  */
 
 

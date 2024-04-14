@@ -1,9 +1,11 @@
 export const idsAce = new Set([
-  'Core',
   'Empty',
 
   'SchemaGet',
   'SchemaAdd',
+
+  'BackupGet',
+  'BackupLoad',
 
   'InsertNode',
   'InsertRelationship',
@@ -16,9 +18,6 @@ export const idsAce = new Set([
 
   'PluginInstall',
   'PluginUninstall',
-
-  'BackupGet',
-  'BackupLoad',
 
   'DataDeleteNodes',
   'DataDeleteRelationships',

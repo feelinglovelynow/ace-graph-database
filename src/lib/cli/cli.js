@@ -36,8 +36,8 @@ import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
     if (!fs.existsSync(files.dir)) await fsPromises.mkdir(files.dir) // IF .ace directory does not exist, create it
 
     switch (bashEntries?.[2]?.[1]) {
-      // ace local
-      case 'local':
+      // ace dev
+      case 'dev':
         execSync('wrangler dev', { stdio: 'inherit', cwd: files.root })
         break
 
@@ -111,30 +111,30 @@ import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
 
    function help () {
      hr()
-     console.log(`🤓 In the folder ${ files.backups } read backup from file (-f) and load the backup to the worker url (-w)`)
+     console.log(`🌥️  In the folder ${ files.backups } read backup from file (-f) and load the backup to the worker url (-w)`)
      bold('ace fileToGraph -f=2024-03-24T19:44:36.492Z.json -w=http://localhost:8787')
      bold('ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --worker=http://localhost:8787')
      hr()
 
 
-     console.log(`🤓 Generate backup at worker (-w), recieve backup from worker and write backup to a json file here: ${ files.backups }`)
+     console.log(`💾 Generate backup at worker (-w), recieve backup from worker and write backup to a json file here: ${ files.backups }`)
      bold('ace graphToFile -w=http://localhost:8787')
      bold('ace graphToFile --worker=http://localhost:8787')
      hr()
 
 
-     console.log('🤓 Create types (TS) and typedefs (JSDoc) that will call the schema at the worker url (-w), and add this schema information to the types')
+     console.log('💪 Create types (TS) and typedefs (JSDoc) that will call the schema at the worker url (-w), and add this schema information to the types')
      bold('ace types -w=http://localhost:8787')
      bold('ace types --worker=http://localhost:8787')
      hr()
 
-     console.log('🤓 Create types (TS) and typedefs (JSDoc) that will not take your schema into account')
+     console.log('😅 Create types (TS) and typedefs (JSDoc) that will not take your schema into account')
      bold('ace types')
      hr()
 
 
-     console.log('🤓 Start local Ace Graph Database (Cloudflare worker and Cloudflare durable object)')
-     bold('ace local')
+     console.log('🌟 Start local Ace Graph Database (Cloudflare worker and Cloudflare durable object)')
+     bold('ace dev')
      hr()
 
 

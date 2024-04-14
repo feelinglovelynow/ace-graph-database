@@ -4,9 +4,9 @@ import { AceError } from '../objects/AceError.js'
 
 /**
  * Validate Schema
- * @param { td.AceSchema } schema
+ * @param { td.AceMutateRequestItemSchemaAddX } options
  */
-export function validateSchema (schema) {
+export function validateSchema ({ schema, allowAcePrefix }) {
   if (!schema.nodes || typeof schema.nodes !== 'object' || Array.isArray(schema.nodes)) throw AceError('schema__invalid-nodes', 'The provided schema requires a nodes object please', { schema })
   if (schema.relationships && (typeof schema.relationships !== 'object' || Array.isArray(schema.relationships))) throw AceError('schema__invalid-relationships', 'If you would love to provide relationships with your schema, please pass it as an object', { schema })
 
@@ -37,11 +37,11 @@ export function validateSchema (schema) {
     nodeNameSet.add(nodeName)
 
     if (typeof nodeName !== 'string') throw AceError('schema__invalid-node-type', `The node name ${ nodeName } is an invalid type, please add node that is a type of string`, { nodeName, schema })
-    if (!nodeName.match(/[A-Z]{0,1}/)) throw AceError('schema__invalid-node-first-character', `The node name ${ nodeName } is does not start with a capital letter, please add node names that start with a capital letters (helpful for generated jsdoc and ts types)`, { nodeName, schema })
-    if (!nodeName.match(/^[A-Za-z\_]+$/)) throw AceError('schema__invalid-node-characters', `The node name ${ nodeName } has invalid characters, please add node names that have characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { nodeName, schema })
+    if (!nodeName.match(/^[A-Za-z\_]+$/)) throw AceError('schema__invalid-node-characters', `The node name ${nodeName} has invalid characters, please add node names that have characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { nodeName, schema })
+    if (!allowAcePrefix && nodeName.toLowerCase().startsWith('ace')) throw AceError('schema__invalid-node-start', `The node name ${ nodeName } starts with Ace and that prefix is reserved for Ace Graph Database nodes, please add node names that do not start with Ace (helpful for generated jsdoc and ts types)`, { nodeName, schema })
 
     for (const nodePropName in schema.nodes[nodeName]) {
-      validateSchemaProp(nodePropName, schema.nodes[nodeName][nodePropName], false)
+      validateSchemaProp(nodePropName, schema.nodes[nodeName][nodePropName], false, allowAcePrefix)
 
       const prop = schema.nodes[nodeName][nodePropName]
 
@@ -79,14 +79,15 @@ export function validateSchema (schema) {
     const _errorData = { relationshipName, relationship }
 
     if (typeof relationshipName !== 'string') throw AceError('schema__invalid-relationship-type', `The relationship name \`${ relationshipName }\` is not a type of string, please add relationships that are a type of string`, _errorData)
-    if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw AceError('schema__invalid-relationship-characters', `The relationship name \`${ relationshipName }\` has invalid characters, please add relationships include characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, _errorData)
+    if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw AceError('schema__invalid-relationship-characters', `The relationship name \`${ relationshipName }\` has invalid characters, please add relationships include characters a-z or A-Z or underscores`, _errorData)
     if (relationship?.id !== enums.idsSchema.OneToOne && relationship?.id !== enums.idsSchema.ManyToMany && relationship?.id !== enums.idsSchema.OneToMany) throw AceError('schema__invalid-relationship-id', `The relationship name \`${ relationshipName }\` is invalid b/c relationship?.id is invalid, please ensure relationships have a valid relationship id of OneToOne, OneToMany or ManyToMany`, _errorData)
+    if (!allowAcePrefix && relationshipName.toLowerCase().startsWith('ace')) throw AceError('schema__invalid-relationship-start', `The relationship name ${ relationshipName } starts with Ace and that prefix is reserved for Ace Graph Database relationships, please add relationship names that do not start with Ace`, { relationshipName, schema })
 
     if (relationship.x?.props) {
       if (typeof relationship.x.props !== 'object' || Array.isArray(relationship.x.props)) throw AceError('schema__invalid-relationship-props', `The relationship name ${ relationshipName } has invalid props, if you'd love to include props please ensure relationship.props type, is an object`, _errorData)
 
       for (const propName in relationship.x.props) {
-        validateSchemaProp(propName, relationship.x.props[propName], true)
+        validateSchemaProp(propName, relationship.x.props[propName], true, allowAcePrefix)
 
         const mapValue = uniqueRelationshipPropsMap.get(relationshipName)
 
@@ -128,9 +129,10 @@ export function validateSchema (schema) {
  * @param { string } propName
  * @param { td.AceSchemaProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp | td.AceSchemaRelationshipProp } propValue
  * @param { boolean } isRelationshipProp
+ * @param { boolean } [ allowAcePrefix ]
  */
-function validateSchemaProp (propName, propValue, isRelationshipProp) {
-  validatePropertyKey(propName, isRelationshipProp)
+function validateSchemaProp (propName, propValue, isRelationshipProp, allowAcePrefix) {
+  validatePropertyKey(propName, isRelationshipProp, allowAcePrefix)
 
   switch (propValue.id) {
     case enums.idsSchema.Prop:
@@ -161,10 +163,11 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
  * Validate Schema Property Key
  * @param { string } propertyKey
  * @param { boolean } isRelationshipProp
+ * @param { boolean } [ allowAcePrefix ]
  */
-function validatePropertyKey (propertyKey, isRelationshipProp) {
+function validatePropertyKey (propertyKey, isRelationshipProp, allowAcePrefix) {
   if (typeof propertyKey !== 'string') throw AceError('validatePropertyKey___invalid-typeof', `The property key ${ propertyKey } is invalid because it is not a type of string, please ensure each property key has a type of string`, { propertyKey })
-  if (propertyKey.toLowerCase().startsWith('ace')) throw AceError('validatePropertyKey___ace-start', `The property key ${propertyKey } is invalid because it starts with "ace", please ensure no property keys start with "ace"`, { propertyKey })
+  if (!allowAcePrefix && propertyKey.toLowerCase().startsWith('ace')) throw AceError('validatePropertyKey___ace-start', `The property key ${propertyKey } is invalid because it starts with "ace", please ensure no property keys start with "ace"`, { propertyKey })
   if (!propertyKey.match(/^[A-Za-z\_]+$/)) throw AceError('validatePropertyKey___invalid-characters', `The property key ${ propertyKey } is invalid because it includes invalid characters, please ensure each property key has characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { propertyKey })
   if (isRelationshipProp && !propertyKey.startsWith('_')) throw AceError('validatePropertyKey___add-underscore', `The property key ${ propertyKey } is invalid because this is a relationship prop that does not start with an underscore, please start relationship props with an underscore, this helps know what props in a query are relationship props`, { propertyKey })
   if (!isRelationshipProp && propertyKey.startsWith('_')) throw AceError('validatePropertyKey___remove-underscore', `The property key ${ propertyKey } is invalid because it is not a relationship prop but it starts with an underscore, please do not start node props with an underscore, relationship props start with an underscore, this helps know what props in a query are relationship props`, { propertyKey })

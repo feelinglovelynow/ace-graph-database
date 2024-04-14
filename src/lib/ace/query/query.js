@@ -12,14 +12,13 @@ import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey,
  * @param { td.AceFnFullResponse } response
  * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
+ * @returns { Promise<void> }
  */
 export async function queryNode (requestItem, passport, response, publicJWKs, iRequest) {
-  if (!passport.schemaDataStructures?.nodeNamesSet) throw AceError('query__falsy-schemaDataStructures-nodeNamesSet', 'The passport schema data structure nodeNamesSet must be truthy, this is set durring AcePassport() if there is a schema defined', { nodeNamesSet: '' })
-  if (!passport.schemaDataStructures.nodeNamesSet.has(requestItem.nodeName)) throw AceError('query__invalid-node-name', `The node name \`${ requestItem.nodeName }\` is invalid b/c it is not defined in your schema`, { nodeName: requestItem.nodeName })
-
-  const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
-
-  await addNodesToResponse(xGenerated, response, uids, null, isUsingSortIndex, passport, publicJWKs, iRequest)
+  if (passport.schemaDataStructures?.nodeNamesSet?.has(requestItem.nodeName)) {
+    const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
+    await addNodesToResponse(xGenerated, response, uids, null, isUsingSortIndex, passport, publicJWKs, iRequest)
+  }
 }
 
 
@@ -29,21 +28,20 @@ export async function queryNode (requestItem, passport, response, publicJWKs, iR
  * @param { td.AceFnFullResponse } response
  * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
+ * @returns { Promise<void> }
  */
 export async function queryRelationship (requestItem, passport, response, publicJWKs, iRequest) {
-  if (!passport.schemaDataStructures?.relationshipNamesSet) throw AceError('query__falsy-schemaDataStructures-relationshipNamesSet', 'The passport schema data structure relationshipNamesSet must be truthy, this is set durring AcePassport() if there is a schema defined', { relationshipNamesSet: '' })
-  if (!passport.schemaDataStructures.relationshipNamesSet.has(requestItem.relationshipName)) throw AceError('query__invalid-node-name', `The relationship name \`${requestItem.relationshipName}\` is invalid b/c it is not defined in your schema`, { relationshipName: requestItem.relationshipName })
-
-  const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
-
-  await addRelationshipsToResponse(xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest)
+  if (passport.schemaDataStructures?.relationshipNamesSet?.has(requestItem.relationshipName)) {
+    const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
+    await addRelationshipsToResponse(xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest)
+  }
 }
 
 
 /**
  * @param { td.AceQueryRequestItemNode | td.AceQueryRequestItemRelationship } requestItem
  * @param { td.AcePassport } passport
- * @returns { Promise<{ uids: any, isUsingSortIndex: any, xGenerated: any }> }
+ * @returns { Promise<{ uids: any, isUsingSortIndex: any, xGenerated: td.AceQueryRequestItemGeneratedXSection }> }
  */
 async function getInitialUids (requestItem, passport) {
   let uids
