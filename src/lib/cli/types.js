@@ -217,7 +217,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AceMutateRequestItemPluginInstall
  * @property { typeof enums.idsAce.PluginInstall } id
  * @property { string } [ property ]
- * @property { { request: AceFnRequest } } x
+ * @property { { install: AcePluginInstall } } x
  *
  * @typedef { object } AceMutateRequestItemPluginUninstall
  * @property { typeof enums.idsAce.PluginUninstall } id

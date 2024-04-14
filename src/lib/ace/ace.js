@@ -1,5 +1,4 @@
 import { td, enums } from '#ace'
-import { core } from './plugins/core.js'
 import { aceFetch } from '../aceFetch.js'
 import { many } from '../objects/AceCache.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
@@ -140,14 +139,8 @@ export async function _ace (options) {
             await empty(requestItem)
             break
 
-          case enums.idsAce.Core:
-            const plugin = core()
-            const responseCore = await _ace({ passport: options.passport, request: plugin.install.request })
-            if (requestItem.property) response.now[requestItem.property] = responseCore
-            break
-
           case enums.idsAce.PluginInstall:
-            const responseInstall = await _ace({ passport: options.passport, request: requestItem.x.request })
+            const responseInstall = await _ace({ passport: options.passport, ...requestItem.x.install })
             if (requestItem.property) response.now[requestItem.property] = responseInstall
             break
 
