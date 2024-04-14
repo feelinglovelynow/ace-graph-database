@@ -163,11 +163,7 @@ curl --header "Content-Type: application/json" \
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
-1. Validate Schema Additions 
-    * Node or edge name may not start w/ [ Ace ]
-    * No triple underscores (DELIMETER) b/c we use them as delimeters
-    * Don't allow uid or _uid to be a prop
-    * Do not allow the forward and the reverse relationship propName to be the same propName
+1. Schema: Do not allow the forward and the reverse relationship propName to be the same propName
 1. On Error Flow
     * Retry: Count, MS Before Trying Again
     * Log to KV
@@ -203,7 +199,7 @@ curl --header "Content-Type: application/json" \
     * Link to see / edit on GitHub
         * Doc Page
         * Functions Doc Page references
-1. Ace Graph Database Foundation
+1. Ace Database Foundation
     * Mission Statement
         * Create the Best Database for JavaScript Developers
     * Principles
