@@ -1,5 +1,5 @@
 import { td, enums } from '#ace'
-import { core } from './core.js'
+import { core } from './plugins/core.js'
 import { aceFetch } from '../aceFetch.js'
 import { many } from '../objects/AceCache.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
@@ -12,39 +12,37 @@ import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, de
 
 /**
  * Chat w/ Ace Graph Database
- * @param { td.AceFnOptions } options
- * @param { td.AceFnRequest } request
+ * @param { td.AceFnFetchOptions } options
  * @returns { Promise<td.AceFnResponse> }
  */
-export async function ace (options, request) {
+export async function ace({ worker, request, privateJWKs, publicJWKs }) {
   return await aceFetch({
-    url: options.worker + '/ace',
-    body: { request, privateJWKs: options.privateJWKs, publicJWKs: options.publicJWKs }
+    url: worker + '/ace',
+    body: { request, privateJWKs, publicJWKs }
   })
 }
 
 
 /**
  * Chat w/ Ace Graph Database
- * @param { td.AcePassport } passport
- * @param { { request: td.AceFnRequest, privateJWKs?: { [keyName: string]: string }, publicJWKs?: { [keyName: string]: string } } } body - Mutation request
+ * @param { td.AceFnOptions } options
  * @returns { Promise<td.AceFnResponse> }
 */
-export async function _ace (passport, body) {
+export async function _ace (options) {
   try {
-    await stamp(passport)
+    await stamp(options.passport)
     
-    const publicJWKs = /** @type { td.AceFnJWKs } */ ({})
-    const privateJWKs = /** @type { td.AceFnJWKs } */ ({})
+    const publicJWKs = /** @type { td.AceFnCryptoJWKs } */ ({})
+    const privateJWKs = /** @type { td.AceFnCryptoJWKs } */ ({})
     const newUidsMap = /** @type { td.AceFnNewUids } */ (new Map())
     const nodeUidsMap = /** @type { td.AceFnNodeUidsMap } */ (new Map())
     const sortIndexMap = /** @type { td.AceFnSortIndexMap } */ (new Map())
     const updateRequestItems = /** @type { td.AceFnUpdateRequestItems } */ ({ nodes: null, relationships: null })
 
     /** @type { (td.AceQueryRequestItem | td.AceMutateRequestItem)[] } Request as an array */
-    const request = Array.isArray(body.request) ? body.request : [ body.request ]
+    const request = Array.isArray(options.request) ? options.request : [options.request ]
 
-    /** @type { string[] } - The passport.cache.deleteSet converted into an array */
+    /** @type { string[] } - The options.passport.cache.deleteSet converted into an array */
     let deletedKeys = []
 
     /** @type { td.AceFnFullResponse } - Nodes with all properties will be in original, nodes with requested properties from `query.x` will be in now. */
@@ -60,18 +58,18 @@ export async function _ace (passport, body) {
 
 
     async function setPrivateJWKs () {
-      if (body.privateJWKs) {
-        for (const name in body.privateJWKs) {
-          privateJWKs[name] = await crypto.subtle.importKey('jwk', JSON.parse(body.privateJWKs[name]), getAlgorithmOptions('import'), true, ['sign'])
+      if (options.privateJWKs) {
+        for (const name in options.privateJWKs) {
+          privateJWKs[name] = await crypto.subtle.importKey('jwk', JSON.parse(options.privateJWKs[name]), getAlgorithmOptions('import'), true, ['sign'])
         }
       }
     }
 
 
     async function setPublicJWKs () {
-      if (body.publicJWKs) {
-        for (const name in body.publicJWKs) {
-          publicJWKs[name] = await crypto.subtle.importKey('jwk', JSON.parse(body.publicJWKs[name]), getAlgorithmOptions('import'), true, ['verify'])
+      if (options.publicJWKs) {
+        for (const name in options.publicJWKs) {
+          publicJWKs[name] = await crypto.subtle.importKey('jwk', JSON.parse(options.publicJWKs[name]), getAlgorithmOptions('import'), true, ['verify'])
         }
       }
     }
@@ -110,12 +108,12 @@ export async function _ace (passport, body) {
           }
         }
 
-        if (updateUids.node.length) updateRequestItems.nodes = await many(updateUids.node, passport.cache)
-        if (updateUids.relationship.length) updateRequestItems.relationships = await many(updateUids.relationship, passport.cache)
+        if (updateUids.node.length) updateRequestItems.nodes = await many(updateUids.node, options.passport.cache)
+        if (updateUids.relationship.length) updateRequestItems.relationships = await many(updateUids.relationship, options.passport.cache)
 
         if (nodeNamesMap.size) {
-          const keys = [...nodeNamesMap.keys() ]
-          const rCache = await many(keys, passport.cache)
+          const keys = [ ...nodeNamesMap.keys() ]
+          const rCache = await many(keys, options.passport.cache)
 
           for (const key of keys) {
             const nodeName = nodeNamesMap.get(key)
@@ -141,59 +139,84 @@ export async function _ace (passport, body) {
           case enums.idsAce.Empty:
             await empty(requestItem)
             break
+
           case enums.idsAce.Core:
-            const coreResponse = await core(passport)
-            if (requestItem.property) response.now[requestItem.property] = coreResponse
+            const plugin = core()
+            const responseCore = await _ace({ passport: options.passport, request: plugin.install.request })
+            if (requestItem.property) response.now[requestItem.property] = responseCore
             break
+
+          case enums.idsAce.PluginInstall:
+            const responseInstall = await _ace({ passport: options.passport, request: requestItem.x.request })
+            if (requestItem.property) response.now[requestItem.property] = responseInstall
+            break
+
+          case enums.idsAce.PluginUninstall:
+            const responseUninstall = await _ace({ passport: options.passport, request: requestItem.x.request })
+            if (requestItem.property) response.now[requestItem.property] = responseUninstall
+            break
+
           case enums.idsAce.QueryNode:
-            await queryNode(requestItem, passport, response, publicJWKs, iRequest)
+            await queryNode(requestItem, options.passport, response, publicJWKs, iRequest)
             break
+
           case enums.idsAce.QueryRelationship:
-            await queryRelationship(requestItem, passport, response, publicJWKs, iRequest)
+            await queryRelationship(requestItem, options.passport, response, publicJWKs, iRequest)
             break
+
           case enums.idsAce.SchemaGet:
             await schemaGet(requestItem)
             break
+
           case enums.idsAce.SchemaAdd:
-            const addToSchemaResponse = addToSchema(passport, requestItem.x)
+            const addToSchemaResponse = addToSchema(options.passport, requestItem.x)
             if (requestItem.property) response.now[requestItem.property] = addToSchemaResponse
-            setSchemaDataStructures(passport)
+            setSchemaDataStructures(options.passport)
             break
+
           case enums.idsAce.BackupGet:
             await backupGet(requestItem)
             break
+
           case enums.idsAce.BackupLoad:
             await fileToGraph(requestItem)
             break
+
           case enums.idsAce.InsertNode:
           case enums.idsAce.UpdateNode:
-            await inupNode(requestItem, passport, nodeUidsMap, sortIndexMap, newUidsMap, updateRequestItems, privateJWKs)
+            await inupNode(requestItem, options.passport, nodeUidsMap, sortIndexMap, newUidsMap, updateRequestItems, privateJWKs)
             break
+
           case enums.idsAce.InsertRelationship:
           case enums.idsAce.UpdateRelationship:
-            await inupRelationship(requestItem, passport, updateRequestItems, newUidsMap)
+            await inupRelationship(requestItem, options.passport, updateRequestItems, newUidsMap)
             break
+
           case enums.idsAce.DataDeleteNodes:
-            if (requestItem.x?.uids?.length) await deleteNodesByUids(requestItem.x.uids, passport)
+            if (requestItem.x?.uids?.length) await deleteNodesByUids(requestItem.x.uids, options.passport)
             break
+
           case enums.idsAce.DataDeleteRelationships:
-            if (requestItem.x?._uids?.length) await deleteRelationshipsBy_Uids(requestItem.x._uids, passport)
+            if (requestItem.x?._uids?.length) await deleteRelationshipsBy_Uids(requestItem.x._uids, options.passport)
             break
+
           case enums.idsAce.DataDeleteNodeProps:
-            if (requestItem.x?.uids?.length && requestItem.x?.props?.length) await dataDeleteNodeProps(requestItem, passport)
+            if (requestItem.x?.uids?.length && requestItem.x?.props?.length) await dataDeleteNodeProps(requestItem, options.passport)
             break
+
           case enums.idsAce.DataDeleteRelationshipProps:
-            if (requestItem.x?._uids?.length && requestItem.x?.props?.length) await dataDeleteRelationshipProps(requestItem, passport)
+            if (requestItem.x?._uids?.length && requestItem.x?.props?.length) await dataDeleteRelationshipProps(requestItem, options.passport)
             break
+
           case enums.idsAce.SchemaAndDataDeleteNodes:
-            await schemaAndDataDeleteNodes(requestItem, nodeUidsMap, passport)
+            await schemaAndDataDeleteNodes(requestItem, nodeUidsMap, options.passport)
             break
         }
       }
 
-      if (passport.cache.deleteSet.size) {
-        passport.cache.deleteSet.forEach((/** @type { string } */ uid) => deletedKeys.push(uid))
-        passport.cache.storage.delete(deletedKeys)
+      if (options.passport.cache.deleteSet.size) {
+        options.passport.cache.deleteSet.forEach((/** @type { string } */ uid) => deletedKeys.push(uid))
+        options.passport.cache.storage.delete(deletedKeys)
       }
 
 
@@ -203,13 +226,13 @@ export async function _ace (passport, body) {
        */
       async function empty (requestItem) {
         throwIfAnyGenericRevokes()
-        passport.cache.storage.deleteAll() // empty storage
+        options.passport.cache.storage.deleteAll() // empty storage
 
         nodeUidsMap.clear() // clear nodeUidsMap
 
         // empty passport schema
-        passport.schema = undefined
-        passport.schemaDataStructures = {}
+        options.passport.schema = undefined
+        options.passport.schemaDataStructures = {}
         
         if (requestItem.property) response.now[requestItem.property] = { success: true }
       }
@@ -217,21 +240,21 @@ export async function _ace (passport, body) {
 
       /** @param { td.AceQueryRequestItemBackupGet } requestItem */
       async function backupGet (requestItem) {
-        passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
-          if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
-          if (value.action === 'read' && value.nodeName) throw AceAuthError(enums.permissionActions.read, passport, { nodeName: value.nodeName })
-          if (value.action === 'read' && value.relationshipName) throw AceAuthError(enums.permissionActions.read, passport, { relationshipName: value.relationshipName })
+        options.passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
+          if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, options.passport, { schema: true })
+          if (value.action === 'read' && value.nodeName) throw AceAuthError(enums.permissionActions.read, options.passport, { nodeName: value.nodeName })
+          if (value.action === 'read' && value.relationshipName) throw AceAuthError(enums.permissionActions.read, options.passport, { relationshipName: value.relationshipName })
         })
 
         /** @type { td.AceBackupResponse } - We'll turn the map into this object */
         const rList = {}
-        const listMap = await passport.cache.storage.list()
+        const listMap = await options.passport.cache.storage.list()
 
         listMap.forEach((/** @type { any } */value, /** @type { string } */key) => { // skip if in deleteSet AND see if in putMap first
-          if (!passport.cache.deleteSet.has(key)) rList[key] = passport.cache.putMap.get(key) || value
+          if (!options.passport.cache.deleteSet.has(key)) rList[key] = options.passport.cache.putMap.get(key) || value
         })
 
-        passport.cache.putMap.forEach((/** @type { any } */ value, /** @type { string } */ key) => { // if something is in putMap and not in listMap => add to rList
+        options.passport.cache.putMap.forEach((/** @type { any } */ value, /** @type { string } */ key) => { // if something is in putMap and not in listMap => add to rList
           if (!listMap.has(key)) rList[key] = value
         })
 
@@ -244,17 +267,17 @@ export async function _ace (passport, body) {
         if (typeof requestItem?.x?.backup !== 'string') throw AceError('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
 
         throwIfAnyGenericRevokes()
-        passport.cache.storage.deleteAll()
-        passport.cache.storage.put(JSON.parse(requestItem.x.backup))
+        options.passport.cache.storage.deleteAll()
+        options.passport.cache.storage.put(JSON.parse(requestItem.x.backup))
       }
 
 
       function throwIfAnyGenericRevokes () {
-        passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
+        options.passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === enums.permissionActions.inup || value.action === enums.permissionActions.insert || value.action === enums.permissionActions.update || value.action === enums.permissionActions.delete) {
-            if (value.schema === true) throw AceAuthError(value.action, passport, { schema: true })
-            if (value.nodeName) throw AceAuthError(value.action, passport, { nodeName: value.nodeName })
-            if (value.relationshipName) throw AceAuthError(value.action, passport, { relationshipName: value.relationshipName })
+            if (value.schema === true) throw AceAuthError(value.action, options.passport, { schema: true })
+            if (value.nodeName) throw AceAuthError(value.action, options.passport, { nodeName: value.nodeName })
+            if (value.relationshipName) throw AceAuthError(value.action, options.passport, { relationshipName: value.relationshipName })
           }
         })
       }
@@ -265,28 +288,28 @@ export async function _ace (passport, body) {
      * @param { td.AceQueryRequestItemSchemaGet } requstItem 
      */
     function schemaGet (requstItem) {
-      if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
-      response.now[requstItem.property] = passport.schema
+      if (options.passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw AceAuthError(enums.permissionActions.read, options.passport, { schema: true })
+      response.now[requstItem.property] = options.passport.schema
     }
 
 
     async function addSortIndicesToGraph () {
       if (sortIndexMap.size) {
         for (const { nodeName, nodePropName, uids } of sortIndexMap.values()) {
-          const nodes = [ ...(await many(uids, passport.cache)).values() ]
+          const nodes = [ ...(await many(uids, options.passport.cache)).values() ]
             .sort((a, b) => Number(a[nodePropName] > b[nodePropName]) - Number(a[nodePropName] < b[nodePropName])) // order ascending
 
-          passport.cache.putMap.set(getSortIndexKey(nodeName, nodePropName), nodes.map(n => n.uid))
+          options.passport.cache.putMap.set(getSortIndexKey(nodeName, nodePropName), nodes.map(n => n.uid))
         }
       }
     }
 
 
     function throwIfMissingMustProps () {
-      if (passport.cache.putMap.size) {
-        for (const requestItem of passport.cache.putMap.values()) {
+      if (options.passport.cache.putMap.size) {
+        for (const requestItem of options.passport.cache.putMap.values()) {
           const x = /** @type { td.AceMutateRequestItemInsertRelationshipX } */ (/** @type {*} */ (requestItem.x))
-          const mustProps = requestItem.subId ? passport.schemaDataStructures?.mustPropsMap?.get(requestItem.subId) : null // the must props for a specific node or relationship
+          const mustProps = requestItem.subId ? options.passport.schemaDataStructures?.mustPropsMap?.get(requestItem.subId) : null // the must props for a specific node or relationship
 
           if (mustProps) {
             mustProps.forEach((/** @type { td.AceSchemaProp | td.AceSchemaRelationshipProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ prop, /** @type { string } */propName) => {
@@ -338,7 +361,7 @@ export async function _ace (passport, body) {
 
           if (relationshipUids) {
             for (const relationshipUid of relationshipUids) {
-              const putEntry = passport.cache.putMap.get(relationshipUid)
+              const putEntry = options.passport.cache.putMap.get(relationshipUid)
 
               if (putEntry) relationshipNodes.push(putEntry)
               else storageUids.push(relationshipUid)
@@ -367,12 +390,12 @@ export async function _ace (passport, body) {
       /** @type { { [k: string]: any } } - Convert putMap into an object that is ready for Cloudflare Storage */
       const putObj = {}
 
-      if (passport.cache.putMap.size) { // convert from map to object for do storage
-        passport.cache.putMap.forEach((/** @type { string } */v, /** @type { string } */ k) => {
-          if (!passport.cache.deleteSet.has(k)) putObj[k] = v // ensure this put is not being deleted
+      if (options.passport.cache.putMap.size) { // convert from map to object for do storage
+        options.passport.cache.putMap.forEach((/** @type { string } */v, /** @type { string } */ k) => {
+          if (!options.passport.cache.deleteSet.has(k)) putObj[k] = v // ensure this put is not being deleted
         })
 
-        passport.cache.storage.put(putObj)
+        options.passport.cache.storage.put(putObj)
       }
 
       if (newUidsMap.size) newUidsMap.forEach((/** @type { string } */ v, /** @type { string } */ k) => newUids[k] = v) // convert from map to object for response

@@ -10,7 +10,7 @@ import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey,
  * @param { td.AceQueryRequestItemNode } requestItem 
  * @param { td.AcePassport } passport
  * @param { td.AceFnFullResponse } response
- * @param { td.AceFnJWKs } publicJWKs
+ * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
  */
 export async function queryNode (requestItem, passport, response, publicJWKs, iRequest) {
@@ -27,7 +27,7 @@ export async function queryNode (requestItem, passport, response, publicJWKs, iR
  * @param { td.AceQueryRequestItemRelationship } requestItem 
  * @param { td.AcePassport } passport
  * @param { td.AceFnFullResponse } response
- * @param { td.AceFnJWKs } publicJWKs
+ * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
  */
 export async function queryRelationship (requestItem, passport, response, publicJWKs, iRequest) {
@@ -108,7 +108,7 @@ async function getInitialUids (requestItem, passport) {
  * @param { any[] | null } graphRelationships
  * @param { boolean } isUsingSortIndex
  * @param { td.AcePassport } passport
- * @param { td.AceFnJWKs } publicJWKs
+ * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
  * @returns { Promise<void> }
  */
@@ -154,7 +154,7 @@ function isRevokesAllowed (node, options, passport) {
  * @param { { node?: any, relationship?: any, uid?: string } } item 
  * @param { { key: string, value: any } | null } graphRelationship
  * @param { td.AcePassport } passport
- * @param { td.AceFnJWKs } publicJWKs
+ * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
  * @returns { Promise<void> }
  */
@@ -260,7 +260,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
  * @param { string[] } uids 
  * @param { boolean } isUsingSortIndex
  * @param { td.AcePassport } passport
- * @param { td.AceFnJWKs } publicJWKs
+ * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
  * @returns { Promise<void> }
  */
@@ -306,7 +306,7 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
  * @param { { [propertyName: string]: any } } responseNowItem 
  * @param { any } responseOriginalItem 
  * @param { td.AcePassport } passport
- * @param { td.AceFnJWKs } publicJWKs
+ * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iRequest
  */
 async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNodeProp, xKey, xValue, xGenerated, responseNowItem, responseOriginalItem, passport, publicJWKs, iRequest) {

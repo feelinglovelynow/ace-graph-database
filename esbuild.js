@@ -7,6 +7,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
   minify: true, // When enabled, the generated code will be minified instead of pretty-printed. 
   outdir: './dist', // Sets the output directory for the build operation.
   entryPoints: [ // This is an array of files that each serve as an input to the bundling algorithm.
+    "./tsc/src/lib/ace/plugins/core.js",
     './tsc/src/lib/ace/query/getDerivedValue.js',
     './tsc/src/lib/ace/query/getRelationshipNode.js',
     './tsc/src/lib/ace/query/getXGenerated.js',
@@ -14,7 +15,6 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/ace/query/query.js',
     './tsc/src/lib/ace/query/queryWhere.js',
     './tsc/src/lib/ace/ace.js',
-    './tsc/src/lib/ace/core.js',
     './tsc/src/lib/ace/mutate.js',
     './tsc/src/lib/ace/validateSchema.js',
 

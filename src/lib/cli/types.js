@@ -46,12 +46,15 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 
 /** AceFn
  *
- * @typedef { object } AceFn
- * @property { AceFnOptions } options
- * @property { AceFnRequest } request
- *
  * @typedef { object } AceFnOptions
+ * @property { AcePassport } passport
+ * @property { AceFnRequest } request
+ * @property { AceFnStringJWKs } [ privateJWKs ]
+ * @property { AceFnStringJWKs } [ publicJWKs ]
+ *
+ * @typedef { object } AceFnFetchOptions
  * @property { string } worker - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @property { AceFnRequest } request
  * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling \`id: 'Start'\` from \`mutate()\`
  * @property { { [jwkName: string]: string } } [ publicJWKs ]
  * @property { { [jwkName: string]: string } } [ privateJWKs ]
@@ -60,16 +63,33 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } AceFnFullResponse
  *
- * @typedef { { [key: string]: CryptoKey } } AceFnJWKs
+ * @typedef { { [key: string]: string } } AceFnStringJWKs
+ * @typedef { { [key: string]: CryptoKey } } AceFnCryptoJWKs
  *
  * @typedef { { success: true } } AceFnEmptyResponse
  *
- * @typedef { { [prop: string]: any, $ace: { newUids: { [uid: string]: string }, deletedKeys: string[] } } } AceFnResponse
+ * @typedef { { newUids: { [uid: string]: string }, deletedKeys: string[] } } AceFn$
+ *
+ * @typedef { { [prop: string]: any, $ace: AceFn$ } } AceFnResponse
  *
  * @typedef { Map<string, string> } AceFnNewUids - As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace Graph Database uid as the value.
  * @typedef { Map<string, string[]> } AceFnNodeUidsMap - <nodeName, uids> Uids of specific nodes in graph
  * @typedef { { nodes: any, relationships: any } } AceFnUpdateRequestItems - If updating we store the orignal items here, based on the uid (nodes) or _uid (relationships)
  * @typedef { Map<string, { nodeName: string, nodePropName: string, uids: string[] }> } AceFnSortIndexMap - As we find properties that according to the schema need a sort index insert we will keep track of them here. Once we get them all together, we sort them, and then add to graph.
+ */
+
+
+/** AcePlugin
+ *
+ * @typedef { object } AcePlugin
+ * @property { AcePluginInstall } install
+ *
+ * @typedef { object } AcePluginInstall
+ * @property { AceFnRequest } request
+ * @property { AceFnStringJWKs } [ publicJWKs ]
+ * @property { AceFnStringJWKs } [ privateJWKs ]
+ *
+ * @typedef { object } AcePluginUninstall
  */
 
 
@@ -172,7 +192,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 /** AceMutate
  *
  * @typedef { AceMutateRequestItem | AceMutateRequestItem[] } AceMutateRequest
- * @typedef { AceMutateRequestItemBackup | AceMutateRequestItemBoot | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemSchema } AceMutateRequestItem
+ * @typedef { AceMutateRequestItemBackup | AceMutateRequestItemPlugin | AceMutateRequestItemBoot | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemSchema } AceMutateRequestItem
  * @typedef { AceMutateRequestItemEmpty | AceMutateRequestItemCore } AceMutateRequestItemBoot
  * @typedef { AceMutateRequestItemInsertNode | AceMutateRequestItemInsertRelationship } AceMutateRequestItemInsert
  * @typedef { AceMutateRequestItemUpdateNode | AceMutateRequestItemUpdateRelationship } AceMutateRequestItemUpdate
@@ -180,7 +200,8 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemSchemaAdd } AceMutateRequestItemSchema
  * @typedef { AceMutateRequestItemBackupGet | AceMutateRequestItemBackupLoad } AceMutateRequestItemBackup
- * 
+ * @typedef { AceMutateRequestItemPluginInstall | AceMutateRequestItemPluginUninstall } AceMutateRequestItemPlugin
+ *
  * @typedef { object } AceMutateRequestItemBackupGet
  * @property { typeof enums.idsAce.BackupGet } id
  * @property { string } property
@@ -192,6 +213,16 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AceMutateRequestItemEmpty
  * @property { typeof enums.idsAce.Empty } id
  * @property { string } [ property ]
+ *
+ * @typedef { object } AceMutateRequestItemPluginInstall
+ * @property { typeof enums.idsAce.PluginInstall } id
+ * @property { string } [ property ]
+ * @property { { request: AceFnRequest } } x
+ *
+ * @typedef { object } AceMutateRequestItemPluginUninstall
+ * @property { typeof enums.idsAce.PluginUninstall } id
+ * @property { string } [ property ]
+ * @property { { request: AceFnRequest } } x
  *
  * @typedef { object } AceMutateRequestItemCore
  * @property { typeof enums.idsAce.Core } id
@@ -221,7 +252,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { object } AceMutateRequestItemSchemaAdd
  * @property { typeof enums.idsAce.SchemaAdd } id
- * @property { string } property
+ * @property { string } [ property ]
  * @property { AceSchema } x
  *
  * @typedef { object } AceMutateRequestPrivateJWKOption
@@ -531,9 +562,9 @@ ${ typedefs.query.RelationshipType }
 /** AceCore
  *
  * @typedef { object } AceCoreResponse
- * @property { { public: string, private: string } } jwks
- * @property { { newUids: { [uid: string]: string } } } $ace
+ * @property { AceFn$ } $ace
  * @property { AceCoreResponseAdmin } admin
+ * 
  * @typedef { object } AceCoreResponseAdmin
  * @property { string } uid
  * @property { string } username

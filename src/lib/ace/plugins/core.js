@@ -1,86 +1,62 @@
-import { _ace } from './ace.js'
 import { td, enums } from '#ace'
-import { addToSchema } from './mutate.js'
-import { createJWKs } from '../security/createJWKs.js'
 
 
 /**
- * Start Ace Graph Database
- * @param { td.AcePassport } passport
- * @returns { Promise<td.AceCoreResponse> }
+ * @returns { td.AcePlugin }
  */
-export async function core (passport) {
-  /** @type { { username: string, uid: string, token: string, role: string } } - Common admin variables */
+export function core () {
   const admin = { username: 'admin', uid: '_:userAdmin', token: '_:tokenAdmin', role: '_:roleAdmin' }
 
-  _addToSchema()
-  const [ jwks, response ] = await Promise.all([ createJWKs(), mutate() ])
-
   return {
-    $ace: {
-      newUids: response.$ace.newUids
-    },
-    jwks: {
-      public: jwks.publicJWK,
-      private: jwks.privateJWK,
-    },
-    admin: {
-      uid: response.$ace.newUids[admin.uid],
-      username: admin.username,
-      token: response.$ace.newUids[admin.token]
-    },
-  }
-
-  async function _addToSchema () {
-    return addToSchema(passport, {
-      nodes: {
-        AceSetting: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          enum: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true, uniqueIndex: true } },
-          isOn: { id: 'Prop', x: { dataType: 'boolean', mustBeDefined: true } },
-        },
-        AceUser: {
-          username: { id: 'Prop', x: { dataType: 'string' } },
-          password: { id: 'Prop', x: { dataType: 'hash' } },
-          tokens: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
-          role: { id: 'ForwardRelationshipProp', x: { has: 'one', nodeName: 'AceRole', relationshipName: 'isTheAceRole' } },
-        },
-        AceToken: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          createdAt: { id: 'Prop', x: { dataType: 'isoString', mustBeDefined: true } },
-          user: { id: 'ReverseRelationshipProp', x: { has: 'one', nodeName: 'AceUser', relationshipName: 'hasTheAceToken' } },
-        },
-        AceRole: {
-          name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          enum: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          users: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceUser', relationshipName: 'isTheAceRole' } },
-          revokesAcePermissions: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AcePermission', relationshipName: 'revokesAcePermission' } },
-        },
-        AcePermission: {
-          action: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-          schema: { id: 'Prop', x: { dataType: 'boolean' } },
-          nodeName: { id: 'Prop', x: { dataType: 'string' } },
-          relationshipName: { id: 'Prop', x: { dataType: 'string' } },
-          propName: { id: 'Prop', x: { dataType: 'string' } },
-          allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When `ace()` encounters a node, relationship or prop, Ace may learn that this item may not be acted upon (read/write/update/delete) as requested b/c of this permission. Ace will allow the action when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
-          roles: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission' } },
-        }
-      },
-      relationships: {
-        hasTheAceToken: { id: 'OneToOne' },
-        isTheAceRole: { id: 'OneToMany' },
-        revokesAcePermission: { id: 'ManyToMany' },
-      }
-    })
-  }
-
-
-  async function mutate () {
-    return _ace(passport, {
+    install: {
       request: [
+        {
+          id: 'SchemaAdd',
+          x: {
+            nodes: {
+              AceSetting: {
+                name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+                enum: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true, uniqueIndex: true } },
+                isOn: { id: 'Prop', x: { dataType: 'boolean', mustBeDefined: true } },
+              },
+              AceUser: {
+                username: { id: 'Prop', x: { dataType: 'string' } },
+                password: { id: 'Prop', x: { dataType: 'hash' } },
+                tokens: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AceToken', relationshipName: 'hasTheAceToken' } },
+                role: { id: 'ForwardRelationshipProp', x: { has: 'one', nodeName: 'AceRole', relationshipName: 'isTheAceRole' } },
+              },
+              AceToken: {
+                name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+                createdAt: { id: 'Prop', x: { dataType: 'isoString', mustBeDefined: true } },
+                user: { id: 'ReverseRelationshipProp', x: { has: 'one', nodeName: 'AceUser', relationshipName: 'hasTheAceToken' } },
+              },
+              AceRole: {
+                name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+                enum: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+                users: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceUser', relationshipName: 'isTheAceRole' } },
+                revokesAcePermissions: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'AcePermission', relationshipName: 'revokesAcePermission' } },
+              },
+              AcePermission: {
+                action: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+                schema: { id: 'Prop', x: { dataType: 'boolean' } },
+                nodeName: { id: 'Prop', x: { dataType: 'string' } },
+                relationshipName: { id: 'Prop', x: { dataType: 'string' } },
+                propName: { id: 'Prop', x: { dataType: 'string' } },
+                allowPropName: { id: 'Prop', x: { dataType: 'string', description: 'When `ace()` encounters a node, relationship or prop, Ace may learn that this item may not be acted upon (read/write/update/delete) as requested b/c of this permission. Ace will allow the action when `AceSetting.enforcePermissions === true` IF `AceToken.user.id === node[ allowPropName ]`.' } },
+                roles: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'AceRole', relationshipName: 'revokesAcePermission' } },
+              }
+            },
+            relationships: {
+              hasTheAceToken: { id: 'OneToOne' },
+              isTheAceRole: { id: 'OneToMany' },
+              revokesAcePermission: { id: 'ManyToMany' },
+            }
+          }
+        },
+
         { id: 'InsertNode', nodeName: 'AceSetting', x: { uid: '_:setting', name: 'Enforce Permissions', enum: enums.settings.enforcePermissions, isOn: false } },
         { id: 'InsertNode', nodeName: 'AceUser', x: { uid: admin.uid, username: admin.username } },
-        { id: 'InsertNode', nodeName: 'AceToken',  x: { uid: admin.token, name: 'Admin', createdAt: 'now' } },
+        { id: 'InsertNode', nodeName: 'AceToken', x: { uid: admin.token, name: 'Admin', createdAt: 'now' } },
         { id: 'InsertNode', nodeName: 'AceRole', x: { uid: admin.role, name: 'Admin', enum: 'admin' } },
         { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleArchitect', name: 'Architect', enum: 'architect' } },
         { id: 'InsertNode', nodeName: 'AceRole', x: { uid: '_:roleEditor', name: 'Editor', enum: 'editor' } },
@@ -130,6 +106,6 @@ export async function core (passport) {
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadAceRole' } },
         { id: 'InsertRelationship', relationshipName: 'revokesAcePermission', x: { a: '_:roleReader', b: '_:permissionReadAcePermission' } },
       ]
-    })
+    }
   }
 }

@@ -12,8 +12,18 @@ import { AcePassport } from './lib/objects/AcePassport.js'
 async function getResponse (storage, request) {
   const url = new URL(request.url)
 
-  if (url.pathname === '/ace') return new Response(JSON.stringify(await _ace(AcePassport({ storage, request, source: enums.passportSource.worker }), await request.json())), { headers: getHeaders('json') })
-  else throw AceError('ace__invalid-url', `The request is invalid b/c the url pathname ${ url.pathname } is invalid, please call with the only valid url pathname, which is /ace`, { pathname: url.pathname, validPathname: '/ace' })
+  if (url.pathname !== '/ace') throw AceError('ace__invalid-url', `The request is invalid b/c the url pathname ${url.pathname} is invalid, please call with the only valid url pathname, which is /ace`, { pathname: url.pathname, validPathname: '/ace' })
+  else {
+    const body = await request.json()
+    const options = /** @type { td.AceFnOptions } */ ({
+      passport: AcePassport({ storage, request, source: enums.passportSource.worker }),
+      request: body.request,
+      publicJWKs: body.publicJWKs,
+      privateJWKs: body.privateJWKs,
+    })
+
+    return new Response(JSON.stringify(await _ace(options)), { headers: getHeaders('json') })
+  }
 }
 
 

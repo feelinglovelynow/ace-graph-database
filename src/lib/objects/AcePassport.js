@@ -130,7 +130,8 @@ async function getUser (_passport) {
   let user
 
   if (_passport.token) {
-    const { token } = await _ace(_passport, {
+    const { token } = await _ace({
+      passport: _passport,
       request: {
         id: 'QueryNode',
         nodeName: 'AceToken',
@@ -197,7 +198,8 @@ async function getIsEnforcePermissionsOn (_passport) {
 
   if (!uid) return false
 
-  const { isOn } = await _ace(_passport, {
+  const { isOn } = await _ace({
+    passport: _passport,
     request: {
       id: 'QueryNode',
       nodeName: 'AceSetting',

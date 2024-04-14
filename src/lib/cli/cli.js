@@ -52,7 +52,7 @@ import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
         ])
 
         console.log('✨ enums ready!\n✨ typedefs ready!')
-        await util.promisify(exec)(`pnpm tsc -p ${ files.tsConfig }`) // write tsc folder AND write .d.ts type files within folder
+        await util.promisify(exec)(`tsc -p ${ files.tsConfig }`) // write tsc folder AND write .d.ts type files within folder
 
         await Promise.all([
           fsPromises.writeFile(files.jsIndex, jsIndex()), // write index.js

@@ -14,6 +14,9 @@ export const idsAce = new Set([
   'QueryNode',
   'QueryRelationship',
 
+  'PluginInstall',
+  'PluginUninstall',
+
   'BackupGet',
   'BackupLoad',
 

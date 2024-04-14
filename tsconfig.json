@@ -1,5 +1,6 @@
 {
   "files": [
+    "src/lib/ace/plugins/core.js",
     "src/lib/ace/query/getDerivedValue.js",
     "src/lib/ace/query/getRelationshipNode.js",
     "src/lib/ace/query/getXGenerated.js",
@@ -7,11 +8,10 @@
     "src/lib/ace/query/query.js",
     "src/lib/ace/query/queryWhere.js",
     "src/lib/ace/ace.js",
-    "src/lib/ace/core.js",
+    "src/lib/ace/plugins/core.js",
     "src/lib/ace/mutate.js",
     "src/lib/ace/validateSchema.js",
 
-    "src/lib/cli/backup.js",
     "src/lib/cli/cli.js",
     "src/lib/cli/enums.js",
     "src/lib/cli/types.js",

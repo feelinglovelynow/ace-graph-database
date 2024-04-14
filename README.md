@@ -129,6 +129,7 @@ curl --header "Content-Type: application/json" \
   http://localhost:8787/ace
 ```
 
+
 ## 🤓 Version 1 Roadmap 
 1. `ace()`
     * Function to communicate with the graph
