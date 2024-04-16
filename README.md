@@ -139,15 +139,36 @@ curl --header "Content-Type: application/json" \
 
 
 ## 🤓 Version 1 Roadmap 
+1. Movie Actor Sort Bug
+1. CLI
+    * ace version (also  put after CLI in ace)
+    * ace schemaToFile
+    * ace folder in users directory
+        * /backups
+            * [timestamp].json
+            * [timestamp].txt
+            * [timestamp].zip
+        * /schemas
+            * [timestamp].json
+            * [timestamp].txt
+            * [timestamp].zip
+        * /backup
+            * backup.json
+            * backup.txt
+            * backup.zip
+        * /schema
+            * schema.json
+            * schema.txt
+            * schema.zip
 1. `ace()`
     * Function to communicate with the graph
-    * Delete `cascadePropNames` array
+    * fileToGraph Option: skipDataDelete: boolean
     * Sanitize / Validate Input
+    * Delete `cascadePropNames` array
     * Must relationship (storage fallback)
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
-    * BackupLoad Option: skipDataDelete: boolean
-    * BackupLoad Option: Public JWK: boolean
+    * fileToGraph Option: Public JWK: boolean
     * BackupGet Option: Private JWK
     * BackupFile Option: Is Encrypted
     * BackupFile Option: Zip
@@ -156,7 +177,6 @@ curl --header "Content-Type: application/json" \
         * Id: 'MutationLoop'
         * Id: 'ResponsePropNameValue'
     * throwIfMissingMustProps -> update / delete 
-    * Install / Uninstall Plugins (Core) (JWKs)
     * Properties:
       * Options:
           * Graphs
@@ -190,6 +210,10 @@ curl --header "Content-Type: application/json" \
 1. loopOptions > switch 
 1. Cli Loop schema once
 1. Move schema loops into schema data structures 
+1. Simulator
+    * Fast forward time
+    * Replay
+    * Auto Create GitHub Bug
 1. Independant Security Audit
 1. Independant Code Review
 1. Unit Tests
@@ -224,10 +248,6 @@ curl --header "Content-Type: application/json" \
     * Deno Edge
     * Vercel Edge
 1. Contribution Documentation
-1. Simulator
-    * Fast forward time
-    * Replay
-    * Auto Create GitHub Bug
 1. Query Planner
 1. Optimize Queries
 1. KV (request cache) Integration
@@ -355,8 +375,8 @@ curl --header "Content-Type: application/json" \
 * number
 * boolean
 * hash
-    1. Get public and private jwks from ace by calling `ace()` or `createJWKs()`
-    1. Send `ace()` a string and a private jwk
+    1. Get public and private jwks from Ace by calling `ace()`, calling `createJWKs()` or with our cli `ace jwks`
+    1. On a property that is the `hash` data type, do an `ace()` insert, and also send to `ace()` a private jwk
     1. Ace will hash the string and store the hash value in your graph
     1. When performing `ace()` queries, provide a public jwk to `Find` a node only if it matches a stored hash
 * isoString
@@ -364,9 +384,28 @@ curl --header "Content-Type: application/json" \
     * When doing a node or relationship mutation, provide a value of `'now'` to tell Ace to add the `isoString` now date as the value, example:
         * `{ id: 'InsertNode', nodeName: 'Movie', x: { name: 'The Matrix', createdAt: 'now' } }`
 ### Schema
-* Defines how Ace graph data is structured, by defining the nodes, relationships and properties
+* Defines how your graph is structured, by defining the nodes, relationships and properties
+* Is stored in your graph, at the key `$schema` to ease migrations
+* Thanks to `ace schemaToFile`, your schema may also be easilly stored in a file in a JSON file, in your backend source control, like `Prisma`
 ### `ace()`
-* How to communicate with Ace Graph Databases
+* Takes 1 parameter, an options object and this options object is the `Ace Query Language` or the `Ace Options`
+* Supports / Default:
+    * Responds with requested nodes, relationships and properties, similair to GraphQL but rather then string template queries and mutations, Typesafe intellisense via JSDoc Typedefs (comments) (not in build) and TypeScript types (not in build) (but super helpful during development)
+    * To limit round trips, multiple sequential queries may be performed in the array request order
+* Typically ORMs unite your databse with JavaScript, but now 1 function supports this!
+* May also be called via HTTP at `[ host ]/ace`
+
+
+## 🕰️ Origin Story
+1. Java SQL Strings
+1. PHP SQL Strings
+1. Node SQL Strings
+1. Mongoose
+1. Dgraph
+1. Prisma
+1. Drizzle
+1. Durable Objects
+1. Ace
 
 
 ## 🎁 All Our Packages
