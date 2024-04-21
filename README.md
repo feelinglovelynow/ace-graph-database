@@ -27,16 +27,15 @@ ace dev # start local graph
 1. Add nodes `Actor` and `Movie` and relationship `actsInMovie` to schema via `AddToSchema`
 1. Add `The Matrix` and `Avatar` nodes to the graph via `AddNodeToGraph`
 1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by placing enums after `_:` (relationship additions can also be done w/ uids) via `AddRelationshipToGraph`
-1. Place a query into the response @ `response.matrix` via `QueryByNode`
 1. Place a backup into the response @ `response.backup` via `GetBackup`
 1. Place the schema into the response @ `response.schema` via `GetSchema`
+1. Place a query into the response @ `response.matrix` via `QueryByNode`
 ```ts
 const response = await ace({
   host: 'http://localhost:8787',
   request: [
     {
-      id: 'AddToSchema', // add to schema the nodes, relationships and properties here and place 'AddToSchema' response items @ response.addToSchema
-      property: 'addToSchema',
+      id: 'AddToSchema', // add the Actor node, the Movie node and the actsInMovie relationship to the schema
       x: {
         schema: {
           nodes: {
@@ -54,7 +53,7 @@ const response = await ace({
               id: 'ManyToMany',
               x: {
                 props: {
-                  _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with QueryByNode or QueryByRelationship, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (no underscores at start) and which props are relationship props (start with underscores)
+                  _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with QueryByNode or QueryByRelationship, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (no underscores at start) and which props are relationship props (starts with underscore)
                 }
               }
             }
@@ -71,8 +70,6 @@ const response = await ace({
 
     // a is the actor b/c schema.nodes.Actor has the ForwardRelationshipProp (Actor.actsIn)
     // b is the movie b/c schema.nodes.Movie has the ReverseRelationshipProp (Movie.actors)
-    // the order of a and b matters when a relationship has a ForwardRelationshipProp and a ReverseRelationshipProp
-    // b/c a is one perspective on the relationship and b is the other perspective on the relationship
     { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
     { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
     { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
@@ -80,8 +77,13 @@ const response = await ace({
     // IF a uid is not specified THEN Ace creates one before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
     { id: 'AddNodeToGraph', node: 'Movie', props: { name: 'Avatar' } },
 
+    // put a backup of the graph @ response.backup
+    { id: 'GetBackup', prop: 'backup' },
 
-    // query @ response.matrix
+    // put the current graph schema @ response.schema
+    { id: 'GetSchema', prop: 'schema' },
+
+    // put the response of this query @ response.matrix
     {
       id: 'QueryByNode',
       node: 'Movie',
@@ -110,12 +112,6 @@ const response = await ace({
         }
       }
     },
-
-    // place a backup of the graph into the response @ response.backup
-    { id: 'GetBackup', prop: 'backup' },
-
-    // place the current graph schema into the response @ response.schema
-    { id: 'GetSchema', prop: 'schema' },
   ]
 })
 ```
@@ -430,8 +426,9 @@ const schema = {
 1. Offline support > Response Allows Resume
 1. Studio
     * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
-1. Lovely Unity 1.0
-1. Real project benchmarks
+1. Lovely Unity v1.0
+    * Real project (example / benchmarks)
+    * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
 1. Docs
     * Search
     * Link to see / edit on GitHub
@@ -444,8 +441,10 @@ const schema = {
         * Open Governance
         * Community Driven
         * Welcome to all users and contributors
-    * Council
-        * Those that align with our roadmap and have ideas how it may improve
+    * Council will be those that:
+        * Align with the majority of our roadmap
+        * Have ideas for how to improve our roadmap
+        * Hope to be in the adventure together
 
 
 ## 🌟 Version 2 Roadmap 
@@ -509,7 +508,7 @@ const schema = {
     * Teach Ai w/ data from graph(s)
     * Ask Ai questions about graph(s)
 1. Rag support
-1. Ace Cloud
+1. Ace Cloud v1.0
     * via Ace Graph Database Foundation
     * Clean + Simple + Performant UX
     * Deploy / Monitor / Maintain graphs:
@@ -553,18 +552,18 @@ const schema = {
     * Version 3
 
 
-## 🧐 Version Update Plan
+## ✅ Version Update Plan
 1. 0.0.x (Prototype) to 0.1.0 (Beta)
     * When all 1.0 road map items are in testing
     * Will not include a migration script
 1. 0.x.0 to 1.0
-    * When all 1.0 road map items pass testing
+    * When all 1.0 road map items pass testing, Lovely Unity v1.0 is achieved and the Ace Database Foundation has been created
     * Will not include a migration script
 1. 1.x to 2.0
     * When all 2.0 road map items pass testing
     * Will include a 1.x to 2.0 migration script
 1. 2.x to 3.0
-    * When all 3.0 road map items pass testing
+    * When all 3.0 road map items pass testing and Ace Cloud v1.0 is achieved
     * Will include a 2.x to 3.0 migration script
 
 
