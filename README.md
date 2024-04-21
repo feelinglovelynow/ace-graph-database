@@ -84,8 +84,10 @@ const response = await ace({
     {
       id: 'QueryByNode',
       node: 'Movie',
-      prop: 'movies',
-      props: { // Movie props we wanna see in the response
+      prop: 'matrix',
+      props: {
+        $a: { findByUid: '_:Matrix' }, // Movie: options
+        // Movie: props that will be @ response response.matrix
         uid: true,
         name: true,
         actors: {
@@ -373,7 +375,7 @@ const schema = {
     * Function to communicate with the graph
     * fileToGraph Option: skipDataDelete: boolean
     * Sanitize / Validate Input
-    * Delete `cascadePropNames` array
+    * Delete `cascadeProps` array
     * Must relationship (storage fallback)
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
