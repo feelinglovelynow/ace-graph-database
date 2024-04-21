@@ -25,8 +25,8 @@ ace dev # start local graph
 ```
 ****Step 2: JavaScript (The 1 transactional function call to `ace()` below will)****
 1. Add nodes `Actor` and `Movie` and relationship `actsInMovie` to schema via `AddToSchema`
-1. Add `Avatar` and `The Matrix` nodes to graph via `AddNodeToGraph`
-1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by using enums placed after `_:` (relationship inserts can also be done w/ uids) via `AddNodeToRelationship`
+1. Add `The Matrix` and `Avatar` nodes to the graph via `AddNodeToGraph`
+1. Add `Keanu`, `Laurence` and `Carrie` nodes to the graph and add their relationships to the `Matrix` to the graph, by placing enums after `_:` (relationship additions can also be done w/ uids) via `AddRelationshipToGraph`
 1. Place a query into the response @ `response.matrix` via `QueryByNode`
 1. Place a backup into the response @ `response.backup` via `GetBackup`
 1. Place the schema into the response @ `response.schema` via `GetSchema`
@@ -73,11 +73,11 @@ const response = await ace({
     // b is the movie b/c schema.nodes.Movie has the ReverseRelationshipProp (Movie.actors)
     // the order of a and b matters when a relationship has a ForwardRelationshipProp and a ReverseRelationshipProp
     // b/c a is one perspective on the relationship and b is the other perspective on the relationship
-    { id: 'AddNodeToRelationship', relationship: 'actsInMovie', props: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
-    { id: 'AddNodeToRelationship', relationship: 'actsInMovie', props: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
-    { id: 'AddNodeToRelationship', relationship: 'actsInMovie', props: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
+    { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
+    { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
+    { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
 
-    // IF a uid is not specified THEN Ace creates one before placing node into storage AND this node can't be used in relationships for this ace() call
+    // IF a uid is not specified THEN Ace creates one before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
     { id: 'AddNodeToGraph', node: 'Movie', props: { name: 'Avatar' } },
 
 
@@ -93,10 +93,10 @@ const response = await ace({
         actors: {
           // actors: options
           $a: {
-            limit: { count: 2, skip: 1 }, // 3
-            flow: [ 'filter', 'sort', 'limit' ],
-            sort: { prop: 'salary', how: 'asc' }, // 2
-            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1
+            limit: { count: 2, skip: 1 },
+            flow: [ 'filter', 'sort', 'limit' ], // do filter, then do sort, then do limit
+            sort: { prop: 'salary', how: 'asc' },
+            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ],
             newProps: {
               bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
               fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
@@ -106,7 +106,7 @@ const response = await ace({
           // actors: props
           uid: true, // node prop (Actor)
           _uid: true, // relationship prop (actsInMovie)
-          _salary: { alias: 'salary' }, // alias property will be in response
+          _salary: { alias: 'salary' }, // alias property will be @ response.matrix.actors[i].salary
         }
       }
     },
@@ -149,72 +149,94 @@ ace version
 
 
 ace jwks
-  Creates public and private jwks and logs them to the console
+  Creates 1 public jwk and 1 private jwk (that may be used together) and logs the jwks to the console
   Why: Send jwks to ace() whenever you would love to do cryptography
-  JWK: A cryptography key, like a password, we recomend storing jwks in your .env file
+  JWKs:
+    - JSON Web Keys
+    - Cryptography keys
+    - Like a password
+      - A private jwk can encrypt and decrypt data
+      - A private jwk can create a hash while a public jwk can validate a hash
+      - We recomend storing jwks in your .env file
 
 
 
 ace dev
-  Start local Ace Graph Database (Cloudflare Worker + Cloudflare Durable Object)
+  Start a local Ace Graph Database (Cloudflare Worker + Cloudflare Durable Object)
 
 
 
 ace types
   Create types (TS) and typedefs (JSDoc)
+    - IF a host (Cloudflare Worker URL) is provided
+      - Types take into consideration your schema by requesting it via the host
+    - ELSE IF a (schema) file is provided [ Current Directory ]/ace/schemas/
+      - Types take into consideration your schema by loading it locally from 
+    - ELSE
+      - Types do not take into consideration your schema
   Options:
-    -u     |  URL  |  Optional  |  String
-    --url  |  URL  |  Optional  |  String
+    -h      |  Host       |  Optional  |  String
+    --host  |  Host       |  Optional  |  String
+    -n      |  File Name  |  Optional  |  String
+    --name  |  File Name  |  Optional  |  String
   Examples:
-    ace types -u=http://localhost:8787
-    ace types --url=http://localhost:8787
+    ace types -h=http://localhost:8787
+    ace types --host=http://localhost:8787
+    ace types -f=qa.json
+    ace types --file=2024-03-24T19:44:36.492Z.json
 
 
 
 ace schemaToFile
-  Ask graph for most recent schema and then save schema to a file locally
-  Location File: [current directory]/ace/schema.json
+  Get most recent schema from graph and then save schema to a file locally
+  Location File: [ Current Directory ]/ace/schemas/[ File Name ].json
+  File Name Default: Now Iso Datetime
   Options:
-    -u          |  URL       |  Required  |  String
-    --url       |  URL       |  Required  |  String
+    -h      |  Host       |  Required  |  String
+    --host  |  Host       |  Required  |  String
+    -n      |  File Name  |  Optional  |  String
+    --name  |  File Name  |  Optional  |  String
   Examples:
-    ace schemaToFile -u=http://localhost:8787
-    ace schemaToFile --url=http://localhost:8787
+    ace schemaToFile -h=http://localhost:8787
+    ace schemaToFile --host=http://localhost:8787
+    ace schemaToFile -h=http://localhost:8787 -n=qa.json
+    ace schemaToFile --host=http://localhost:8787 --name=dev.json
 
 
 
 ace graphToFile
   Generate backup and then save backup to a file locally
   Location File: [ Current Directory ]/ace/backups/[ File Name ].json
+  File Name Default: Now Iso Datetime
   Options:
-    -u          |  URL        |  Required  |  String
-    --url       |  URL        |  Required  |  String
-    -n          |  File Name  |  Optional  |  String
-    --name      |  File Name  |  Optional  |  String
+    -h      |  Host       |  Required  |  String
+    --host  |  Host       |  Required  |  String
+    -n      |  File Name  |  Optional  |  String
+    --name  |  File Name  |  Optional  |  String
   Examples:
-    ace graphToFile -u=http://localhost:8787
-    ace graphToFile --url=http://localhost:8787
-    ace graphToFile -u=http://localhost:8787 -n=qa
-    ace graphToFile --url=http://localhost:8787 --name=dev
+    ace graphToFile -h=http://localhost:8787
+    ace graphToFile --host=http://localhost:8787
+    ace graphToFile -h=http://localhost:8787 -n=qa
+    ace graphToFile --host=http://localhost:8787 --name=dev
 
 
 
 ace fileToGraph
   Read backup from file and then save backup to graph
-  File Location: [ Current Directory ]/ace/backups/[ File Name ].json
+  File Location: [ Current Directory ]/ace/backups/[ File ]
   Skip Data Delete: When a backup is applied with "ace fileToGraph" an entire graph delete is done first, to avoid the delete and just apply the backup use this option
   Options:
-    -n                |  File Name         |  Required  |  String
-    -name             |  File Name         |  Required  |  String
-    -u                |  URL               |  Required  |  String
-    --url             |  URL               |  Required  |  String
+    -f                |  File              |  Required  |  String
+    -file             |  File              |  Required  |  String
+    -h                |  Host              |  Required  |  String
+    --host            |  Host              |  Required  |  String
     -s                |  Skip Data Delete  |  Optional  |  Boolean
     --skipDataDelete  |  Skip Data Delete  |  Optional  |  Boolean
   Examples:
-    ace fileToGraph -n=qa.json -u=http://localhost:8787
-    ace fileToGraph --name=dev.json --url=http://localhost:8787
-    ace fileToGraph -n=backup.json -u=http://localhost:8787 -s=true
-    ace fileToGraph --name=2024-03-24T19:44:36.492Z.json --url=http://localhost:8787 --skipDataDelete=true
+    ace fileToGraph -f=qa.json -h=http://localhost:8787
+    ace fileToGraph --file=dev.json --host=http://localhost:8787
+    ace fileToGraph -f=backup.json -h=http://localhost:8787 -s=true
+    ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --host=http://localhost:8787 --skipDataDelete=true
 ```
 
 
@@ -275,7 +297,7 @@ const query = {
 
 const mutation = { id: 'AddNodeToGraph', node: 'Movie', props: { uid: '_:Matrix', name: 'The Matrix' } }
 
-const relationship = { id: 'AddNodeToRelationship', relationship: 'actsInMovie', props: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } }
+const relationship = { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', props: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } }
 
 const schema = {
   id: 'AddToSchema',
