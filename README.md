@@ -83,16 +83,29 @@ const response = await ace({
     // query all movies and their actors, only get the properties we request and place this information @ response.movies
     {
       id: 'QueryByNode',
-      nodeName: 'Movie',
+      node: 'Movie',
       prop: 'movies',
-      props: { // the first node shape we define is for the Movie node name
+      props: { // Movie props we wanna see in the response
         uid: true,
         name: true,
         actors: {
-          _uid: true, // relationship prop (actsInMovie)
-          _salary: { alias: 'salary' }, // alias property will be in response
+          // actors: options
+          $a: {
+            limit: { count: 2, skip: 1 }, // 3
+            flow: [ 'filter', 'sort', 'limit' ],
+            sort: { prop: 'salary', how: 'asc' }, // 2
+            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1
+            newProps: {
+              bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
+              fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
+            },
+          },
+
+          // actors: props
           uid: true, // node prop (Actor)
           name: true, // node prop (Actor)
+          _uid: true, // relationship prop (actsInMovie)
+          _salary: { alias: 'salary' }, // alias property will be in response
         }
       }
     },
@@ -120,13 +133,13 @@ curl --header "Content-Type: application/json" \
   --request POST \
   --data '{
     "request": [
-      { "id": "InsertNode", "nodeName": "Movie",  "x": { "name": "Hercules" } },
+      { "id": "AddNodeToGraph", "node": "Movie",  "x": { "name": "Hercules" } },
 
       {
-        "id": "QueryNode",
-        "nodeName": "Movie",
-        "property": "movies",
-        "x": {
+        "id": "QueryByNode",
+        "node": "Movie",
+        "prop": "movies",
+        "props": {
           "uid": true,
           "name": true
         }
@@ -264,11 +277,10 @@ const query = {
     actors: {
       $a: {
         alias: 'stars',
-        limit: { count: 9, skip: 9 }, // 4
-        sort: { prop: 'salary', how: 'asc' }, // 3
-        flow: [ 'avgAsProp', 'filter', 'sort', 'limit' ],
-        filter: [ { prop: 'salary' }, '>=', { prop: 'avgSalary' } ], // 2
-        avgAsProp: { prop: 'avgSalary', computeProp: 'salary' }, // 1
+        limit: { count: 9, skip: 9 }, // 3
+        flow: [ 'filter', 'sort', 'limit' ],
+        sort: { prop: 'salary', how: 'asc' }, // 2
+        filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1
         resHide: { avgSalary: true },
         newProps: {
           bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
@@ -316,14 +328,14 @@ const schema = {
         Movie: {
           props: {
             title: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', nodeName: 'Actor', relationshipName: 'actsInMovie' } },
+            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', node: 'Actor', relationship: 'actsInMovie' } },
           }
         },
         Actor: {
           props: {
             firstName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
             lastName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', nodeName: 'Movie', relationshipName: 'actsInMovie' } },
+            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'Movie', relationship: 'actsInMovie' } },
           }
         }
       },
@@ -617,7 +629,6 @@ const schema = {
 ## 🎁 All Our Packages
 1. @feelinglovelynow/ace-graph-database: [NPM](https://www.npmjs.com/package/@feelinglovelynow/ace-graph-database) ⋅ [Github](https://github.com/feelinglovelynow/ace-graph-database)
 1. @feelinglovelynow/datetime-local: [NPM](https://www.npmjs.com/package/@feelinglovelynow/datetime-local) ⋅ [Github](https://github.com/feelinglovelynow/datetime-local)
-1. @feelinglovelynow/dgraph: [NPM](https://www.npmjs.com/package/@feelinglovelynow/dgraph) ⋅ [Github](https://github.com/feelinglovelynow/dgraph)
 1. @feelinglovelynow/env-write: [NPM](https://www.npmjs.com/package/@feelinglovelynow/env-write) ⋅ [Github](https://github.com/feelinglovelynow/env-write)
 1. @feelinglovelynow/get-form-entries: [NPM](https://www.npmjs.com/package/@feelinglovelynow/get-form-entries) ⋅ [Github](https://github.com/feelinglovelynow/get-form-entries)
 1. @feelinglovelynow/get-relative-time: [NPM](https://www.npmjs.com/package/@feelinglovelynow/get-relative-time) ⋅ [Github](https://github.com/feelinglovelynow/get-relative-time)
