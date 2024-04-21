@@ -117,7 +117,7 @@ const response = await ace({
 ```
 ****Step 3: Bash****
 ``` bash
-ace types -w=http://localhost:8787 #generate types that align with above schema for intellisense during all future ace() calls
+ace types -h=http://localhost:8787 #generate types that align with the above schema for intellisense
 ```
 
 
@@ -538,7 +538,7 @@ const schema = {
     * Collaboration Tools
 
 
-## 😍 What options do I have to store my data?
+## 📀 What options do I have to store my data?
 1. Cloudflare Durable Object
     * Version 1
     * Their $5 a month pricing tier allows:
