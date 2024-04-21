@@ -125,32 +125,7 @@ ace types -w=http://localhost:8787 #generate types that align with above schema 
 ```
 
 
-## 💪 Call `ace()` with cURL
-* The Ace query language with cURL, is the same as above in `JS/TS`
-* Thanks to `ace types`, above is easier, thanks to intellisense
-* To format the JSON response, `npm i -g json` and then @ the end of a cURL add ` | json`
-``` bash
-curl --header "Content-Type: application/json" \
-  --request POST \
-  --data '{
-    "request": [
-      { "id": "AddNodeToGraph", "node": "Movie",  "x": { "name": "Hercules" } },
-
-      {
-        "id": "QueryByNode",
-        "node": "Movie",
-        "prop": "movies",
-        "props": {
-          "uid": true,
-          "name": true
-        }
-      }
-    ]
-  }' \
-  http://localhost:8787/ace
-```
-
-## 😎 CLI
+## ⚡️ CLI
 * Clone this repo or pull `@feelinglovelynow/ace-graph-database` from npm to get access to our cli
 * To show everything our cli can do, asking our cli for help... is helpful 🥁
 * To do this, in bash just enter, `ace`, `ace -h`, `ace --help` or `ace help` and this is what shows up:
@@ -244,25 +219,7 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap 
-1. Response Types
-1. How local db schema to prod db schema
-    * Update prop column name
-    * Based on the schema diff, we know what happened with the migration
-        * Original Schema, Now Schema
-            * Any (new/less) nodes
-            * Any (new/less) relationships
-            * Any (new/less) (node/relationship) props
-            * Any props have different values
-            * How do we know the difference between a rename and a removal and an addition
-                * B/c on a rename we want to keep the previous data
-                * first_name to firstName
-                * Add firstName column is the first migration
-                * CopyColumnData is the 2nd step
-                * Remove first_name column is the last migration
-                * https://planetscale.com/docs/learn/how-to-make-different-types-of-schema-changes
-                * https://planetscale.com/blog/backward-compatible-databases-changes
-        * Once we know the answer to the above questions we can craft the proper `ace()`
-1. Refactor, to help w/:
+1. $options array to $a object, to help w/:
     * Improve (typing / response) intellisense
     * Less typing required
     * Property to Prop
@@ -406,9 +363,26 @@ const schema = {
     * Email Log
     * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
-1. Logs
+1. How local db schema to prod db schema
+    * Update prop column name
+    * Based on the schema diff, we know what happened with the migration
+        * Original Schema, Now Schema
+            * Any (new/less) nodes
+            * Any (new/less) relationships
+            * Any (new/less) (node/relationship) props
+            * Any props have different values
+            * How do we know the difference between a rename and a removal and an addition
+                * B/c on a rename we want to keep the previous data
+                * first_name to firstName
+                * Add firstName column is the first migration
+                * CopyColumnData is the 2nd step
+                * Remove first_name column is the last migration
+                * https://planetscale.com/docs/learn/how-to-make-different-types-of-schema-changes
+                * https://planetscale.com/blog/backward-compatible-databases-changes
+        * Once we know the answer to the above questions we can craft the proper `ace()`1. Logs
     * Put [ Key, Original, Now, Request Item, API Token ]
     * Delete [ Key, API Token ]
+1. Response Types
 1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
 1. Security
@@ -626,6 +600,33 @@ const schema = {
 1. Drizzle
 1. Durable Objects
 1. Ace
+
+
+
+## 🌎 Call `ace()` with cURL
+* The Ace query language with cURL, is the same as above in `JS/TS`
+* Thanks to `ace types`, above is easier, thanks to intellisense
+* To format the JSON response, `npm i -g json` and then @ the end of a cURL add ` | json`
+``` bash
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{
+    "request": [
+      { "id": "AddNodeToGraph", "node": "Movie",  "x": { "name": "Hercules" } },
+
+      {
+        "id": "QueryByNode",
+        "node": "Movie",
+        "prop": "movies",
+        "props": {
+          "uid": true,
+          "name": true
+        }
+      }
+    ]
+  }' \
+  http://localhost:8787/ace
+```
 
 
 ## 🎁 All Our Packages
