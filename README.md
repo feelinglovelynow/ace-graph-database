@@ -171,10 +171,10 @@ ace types
     - ELSE
       - Types do not take into consideration your schema
   Options:
-    -h      |  Host       |  Optional  |  String
-    --host  |  Host       |  Optional  |  String
-    -n      |  File Name  |  Optional  |  String
-    --name  |  File Name  |  Optional  |  String
+    -h      |  Host  |  Optional  |  String
+    --host  |  Host  |  Optional  |  String
+    -f      |  File  |  Optional  |  String
+    --file  |  File  |  Optional  |  String
   Examples:
     ace types -h=http://localhost:8787
     ace types --host=http://localhost:8787
