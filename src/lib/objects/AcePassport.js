@@ -1,7 +1,6 @@
 import { td, enums } from '#ace'
-import { AceError } from './AceError.js'
 import { _ace  } from '../ace/ace.js'
-import { AceCache, one } from './AceCache.js'
+import { AceError } from './AceError.js'
 import { DELIMITER, REQUEST_TOKEN_HEADER, SCHEMA_KEY, getRevokesKey, getUniqueIndexKey } from '../variables.js'
 
 
@@ -12,14 +11,14 @@ import { DELIMITER, REQUEST_TOKEN_HEADER, SCHEMA_KEY, getRevokesKey, getUniqueIn
 export function AcePassport (options) {
   let passport = {}
 
-  if (options.cache) passport.cache = options.cache
-  else if (options.storage) passport.cache = AceCache(options.storage)
-  else throw AceError('passport__cache-required', 'Please pass options.cache or options.storage to AcePassport(options) so Cache may be setup', { options })
+  if (options.storage) passport.storage = options.storage
+  else throw AceError('passport__storage-falsy', 'Please pass options.storage to AcePassport(options)', { options })
 
   if (!options.source) throw AceError('passport__falsy-source', 'Please pass options.source to AcePassport(options)', { options })
   if (!enums.passportSource[options.source]) throw AceError('passport__invalid-source', 'Please pass a valid options.source to AcePassport(options)', { options, validSources: enums.passportSource })
 
   passport.source = options.source
+  passport.$aceDataStructures = /** @type { td.AceFn$DataStructure } */ ({ newUids: new Map(), deletedKeys: new Set(), putMap: new Map() })
 
   if (options.user) passport.user = options.user
   if (options.token) passport.token = options.token
@@ -38,7 +37,7 @@ export function AcePassport (options) {
  * @param { td.AcePassport } passport
  */
 export async function stamp (passport) {
-  if (!passport.schema) passport.schema = await one(SCHEMA_KEY, passport.cache)
+  if (!passport.schema) passport.schema = await passport.storage.get(SCHEMA_KEY)
   if (!passport.schemaDataStructures) setSchemaDataStructures(passport)
 
   const _passport = AcePassport({ ...passport, source: enums.passportSource.stamp })
@@ -145,7 +144,7 @@ async function getUser (_passport) {
             password: true,
             role: {
               uid: true,
-              revokesAcePermissions: {
+              aceRevokesPermissions: {
                 uid: true,
                 action: true,
                 nodeName: true,
@@ -194,7 +193,7 @@ function getRevokesAcePermissions (isEnforcePermissionsOn, user)  {
  */
 async function getIsEnforcePermissionsOn (_passport) {
   const key = getUniqueIndexKey('AceSetting', 'enum', enums.settings.enforcePermissions)
-  const uid = await one(key, _passport.cache)
+  const uid = await _passport.storage.get(key)
 
   if (!uid) return false
 

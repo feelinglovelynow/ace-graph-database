@@ -135,8 +135,8 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
 
       combined.sort((a, b) => {
         let rSort = 0
-        let x = a.original[property]
-        let y = b.original[property]
+        let x = a.now[property]
+        let y = b.now[property]
 
         if (x < y) rSort = (option.x.direction === enums.sortOptions.dsc) ? 1 : -1
         if (x > y) rSort = (option.x.direction === enums.sortOptions.dsc) ? -1 : 1
@@ -144,8 +144,8 @@ export async function implementQueryOptions (xGenerated, response, isUsingSortIn
         return rSort
       })
 
-      response.now = combined.map((value) => value.now)
-      response.original = combined.map((value) => value.original)
+      response.now[xGenerated.propName] = combined.map((value) => value.now)
+      response.original[xGenerated.propName] = combined.map((value) => value.original)
     }
   }
 

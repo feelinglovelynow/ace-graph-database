@@ -16,9 +16,9 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/ace/query/queryWhere.js',
     './tsc/src/lib/ace/ace.js',
     './tsc/src/lib/ace/mutate.js',
+    './tsc/src/lib/ace/storage.js',
     './tsc/src/lib/ace/validateSchema.js',
 
-    './tsc/src/lib/objects/AceCache.js',
     './tsc/src/lib/objects/AceError.js',
     './tsc/src/lib/objects/AcePassport.js',
 

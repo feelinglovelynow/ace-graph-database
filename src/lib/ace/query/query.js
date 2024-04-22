@@ -1,6 +1,5 @@
 import { td, enums } from '#ace'
-import { many, one } from '../../objects/AceCache.js'
-import { AceAuthError, AceError } from '../../objects/AceError.js'
+import { AceAuthError } from '../../objects/AceError.js'
 import { implementQueryOptions } from './implementQueryOptions.js'
 import { getXGeneratedByParent, getXGeneratedById } from './getXGenerated.js'
 import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey, getNodeUidsKey, getRelationshipUidsKey } from '../../variables.js'
@@ -55,7 +54,7 @@ async function getInitialUids (requestItem, passport) {
 
   if (sortOptions) {
     const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', sortOptions.x.property) // IF sorting by an property requested => see if property is a sort index
-    if (indexKey) uids = await one(indexKey, passport.cache)
+    if (indexKey) uids = await passport.storage.get(indexKey)
   }
 
   let isUsingSortIndex = false
@@ -70,7 +69,7 @@ async function getInitialUids (requestItem, passport) {
       if (!uids.length) isValid = false
     } else if (findByUnique) {
       const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', findByUnique.x.property, findByUnique.x.value)
-      const rCache = await one(key, passport.cache)
+      const rCache = await passport.storage.get(key)
       const uid = rCache.get(key)
       uids = uid ? [uid ] : []
       if (!uids.length) isValid = false
@@ -79,15 +78,17 @@ async function getInitialUids (requestItem, passport) {
         return getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', value.property, value.value)
       })
 
-      const rCache = await many(keys, passport.cache)
+      const rCache = await passport.storage.get(keys)
       uids = [ ...(rCache.values()) ]
       if (!uids.length) isValid = false
     }
 
     if (isValid && !uids?.length) {
       uids = requestItem.id === 'QueryNode' ?
-        await one(getNodeUidsKey(xGenerated.nodeName || ''), passport.cache) || [] :
-        await one(getRelationshipUidsKey(xGenerated.relationshipName || ''), passport.cache) || []
+        !xGenerated.nodeName ? [] : await passport.storage.get(getNodeUidsKey(xGenerated.nodeName)) :
+        !xGenerated.relationshipName ? [] : await passport.storage.get(getRelationshipUidsKey(xGenerated.relationshipName))
+
+      if (!uids) uids = []
     }
   }
 
@@ -115,7 +116,7 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
 
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { nodeName: xGenerated.nodeName })
 
-  const rCache = await many(uids, passport.cache)
+  const rCache = await passport.storage.get(uids)
 
   for (let i = 0; i < uids.length; i++) {
     const node = rCache.get(uids[i])
@@ -167,7 +168,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
     _uid = item.relationship?.x?._uid
   } else if (item.uid) {
     uid = item.uid
-    graphItem = await one(uid, passport.cache)
+    graphItem = await passport.storage.get(uid)
   }
 
   if (!graphItem) {
@@ -283,7 +284,7 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
     }
   }
 
-  const rCache = await many(uids, passport.cache)
+  const rCache = await passport.storage.get(uids)
 
   for (let i = 0; i < uids.length; i++) {
     const relationship = rCache.get(uids[i])
@@ -333,26 +334,26 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
     const uniqueUids = /** @type { string[] } */ ([])
 
     if (uniqueKeys.length) {
-      (await many(uniqueKeys, passport.cache)).forEach(value => {
+      (await passport.storage.get(uniqueKeys)).forEach((/** @type {*} */ value) => {
         uniqueUids.push(value)
       })
     }
 
-    const rCache = await many(relationshipUids, passport.cache)
+    const graphRelationshipsMap = /** @type { Map<string, td.AceGraphRelationship> } */ (await passport.storage.get(relationshipUids))
 
     switch (schemaNodeProp.id) {
       case enums.idsSchema.ForwardRelationshipProp:
-        rCache.forEach((graphRelationship, graphRelationshipKey) => {
+        graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
           if (uid === graphRelationship?.x.a) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
         })
         break
       case enums.idsSchema.ReverseRelationshipProp:
-        rCache.forEach((graphRelationship, graphRelationshipKey) => {
+        graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
           if (uid === graphRelationship?.x.b) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
         })
         break
       case enums.idsSchema.BidirectionalRelationshipProp:
-        rCache.forEach((graphRelationship, graphRelationshipKey) => {
+        graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
           validateAndPushUids(relationshipGeneratedQueryXSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
         })
         break

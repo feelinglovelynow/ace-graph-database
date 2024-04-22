@@ -17,7 +17,6 @@ export async function aceFetch (options) {
     requestInit.method = options?.method ? options.method : 'POST'
     
     if (options?.token) requestInit.headers[REQUEST_TOKEN_HEADER] = options.token
-
     response = await (await fetch(options.url, requestInit)).json()
     return response
   } catch (error) {

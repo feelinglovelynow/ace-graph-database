@@ -195,8 +195,8 @@ ace schemaToFile
   Examples:
     ace schemaToFile -h=http://localhost:8787
     ace schemaToFile --host=http://localhost:8787
-    ace schemaToFile -h=http://localhost:8787 -n=qa.json
-    ace schemaToFile --host=http://localhost:8787 --name=dev.json
+    ace schemaToFile -h=http://localhost:8787 -n=qa
+    ace schemaToFile --host=http://localhost:8787 --name=dev
 
 
 
@@ -253,7 +253,7 @@ const query = {
     actors: {
       $a: {
         alias: 'stars',
-        limit: { count: 9, skip: 9 }, // 3
+        limit: { count: 9, skip: 9, random: true }, // skip the first 9, get random 9 more
         flow: [ 'filter', 'sort', 'limit' ],
         sort: { prop: 'salary', how: 'asc' }, // 2
         filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1

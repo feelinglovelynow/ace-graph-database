@@ -13,7 +13,6 @@ export function core () {
         {
           id: 'SchemaAdd',
           x: {
-            allowAcePrefix: true,
             schema: {
               nodes: {
                 AceSetting: {

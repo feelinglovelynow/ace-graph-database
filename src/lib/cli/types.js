@@ -52,29 +52,26 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { AceFnStringJWKs } [ privateJWKs ]
  * @property { AceFnStringJWKs } [ publicJWKs ]
  *
+ * @typedef { AceQueryRequestItem | AceMutateRequestItem | (AceQueryRequestItem | AceMutateRequestItem)[] } AceFnRequest
+ * @typedef { { [prop: string]: any, $ace: AceFn$ } } AceFnResponse
+ * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } AceFnFullResponse
+ * @typedef { { success: true } } AceFnEmptyResponse
+ *
  * @typedef { object } AceFnFetchOptions
- * @property { string } worker - URL for the Cloudflare Worker that points to your Ace Graph Database
+ * @property { string } host - Host URL for the Cloudflare Worker that points to your Ace Graph Database
  * @property { AceFnRequest } request
  * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling \`id: 'Start'\` from \`mutate()\`
  * @property { { [jwkName: string]: string } } [ publicJWKs ]
  * @property { { [jwkName: string]: string } } [ privateJWKs ]
  *
- * @typedef { AceQueryRequestItem | AceMutateRequestItem | (AceQueryRequestItem | AceMutateRequestItem)[] } AceFnRequest
- *
- * @typedef { { now: { [k: string]: any }, original: { [k: string]: any } } } AceFnFullResponse
- *
  * @typedef { { [key: string]: string } } AceFnStringJWKs
  * @typedef { { [key: string]: CryptoKey } } AceFnCryptoJWKs
  *
- * @typedef { { success: true } } AceFnEmptyResponse
- *
  * @typedef { { newUids: { [uid: string]: string }, deletedKeys: string[] } } AceFn$
+ * @typedef { { newUids: Map<string, string>, deletedKeys: Set<string>, putMap: Map<string, any> } } AceFn$DataStructure
  *
- * @typedef { { [prop: string]: any, $ace: AceFn$ } } AceFnResponse
- *
- * @typedef { Map<string, string> } AceFnNewUids - As we find uids with a REQUEST_UID_PREFIX we will add the REQUEST_UID_PREFIX as the key and it's crypto Ace Graph Database uid as the value.
- * @typedef { Map<string, string[]> } AceFnNodeUidsMap - <nodeName, uids> Uids of specific nodes in graph
  * @typedef { { nodes: any, relationships: any } } AceFnUpdateRequestItems - If updating we store the orignal items here, based on the uid (nodes) or _uid (relationships)
+ * 
  * @typedef { Map<string, { nodeName: string, nodePropName: string, uids: string[] }> } AceFnSortIndexMap - As we find properties that according to the schema need a sort index insert we will keep track of them here. Once we get them all together, we sort them, and then add to graph.
  */
 
@@ -96,9 +93,10 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 /** AcePassport
  *
  * @typedef { object } AcePassport
- * @property { AceCache } cache
+ * @property { Ace_CF_DO_Storage } storage
  * @property { enums.passportSource } source - The source function that created this passport
  * @property { AcePassportUser } user
+ * @property { AceFn$DataStructure } $aceDataStructures
  * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling mutate > Initalize
  * @property { AceSchema } [ schema ]
  * @property { Map<string, AceGraphPermission> } [ revokesAcePermissions ]
@@ -120,7 +118,6 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AcePassportOptions
  * @property { enums.passportSource } source - The source function that created this passport
  * @property { Ace_CF_DO_Storage } [ storage ] - Cloudflare Durable Object Storage (Ace Graph Database)
- * @property { AceCache } [ cache ]
  * @property { AcePassportUser } [ user ]
  * @property { string | null } [ token ] - If AceSetting.enforcePermissions is true, this token must be defined, a token can be created when calling mutate > Start
  * @property { AceSchema } [ schema ]
@@ -253,7 +250,6 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { string } [ property ]
  * @property { AceMutateRequestItemSchemaAddX } x
  * @typedef { object } AceMutateRequestItemSchemaAddX
- * @property { boolean } [ allowAcePrefix ]
  * @property { AceSchema } schema
  *
  * @typedef { object } AceMutateRequestPrivateJWKOption
@@ -307,7 +303,7 @@ ${ typedefs.query.RelationshipType }
  * @typedef { { id: typeof enums.idsQueryOptions.Value, x: { value: any } } } AceQueryValue
  * @typedef { { id: typeof enums.idsQueryOptions.Alias, property: string } } AceQueryAliasProperty
  * @typedef { { id: typeof enums.idsQueryOptions.Limit, x: { skip?: number, count?: number } } } AceQueryLimit
- * @typedef { { id: typeof enums.idsQueryOptions.Sort, x: { direction: 'asc' | 'dsc', property: string } } } AceQuerySort
+ * @typedef { { id: typeof enums.idsQueryOptions.Sort, x: { direction: enums.sortOptions, property: string } } } AceQuerySort
  * @typedef { { id: typeof enums.idsQueryOptions.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (AceQueryProperty | AceQueryValue | AceQueryDerivedGroup)[] } } } AceQueryDerivedGroup
  *
  * @typedef { object } AceQueryFind
@@ -563,16 +559,6 @@ ${ typedefs.query.RelationshipType }
 /** AceBackup
  *
  * @typedef { { [k: string]: any }  } AceBackupResponse
- */
-
-
-/** AceCache
- *
- * @typedef { object } AceCache
- * @property { Ace_CF_DO_Storage } storage
- * @property { Map<string, any> } putMap
- * @property { Map<string, any> } getMap
- * @property { Set<string> } deleteSet
  */
 `
 }

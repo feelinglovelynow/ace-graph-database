@@ -9,9 +9,9 @@
     "src/lib/ace/query/queryWhere.js",
     "src/lib/ace/ace.js",
     "src/lib/ace/mutate.js",
+    "src/lib/ace/storage.js",
     "src/lib/ace/validateSchema.js",
 
-    "src/lib/objects/AceCache.js",
     "src/lib/objects/AceError.js",
     "src/lib/objects/AcePassport.js",
 

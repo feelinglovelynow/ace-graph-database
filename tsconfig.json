@@ -10,13 +10,13 @@
     "src/lib/ace/ace.js",
     "src/lib/ace/plugins/core.js",
     "src/lib/ace/mutate.js",
+    "src/lib/ace/storage.js",
     "src/lib/ace/validateSchema.js",
 
     "src/lib/cli/cli.js",
     "src/lib/cli/enums.js",
     "src/lib/cli/types.js",
 
-    "src/lib/objects/AceCache.js",
     "src/lib/objects/AceError.js",
     "src/lib/objects/AcePassport.js",
 
