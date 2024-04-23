@@ -14,7 +14,7 @@ import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey,
  * @returns { Promise<void> }
  */
 export async function queryNode (requestItem, passport, response, publicJWKs, iRequest) {
-  if (passport.schemaDataStructures?.nodeNamesSet?.has(requestItem.nodeName)) {
+  if (passport.schemaDataStructures?.nodeNamesSet?.has(requestItem.node)) {
     const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
     await addNodesToResponse(xGenerated, response, uids, null, isUsingSortIndex, passport, publicJWKs, iRequest)
   }
@@ -30,8 +30,9 @@ export async function queryNode (requestItem, passport, response, publicJWKs, iR
  * @returns { Promise<void> }
  */
 export async function queryRelationship (requestItem, passport, response, publicJWKs, iRequest) {
-  if (passport.schemaDataStructures?.relationshipNamesSet?.has(requestItem.relationshipName)) {
+  if (passport.schemaDataStructures?.relationshipNamesSet?.has(requestItem.relationship)) {
     const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
+
     await addRelationshipsToResponse(xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest)
   }
 }
@@ -45,7 +46,7 @@ export async function queryRelationship (requestItem, passport, response, public
 async function getInitialUids (requestItem, passport) {
   let uids
 
-  const xGenerated = getXGeneratedById (requestItem, passport)
+  const xGenerated = getXGeneratedById(requestItem, passport)
   const sortOptions = /** @type { td.AceQuerySort } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.Sort))
   const findByUid = /** @type { td.AceQueryFindByUid } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FindByUid))
   const findByUnique = /** @type { td.AceQueryFindByUnique } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FindByUnique))
@@ -112,9 +113,9 @@ async function getInitialUids (requestItem, passport) {
  * @returns { Promise<void> }
  */
 async function addNodesToResponse (xGenerated, response, uids, graphRelationships, isUsingSortIndex, passport, publicJWKs, iRequest) {
-  const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', nodeName: xGenerated.nodeName, propName: '*' }))
+  const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop: '*' }))
 
-  if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { nodeName: xGenerated.nodeName })
+  if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { node: xGenerated.nodeName })
 
   const rCache = await passport.storage.get(uids)
 
@@ -189,8 +190,8 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
 
     for (const xKey in xGenerated.x) { // loop a section of query.x object
       const revokesOptions = item.relationship ?
-        { key: getRevokesKey({ action: 'read', relationshipName: xGenerated.relationshipName, propName: xKey }) } :
-        { key: getRevokesKey({ action: 'read', nodeName: xGenerated.nodeName, propName: xKey }) }
+        { key: getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop: xKey }) } :
+        { key: getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop: xKey }) }
 
       if (isRevokesAllowed(responseOriginalItem, revokesOptions, passport)) {
         const xValue = xGenerated.x[xKey]
@@ -212,9 +213,9 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
           if (isTruthy) responseNowItem[xKey] = graphRelationship.value[xKey]
           else if (alias) responseNowItem[alias] = graphRelationship?.value[xKey]
         } else if (parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.ForwardRelationshipProp || parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.ReverseRelationshipProp || parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.BidirectionalRelationshipProp) { // this prop is defined @ schema.nodes and is a SchemaRelationshipProp
-          const relationshipUids = graphItem[getRelationshipProp(parentNodeOptions.schemaNodeProp.x.relationshipName)]
+          const relationshipUids = graphItem[getRelationshipProp(parentNodeOptions.schemaNodeProp.x.relationship)]
           await addRelationshipPropsToResponse(uid, relationshipUids, parentNodeOptions.schemaNodeProp, xKey, xValue, xGenerated, responseNowItem, responseOriginalItem, passport, publicJWKs, iRequest)
-        } else if (item.relationship && xKey !== '$options' && relationshipPropsMap) {
+        } else if (item.relationship && xKey !== '$o' && relationshipPropsMap) {
           const schemaNodeProp = relationshipPropsMap.get(xKey)
           const relationshipGeneratedQueryXSection = getXGeneratedByParent(xValue, xKey, passport, xGenerated)  
 
@@ -264,9 +265,9 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
  * @returns { Promise<void> }
  */
 async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest) {
-  const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', relationshipName: xGenerated.relationshipName, propName: '*' }))
+  const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop: '*' }))
 
-  if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { relationshipName: xGenerated.relationshipName })
+  if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { relationship: xGenerated.relationshipName })
 
   const findBy_Uid = /** @type { td.AceQueryFindBy_Uid } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FindBy_Uid))
 
@@ -288,6 +289,7 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
 
   for (let i = 0; i < uids.length; i++) {
     const relationship = rCache.get(uids[i])
+
     if (isRevokesAllowed(relationship.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { relationship }, null, passport, publicJWKs, iRequest)
   }
 

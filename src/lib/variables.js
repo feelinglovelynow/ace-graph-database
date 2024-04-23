@@ -92,14 +92,14 @@ export function getRelationshipUidsKey (relationshipName) {
 
 
 /**
- * @param { { action: *, schema?: boolean, nodeName?: string, relationshipName?: string, propName?: string } } x 
+ * @param { { action: *, schema?: boolean, node?: string, relationship?: string, prop?: string } } x 
  * @returns { string }
  */
 export function getRevokesKey (x) {
   let response = ''
 
   if (x.schema) response = x.action + DELIMITER + 'schema'
-  else if (x.nodeName || x.relationshipName) response = x.action + DELIMITER + (x.nodeName || x.relationshipName) + DELIMITER + x.propName
+  else if (x.node || x.relationship) response = x.action + DELIMITER + (x.node || x.relationship) + DELIMITER + x.prop
 
   return response
 }

@@ -13,8 +13,8 @@ import { getRelationshipNode } from './getRelationshipNode.js'
  * @returns { Promise<void> }
  */
 export async function implementQueryOptions (xGenerated, response, isUsingSortIndex, publicJWKs, passport) {
-  if (xGenerated.x.$options) {
-    for (let option of xGenerated.x.$options) {
+  if (xGenerated.x.$o) {
+    for (let option of xGenerated.x.$o) {
       switch (option.id) {
         case enums.idsQueryOptions.Find:
         case enums.idsQueryOptions.Filter:

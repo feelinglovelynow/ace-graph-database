@@ -9,8 +9,8 @@ import { AceError } from '../../objects/AceError.js'
  */
 export function getXGeneratedById (requestItem, passport) {
   if (requestItem.id !== 'QueryNode' && requestItem.id !== 'QueryRelationship') throw AceError('getXGeneratedById__x-id-invalid', 'This request is failing b/c request.x.id is not a truthy string of QueryNode or QueryRelationship', { query: requestItem })
-  if (requestItem.id === 'QueryNode' && !passport.schema?.nodes[requestItem.nodeName]) throw AceError('getXGeneratedById__x-section-id-node-invalid', 'This request is failing b/c request.x.nodeName is not a node in your schema', { query: requestItem })
-  if (requestItem.id === 'QueryRelationship' && !passport.schema?.relationships[requestItem.relationshipName]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
+  if (requestItem.id === 'QueryNode' && !passport.schema?.nodes[requestItem.node]) throw AceError('getXGeneratedById__x-section-id-node-invalid', 'This request is failing b/c request.x.nodeName is not a node in your schema', { query: requestItem })
+  if (requestItem.id === 'QueryRelationship' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
 
   const rLoop = loopOptions(requestItem.x)
 
@@ -19,12 +19,13 @@ export function getXGeneratedById (requestItem, passport) {
     x: requestItem.x,
     id: requestItem.id,
     has: enums.has.many,
-    xPropName: requestItem.property,
+    xPropName: requestItem.prop,
     aliasPropName: rLoop.aliasPropName,
-    propName: rLoop.aliasPropName || requestItem.property,
+    propName: rLoop.aliasPropName || requestItem.prop,
   })
 
-  if (/** @type { td.AceQueryRequestItemNode } */(requestItem).nodeName) response.nodeName = /** @type { td.AceQueryRequestItemNode } */(requestItem).nodeName
+  if (/** @type { td.AceQueryRequestItemNode } */(requestItem).node) response.nodeName = /** @type { td.AceQueryRequestItemNode } */(requestItem).node
+  else if (/** @type { td.AceQueryRequestItemRelationship } */(requestItem).relationship) response.relationshipName = /** @type { td.AceQueryRequestItemRelationship } */(requestItem).relationship
 
   return response
 }
@@ -61,12 +62,12 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
   return {
     ...rLoop,
     x: xValue,
-    nodeName: schemaPropValue.x.nodeName,
+    nodeName: schemaPropValue.x.node,
     has: schemaPropValue.x.has,
     xPropName: xKey,
     aliasPropName: rLoop.aliasPropName,
     propName: rLoop.aliasPropName || xKey,
-    relationshipName: schemaPropValue.x.relationshipName,
+    relationshipName: schemaPropValue.x.relationship,
   }
 }
 
@@ -83,8 +84,8 @@ function loopOptions (x) {
   let hasValueAsResponse = false
   const priorityOptions = new Map()
 
-  if (x?.$options?.length) {
-    for (const $o of x.$options) {
+  if (x?.$o?.length) {
+    for (const $o of x.$o) {
       if ($o.id === 'Sort') priorityOptions.set('Sort', $o)
       else if ($o.id === 'Alias') aliasPropName = $o.property
       else if ($o.id === 'Limit') { if ($o.x.count === 1) hasCountOne = true }

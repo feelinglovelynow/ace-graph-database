@@ -16,7 +16,7 @@ export function typedefs (schema) {
 ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { object } AceGraphRelationship
- * @property { string } relationshipName
+ * @property { string } relationship
  * @property { AcGraphRelationshipX } x
  * @typedef { { a: string, b: string, _uid: string, [propName: string]: any } } AcGraphRelationshipX
  * 
@@ -24,8 +24,8 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { string } uid
  * @property { enums.permissionActions } action
  * @property { boolean } [ schema ]
- * @property { string } [ nodeName ]
- * @property { string } [ relationshipName ]
+ * @property { string } [ node ]
+ * @property { string } [ relationship ]
  * @property { string } [ propName ]
  * @property { string } [ allowPropName ]
  */
@@ -34,7 +34,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 /** AceError
  *
  * @typedef { { id: string, detail: string, [errorItemKey: string]: any} } AceError
- * @typedef { { nodeName?: string, relationshipName?: string, propName?: string, schema?: boolean } } AceAuthErrorOptions
+ * @typedef { { node?: string, relationship?: string, prop?: string, schema?: boolean } } AceAuthErrorOptions
  */
 
 
@@ -176,8 +176,8 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { object } AceSchemaNodeRelationshipX
  * @property { enums.has } has - Does this node have a max of \`one\` of these props or a max of \`many\`
- * @property { string } nodeName - The node name that this prop points to
- * @property { string } relationshipName - Each node prop that is a relationship must also align with a relationship name. This way the relationship can have its own props.
+ * @property { string } node - The node name that this prop points to
+ * @property { string } relationship - Each node prop that is a relationship must also align with a relationship name. This way the relationship can have its own props.
  * @property { boolean } [ mustBeDefined ] - Must each node in the graph, that aligns with this relationship, have this relationship defined
  * @property { string } [ description ] - Custom description that Ace will add to other types, example: query / mutation types
  *
@@ -194,7 +194,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { AceMutateRequestItemUpdateNode | AceMutateRequestItemUpdateRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
  * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes } AceMutateRequestItemSchemaAndData
- * @typedef { AceMutateRequestItemSchemaAdd } AceMutateRequestItemSchema
+ * @typedef { AceMutateRequestItemAddToSchema } AceMutateRequestItemSchema
  * @typedef { AceMutateRequestItemBackupGet | AceMutateRequestItemBackupLoad } AceMutateRequestItemBackup
  * @typedef { AceMutateRequestItemPluginInstall | AceMutateRequestItemPluginUninstall } AceMutateRequestItemPlugin
  *
@@ -245,11 +245,11 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { typeof enums.idsAce.SchemaAndDataDeleteNodes } id
  * @property { { nodes: ${ typedefs.mutate.SchemaAndDataDeleteNodesType || 'string[]' } } } x
  *
- * @typedef { object } AceMutateRequestItemSchemaAdd
- * @property { typeof enums.idsAce.SchemaAdd } id
- * @property { string } [ property ]
- * @property { AceMutateRequestItemSchemaAddX } x
- * @typedef { object } AceMutateRequestItemSchemaAddX
+ * @typedef { object } AceMutateRequestItemAddToSchema
+ * @property { typeof enums.idsAce.AddToSchema } id
+ * @property { string } [ prop ]
+ * @property { AceMutateRequestItemAddToSchemaX } x
+ * @typedef { object } AceMutateRequestItemAddToSchemaX
  * @property { AceSchema } schema
  *
  * @typedef { object } AceMutateRequestPrivateJWKOption
@@ -270,8 +270,8 @@ ${ typedefs.query.NodeType }
  *
 ${ typedefs.query.RelationshipType }
  *
- * @typedef { { [propertyName: string]: any,   uid?: boolean | AceQueryAliasProperty,  $options?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemNodeX
- * @typedef { { [propertyName: string]: any,   _uid?: boolean | AceQueryAliasProperty, $options?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemRelationshipX
+ * @typedef { { [propertyName: string]: any,   uid?: boolean | AceQueryAliasProperty,  $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemNodeX
+ * @typedef { { [propertyName: string]: any,   _uid?: boolean | AceQueryAliasProperty, $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemRelationshipX
  * @typedef { ${ queryRequestItemNodeOptions } } AceQueryRequestItemNodeOptions
  * @typedef { ${ queryRequestItemRelationshipOptions } } AceQueryRequestItemRelationshipOptions
  * 
@@ -368,25 +368,25 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryProperty } property - Loop the items and only return the items that are defined at this property
  *
  * @typedef { object } AceQueryFilterByUids
- * @property { typeof enums.idsQueryOptions.FilterByUids } id - Recieves an array of uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { typeof enums.idsQueryOptions.FilterByUids } id - Recieves an array of uids and returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
  * @property { AceQueryFilterByUidsX } x
  * @typedef { object } AceQueryFilterByUidsX
- * @property { string[] } uids - With this array of uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { string[] } uids - With this array of uids, returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
  *
  * @typedef { object } AceQueryFilterByUniques
- * @property { typeof enums.idsQueryOptions.FilterByUniques } id - Recieves an array of unique values and returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
+ * @property { typeof enums.idsQueryOptions.FilterByUniques } id - Recieves an array of unique values and returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)
  * @property { AceQueryFilterByUniquesX } x
  * @typedef { object } AceQueryFilterByUniquesX
- * @property { AceQueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $options qualifiying)
+ * @property { AceQueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)
  * @typedef { object } AceQueryFilterByUniquesXUnique
  * @property { string } value - The value Ace will query to find a unique match for
  * @property { string } property - Find node by this prop that has a unique index
  *
  * @typedef { object } AceQueryFilterBy_Uids
- * @property { typeof enums.idsQueryOptions.FilterBy_Uids } id - Recieves an array of _uids and returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { typeof enums.idsQueryOptions.FilterBy_Uids } id - Recieves an array of _uids and returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
  * @property { AceQueryFilterBy_UidsX } x
  * @typedef { object } AceQueryFilterBy_UidsX
- * @property { string[] } _uids - With this array of _uids, returns an array of valid nodes (valid meaning: found in graph & $options qualifiying)
+ * @property { string[] } _uids - With this array of _uids, returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
  *
  * @typedef { object } AceQueryFindByUnique
  * @property { typeof enums.idsQueryOptions.FindByUnique } id - Find node by a prop that has a unique index
@@ -439,7 +439,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryCountAsPropertyX } x
  * @typedef { object } AceQueryCountAsPropertyX
  * @property { string } newProperty - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQuerySumAsProperty
  * @property { typeof enums.idsQueryOptions.SumAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
@@ -447,7 +447,7 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQuerySumAsPropertyX
  * @property { string } computeProperty - Add the sum of the \`computeProperty\` of each node in the response
  * @property { string } newProperty - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryPropertyAsResponse
  * @property { typeof enums.idsQueryOptions.PropertyAsResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
@@ -470,7 +470,7 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQueryAverageAsPropertyX
  * @property { string } computeProperty - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response
  * @property { string } newProperty - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMinAmountAsProperty
  * @property { typeof enums.idsQueryOptions.MinAmountAsProperty } id - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
@@ -478,7 +478,7 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQueryMinAmountAsPropertyX
  * @property { string } computeProperty - Find the smallest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProperty - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMaxAmountAsProperty
  * @property { typeof enums.idsQueryOptions.MaxAmountAsProperty } id - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
@@ -486,7 +486,7 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQueryMaxAmountAsPropertyX
  * @property { string } computeProperty - Find the largest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProperty - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMinNodeAsResponse
  * @property { typeof enums.idsQueryOptions.MinNodeAsResponse } id - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
@@ -507,7 +507,7 @@ ${ typedefs.query.RelationshipType }
  * @property { string } newProperty - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
  * @property { enums.queryDerivedSymbol } symbol - Derive a value based on the provided \`symbol\` which include basic math symbols found at \`enums.queryDerivedSymbol\`
  * @property { (AceQueryProperty | AceQueryValue | AceQueryDerivedGroup)[] } items - Collection of items (Value, Property and/or a Derived Group) that will combine based on the \`symbol\`
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $options calculations but not show up in the response
+ * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { { [key: string]: CryptoKey } } AceQueryPublicJWKs
  *
@@ -624,19 +624,19 @@ function getSchemaTypedefs (schema) {
       typedefs.mutate.InsertNodeTypes += `\n *
  * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
  * @property { typeof enums.idsAce.InsertNode } id - Insert Node
- * @property { '${ schemaNodeName}' } nodeName - Insert \`${ schemaNodeName }\` node
+ * @property { '${ schemaNodeName}' } node - Insert \`${ schemaNodeName }\` node
  * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
- * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation insert options
+ * @property { AceMutateRequestPrivateJWKOption[] } [ $o ] - Mutation insert options
  * @property { string } [ uid ] - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
 
       typedefs.mutate.UpdateNodeTypes += `\n *
  * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
  * @property { typeof enums.idsAce.UpdateNode } id - Update Node
- * @property { '${ schemaNodeName }' } nodeName - Update \`${ schemaNodeName }\` node
+ * @property { '${ schemaNodeName }' } node - Update \`${ schemaNodeName }\` node
  * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
- * @property { AceMutateRequestPrivateJWKOption[] } [ $options ] - Mutation options
+ * @property { AceMutateRequestPrivateJWKOption[] } [ $o ] - Mutation update options
  * @property { string } uid - The node's unique identifier`
 
       for (const schemaNodePropName in schema.nodes[schemaNodeName]) {
@@ -653,28 +653,28 @@ function getSchemaTypedefs (schema) {
           case 'ForwardRelationshipProp':
           case 'ReverseRelationshipProp':
           case 'BidirectionalRelationshipProp':
-            const relationshipMapValue = relationshipMap.get(schemaProp.x.relationshipName) || []
+            const relationshipMapValue = relationshipMap.get(schemaProp.x.relationship) || []
 
             relationshipMapValue.push({ schemaNodeName, schemaNodePropName, schemaProp })
-            relationshipMap.set(schemaProp.x.relationshipName, relationshipMapValue)
+            relationshipMap.set(schemaProp.x.relationship, relationshipMapValue)
 
-            typedefs.Nodes += `\n * @property { ${ schemaProp.x.nodeName }${ schemaProp.x.has === 'many' ? '[]' : '' } } [ ${ schemaNodePropName } ]`
+            typedefs.Nodes += `\n * @property { ${ schemaProp.x.node }${ schemaProp.x.has === 'many' ? '[]' : '' } } [ ${ schemaNodePropName } ]`
 
             let queryProps = ''
 
-            for (const relationshipNodePropName in schema.nodes[schemaProp.x.nodeName]) {
-              const rSchemaProp = schema.nodes[schemaProp.x.nodeName][relationshipNodePropName]
+            for (const relationshipNodePropName in schema.nodes[schemaProp.x.node]) {
+              const rSchemaProp = schema.nodes[schemaProp.x.node][relationshipNodePropName]
 
               queryProps += rSchemaProp.id === 'Prop' ?
-                `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.nodeName, schemaPropDescription: rSchemaProp.x.description }) }` :
-                `\n * @property { ${ getNodePropXPropName(schemaProp.x.nodeName, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaProp.x.nodeName, relationshipNodePropName, rSchemaProp) }`
+                `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.node, schemaPropDescription: rSchemaProp.x.description }) }` :
+                `\n * @property { ${ getNodePropXPropName(schemaProp.x.node, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaProp.x.node, relationshipNodePropName, rSchemaProp) }`
             }
 
-            if (schema.relationships?.[schemaProp.x.relationshipName]?.x?.props) {
-              const props = schema.relationships?.[schemaProp.x.relationshipName].x.props
+            if (schema.relationships?.[schemaProp.x.relationship]?.x?.props) {
+              const props = schema.relationships?.[schemaProp.x.relationship].x.props
 
               for (const relationshipPropName in props) {
-                queryProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationshipName, schemaPropDescription: props[relationshipPropName].x.description })}`
+                queryProps += `\n * @property { boolean | AceQueryAliasProperty } [ ${ relationshipPropName} ] - ${getQueryPropDescription({ propName: relationshipPropName, relationshipName: schemaProp.x.relationship, schemaPropDescription: props[relationshipPropName].x.description })}`
               }
             }
 
@@ -686,9 +686,9 @@ function getSchemaTypedefs (schema) {
 
             typedefs.query.RelationshipPropTypes += `
  * @typedef { object } ${ relationshipPropName }
- * @property { AceQueryRequestItemNodeOptions } [ $options ]
- * @property { boolean | AceQueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationshipName })}
- * @property { boolean | AceQueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.nodeName })}${ queryProps }
+ * @property { AceQueryRequestItemNodeOptions } [ $o ]
+ * @property { boolean | AceQueryAliasProperty } [ _uid ] - ${ getQueryPropDescription({ propName: '_uid', relationshipName: schemaProp.x.relationship })}
+ * @property { boolean | AceQueryAliasProperty } [ uid ] - ${ getQueryPropDescription({ propName: 'uid', nodeName: schemaProp.x.node })}${ queryProps }
  *`
             break
         }
@@ -699,12 +699,12 @@ function getSchemaTypedefs (schema) {
       typedefs.query.Nodes +=` *
  * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
  * @property { typeof enums.idsAce.QueryNode } id
- * @property { '${ schemaNodeName }' } nodeName
- * @property { string } property
+ * @property { '${ schemaNodeName }' } node
+ * @property { string } prop
  * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
  * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
  * @property { boolean | AceQueryAliasProperty } [ uid ]
- * @property { AceQueryRequestItemNodeOptions } [ $options ]${ typedefs.query.NodeProps }
+ * @property { AceQueryRequestItemNodeOptions } [ $o ]${ typedefs.query.NodeProps }
 `
 
       typedefs.Nodes += '\n *'
@@ -735,7 +735,7 @@ function getSchemaTypedefs (schema) {
       typedefs.mutate.InsertRelationshipTypes += `\n *
  * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationship
  * @property { typeof enums.idsAce.InsertRelationship } id - Insert Relationship
- * @property { '${ schemaRelationshipName }' } relationshipName - Insert \`${ schemaRelationshipName }\` relationship
+ * @property { '${ schemaRelationshipName }' } relationship - Insert \`${ schemaRelationshipName }\` relationship
  * @property { ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX } x
  * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX
  * @property { string } a - ${ abDescription }
@@ -744,7 +744,7 @@ function getSchemaTypedefs (schema) {
       typedefs.mutate.UpdateRelationshipTypes += `\n *
  * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationship
  * @property { typeof enums.idsAce.UpdateRelationship } id - Update Relationship
- * @property { '${ schemaRelationshipName }' } relationshipName - Update \`${ schemaRelationshipName }\` relationship
+ * @property { '${ schemaRelationshipName }' } relationship - Update \`${ schemaRelationshipName }\` relationship
  * @property { ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX } x
  * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX
  * @property { string } _uid - The relationship uid you would love to update
@@ -778,12 +778,12 @@ function getSchemaTypedefs (schema) {
       typedefs.query.Relationships += ` *
  * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationship
  * @property { typeof enums.idsAce.QueryRelationship } id
- * @property { '${ schemaRelationshipName }' } relationshipName
- * @property { string } property
+ * @property { '${ schemaRelationshipName }' } relationship
+ * @property { string } prop
  * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } x
  * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationshipX
  * @property { boolean | AceQueryAliasProperty } [ _uid ]
- * @property { AceQueryRequestItemRelationshipOptions } [ $options ]${ typedefs.query.RelationshipProps }
+ * @property { AceQueryRequestItemRelationshipOptions } [ $o ]${ typedefs.query.RelationshipProps }
 `
 
       typedefs.Relationships += '\n *'
@@ -815,8 +815,8 @@ function getSchemaTypedefs (schema) {
     right: ' } AceQueryRequestItemNode',
     default: ` * @typedef { object } AceQueryRequestItemNode
  * @property { typeof enums.idsAce.QueryNode } id
- * @property { string } nodeName
- * @property { string } property
+ * @property { string } node
+ * @property { string } prop
  * @property { AceQueryRequestItemNodeX } x`
   })
 
@@ -827,8 +827,8 @@ function getSchemaTypedefs (schema) {
     right: ' } AceQueryRequestItemRelationship',
     default: ` * @typedef { object } AceQueryRequestItemRelationship
  * @property { typeof enums.idsAce.QueryRelationship } id
- * @property { string } relationshipName
- * @property { string } property
+ * @property { string } relationship
+ * @property { string } prop
  * @property { AceQueryRequestItemRelationshipX } x`
   })
 
@@ -839,8 +839,8 @@ function getSchemaTypedefs (schema) {
     right: ' } AceMutateRequestItemInsertNode',
     default: `\n *\n * @typedef { object } AceMutateRequestItemInsertNode
  * @property { typeof enums.idsAce.InsertNode } id
- * @property { string } nodeName
- * @property { { uid?: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { string } node
+ * @property { { uid?: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
   typedefs.mutate.UpdateNodeType = plop({
@@ -849,8 +849,8 @@ function getSchemaTypedefs (schema) {
     right: ' } AceMutateRequestItemUpdateNode',
     default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateNode
  * @property { typeof enums.idsAce.UpdateNode } id
- * @property { string } nodeName
- * @property { { uid: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { string } node
+ * @property { { uid: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
   typedefs.mutate.InsertRelationshipType = plop({
@@ -859,8 +859,8 @@ function getSchemaTypedefs (schema) {
     right: ' } AceMutateRequestItemInsertRelationship',
     default: `\n *\n * @typedef { object } AceMutateRequestItemInsertRelationship
  * @property { typeof enums.idsAce.InsertRelationship } id
- * @property { string } relationshipName
- * @property { { a: string, b: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { string } relationship
+ * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
   typedefs.mutate.UpdateRelationshipType = plop({
@@ -869,8 +869,8 @@ function getSchemaTypedefs (schema) {
     right: ' } AceMutateRequestItemUpdateRelationship',
     default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateRelationship
  * @property { typeof enums.idsAce.UpdateRelationship } id
- * @property { string } relationshipName
- * @property { { a: string, b: string, [propName: string]: any, $options?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { string } relationship
+ * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
   return typedefs
@@ -977,5 +977,5 @@ function getQueryPropDescription (options) {
  * @returns 
  */
 function getQueryRelationshipPropDescription (schemaNodeName, schemaNodePropName, schemaProp) {
-  return `Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.nodeName }\` node in the response`
+  return `Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.node }\` node in the response`
 }

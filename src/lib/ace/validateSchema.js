@@ -56,13 +56,13 @@ export function validateSchema (schema) {
         }
       } else {
         const schemaRelationshipProp = /** @type { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ (prop)
-        const mapValue = directionsMap.get(schemaRelationshipProp.x.relationshipName)
+        const mapValue = directionsMap.get(schemaRelationshipProp.x.relationship)
         const arrayValue = { nodeName, nodePropName, id: schemaRelationshipProp.id }
 
-        if (!mapValue) directionsMap.set(schemaRelationshipProp.x.relationshipName, [arrayValue])
+        if (!mapValue) directionsMap.set(schemaRelationshipProp.x.relationship, [arrayValue])
         else mapValue.push(arrayValue)
 
-        relationshipPropNodeNameSet.add(schemaRelationshipProp.x.nodeName)
+        relationshipPropNodeNameSet.add(schemaRelationshipProp.x.node)
       }
     }
   }
@@ -150,8 +150,8 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
 
       if (isRelationshipProp) throw AceError('schema__invalid-id', `The schema prop ${ propName } is invalid because prop's must have an id of "SchemaProp" and not "SchemaRelationshipProp"`, { propName, propValue })
       if (schemaRelationshipProp.x.has !== enums.has.one && schemaRelationshipProp.x.has !== enums.has.many) throw AceError('schema__invalid-has', `The schema prop ${ propName } is invalid because has is not "one" or "many", please ensure "has" is "one" or "many"`, { propName, propValue })
-      if (typeof schemaRelationshipProp.x.nodeName !== 'string' || !schemaRelationshipProp.x.nodeName) throw AceError('schema__invalid-node-name', `The schema prop ${ propName } is invalid because the nodeName is not a truthy string, please ensure each schema prop that has a truthy string nodeName`, { propName, propValue })
-      if (typeof schemaRelationshipProp.x.relationshipName !== 'string' || !schemaRelationshipProp.x.relationshipName) throw AceError('schema__invalid-relationship-name', `The schema prop ${ propName } is invalid because the relationshipName is not a truthy string, please ensure each schema prop that has a truthy string relationshipName`, { propName, propValue })
+      if (typeof schemaRelationshipProp.x.node !== 'string' || !schemaRelationshipProp.x.node) throw AceError('schema__invalid-node-name', `The schema prop ${ propName } is invalid because the nodeName is not a truthy string, please ensure each schema prop that has a truthy string nodeName`, { propName, propValue })
+      if (typeof schemaRelationshipProp.x.relationship !== 'string' || !schemaRelationshipProp.x.relationship) throw AceError('schema__invalid-relationship-name', `The schema prop ${ propName } is invalid because the relationshipName is not a truthy string, please ensure each schema prop that has a truthy string relationshipName`, { propName, propValue })
       break
     default:
       if (isRelationshipProp) throw AceError('schema__invalid-id', `The schema prop ${ propName } is invalid because prop's must include an id of "SchemaProp"`, { propName, propValue })

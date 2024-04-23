@@ -2,7 +2,7 @@ export const idsAce = new Set([
   'Empty',
 
   'SchemaGet',
-  'SchemaAdd',
+  'AddToSchema',
 
   'BackupGet',
   'BackupLoad',

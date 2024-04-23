@@ -136,9 +136,9 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             await schemaGet(requestItem)
             break
 
-          case enums.idsAce.SchemaAdd:
+          case enums.idsAce.AddToSchema:
             const addToSchemaResponse = addToSchema(passport, requestItem.x.schema)
-            if (requestItem.property) response.now[requestItem.property] = addToSchemaResponse
+            if (requestItem.prop) response.now[requestItem.prop] = addToSchemaResponse
             setSchemaDataStructures(passport)
             break
 
@@ -203,8 +203,8 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
       async function backupGet (requestItem) {
         passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
-          if (value.action === 'read' && value.nodeName) throw AceAuthError(enums.permissionActions.read, passport, { nodeName: value.nodeName })
-          if (value.action === 'read' && value.relationshipName) throw AceAuthError(enums.permissionActions.read, passport, { relationshipName: value.relationshipName })
+          if (value.action === 'read' && value.node) throw AceAuthError(enums.permissionActions.read, passport, { node: value.node })
+          if (value.action === 'read' && value.relationship) throw AceAuthError(enums.permissionActions.read, passport, { relationship: value.relationship })
         })
 
         /** @type { td.AceBackupResponse } - We'll turn the map into this object */
@@ -233,8 +233,8 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
         passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === enums.permissionActions.inup || value.action === enums.permissionActions.insert || value.action === enums.permissionActions.update || value.action === enums.permissionActions.delete) {
             if (value.schema === true) throw AceAuthError(value.action, passport, { schema: true })
-            if (value.nodeName) throw AceAuthError(value.action, passport, { nodeName: value.nodeName })
-            if (value.relationshipName) throw AceAuthError(value.action, passport, { relationshipName: value.relationshipName })
+            if (value.node) throw AceAuthError(value.action, passport, { node: value.node })
+            if (value.relationship) throw AceAuthError(value.action, passport, { relationship: value.relationship })
           }
         })
       }
@@ -293,7 +293,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
                 case enums.idsSchema.BidirectionalRelationshipProp:
                   const bidirectionalRelationshipProp = /** @type { td.AceSchemaBidirectionalRelationshipProp } */ (prop)
 
-                  if (!x[getRelationshipProp(bidirectionalRelationshipProp.x.relationshipName)]?.length) {
+                  if (!x[getRelationshipProp(bidirectionalRelationshipProp.x.relationship)]?.length) {
                     throw AceError('mutate__missing-must-defined-relationship', 'Please ensure relationships that must be defined, are defined.', { requiredPropName: propName, bidirectionalRelationshipProp, requestItem })
                   }
                   break
@@ -314,7 +314,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           const relationshipNodes = []
           const isInverse = schemaRelationshipProp.id === 'ReverseRelationshipProp'
           const x = /** @type { td.AceMutateRequestItemInsertRelationshipX } */ (rSchemaRelationshipProp.x)
-          const relationshipUids = x[getRelationshipProp(schemaRelationshipProp.x.relationshipName)]
+          const relationshipUids = x[getRelationshipProp(schemaRelationshipProp.x.relationship)]
 
           if (relationshipUids) {
             for (const relationshipUid of relationshipUids) {
@@ -334,7 +334,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             }
           }
 
-          if (!isValid) throw AceError('mutate__missing-must-defined-relationship', `${propName} is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
+          if (!isValid) throw AceError('mutate__missing-must-defined-relationship', `${ propName } is invalid because it is missing relationship props that must be defined, please ensure relationships that must be defined, are defined.`, { requiredPropName: propName, schemaRelationshipProp, rSchemaRelationshipProp })
         }
       }
     }

@@ -81,12 +81,12 @@ export function setSchemaDataStructures (passport) {
         const propValue = passport.schema.nodes[nodeName][propName]
 
         if (propValue.id !== 'Prop') {
-          passport.schemaDataStructures.nodeNamePlusRelationshipNameToNodePropNameMap.set(nodeName + DELIMITER + propValue.x.relationshipName, propName)
+          passport.schemaDataStructures.nodeNamePlusRelationshipNameToNodePropNameMap.set(nodeName + DELIMITER + propValue.x.relationship, propName)
 
           // relationshipPropsMap
-          const mapValue = passport.schemaDataStructures.relationshipPropsMap.get(propValue.x.relationshipName) || new Map()
+          const mapValue = passport.schemaDataStructures.relationshipPropsMap.get(propValue.x.relationship) || new Map()
           mapValue.set(propName, propValue)
-          passport.schemaDataStructures.relationshipPropsMap.set(propValue.x.relationshipName, mapValue)
+          passport.schemaDataStructures.relationshipPropsMap.set(propValue.x.relationship, mapValue)
         }
 
         if (propValue?.x?.mustBeDefined) {
@@ -133,10 +133,10 @@ async function getUser (_passport) {
       passport: _passport,
       request: {
         id: 'QueryNode',
-        nodeName: 'AceToken',
-        property: 'token',
+        node: 'AceToken',
+        prop: 'token',
         x: {
-          $options: [
+          $o: [
             { id: 'FindByUid', x: { uid: _passport.token } }
           ],
           user: {
@@ -147,8 +147,8 @@ async function getUser (_passport) {
               aceRevokesPermissions: {
                 uid: true,
                 action: true,
-                nodeName: true,
-                relationshipName: true,
+                node: true,
+                relationship: true,
                 propName: true,
                 schema: true,
                 allowPropName: true,
@@ -201,10 +201,10 @@ async function getIsEnforcePermissionsOn (_passport) {
     passport: _passport,
     request: {
       id: 'QueryNode',
-      nodeName: 'AceSetting',
-      property: 'isOn',
+      node: 'AceSetting',
+      prop: 'isOn',
       x: {
-        $options: [
+        $o: [
           { id: 'FindByUid', x: { uid } },
           { id: 'PropertyAsResponse', x: { property: 'isOn' } }
         ]

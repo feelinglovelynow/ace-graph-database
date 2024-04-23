@@ -29,17 +29,17 @@ export function AceAuthError (action, passport, options) {
   if (options.schema) {
     id += `${ action }__schema`
     message += `the schema `
-  } else if (options.nodeName) {
+  } else if (options.node) {
     id += 'node'
-    message += `the node name \`${ options.nodeName }\` `
-  } else if (options.relationshipName) {
+    message += `the node name \`${ options.node }\` `
+  } else if (options.relationship) {
     id += 'relationship'
-    message += `the relationship name \`${ options.relationshipName }\` `
+    message += `the relationship name \`${ options.relationship }\` `
   }
 
-  if (options.propName) {
+  if (options.prop) {
     id += '__prop'
-    message += `and the prop name \`${ options.propName }\` `
+    message += `and the prop name \`${ options.prop }\` `
   }
 
   return AceError(id, message + 'is revoked from your AcePermissions, you cannot do this', { token: passport.token, source: passport.source })

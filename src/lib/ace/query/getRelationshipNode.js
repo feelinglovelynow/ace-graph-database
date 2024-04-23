@@ -36,7 +36,7 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
       else if (response.node) response.node = response.node[nodePropName]
       else response.node = null
 
-      if (response.node) relationshipNodeName = schemaRelationshipProp?.x.nodeName
+      if (response.node) relationshipNodeName = schemaRelationshipProp?.x.node
       else break
     }
   }
