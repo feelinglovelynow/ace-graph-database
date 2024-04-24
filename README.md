@@ -266,8 +266,6 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap 
-1. InsertNode to AddNodeToGraph
-1. InsertRelationship to AddRelationshipToGraph
 1. expand: true
 1. Property to Prop
 1. $o values
@@ -289,7 +287,7 @@ ace fileToGraph
     * Query Prop: `{ alias: 'hi', required: true }`
     * fileToGraph Option: Public JWK: boolean
     * Query can reference overwriten uids map so hoist up to ace()
-    * BackupGet Option: Private JWK
+    * GetBackup Option: Private JWK
     * BackupFile Option: Is Encrypted
     * BackupFile Option: Zip
     * Mutations that alter Schema and Data simultaneously (idsMutate)

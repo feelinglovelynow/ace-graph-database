@@ -4,20 +4,20 @@ export const idsAce = new Set([
   'SchemaGet',
   'AddToSchema',
 
-  'BackupGet',
-  'BackupLoad',
+  'GetBackup',
+  'LoadBackup',
 
-  'InsertNode',
-  'InsertRelationship',
+  'AddNodeToGraph',
+  'AddRelationshipToGraph',
 
-  'UpdateNode',
-  'UpdateRelationship',
+  'UpdateGraphNode',
+  'UpdateGraphRelationship',
 
-  'QueryNode',
-  'QueryRelationship',
+  'QueryByNode',
+  'QueryByRelationship',
 
-  'PluginInstall',
-  'PluginUninstall',
+  'InstallPlugin',
+  'UninstallPlugin',
 
   'DataDeleteNodes',
   'DataDeleteRelationships',

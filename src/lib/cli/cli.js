@@ -122,7 +122,7 @@ Private JWK:
         const gtfHost = options.get('-h') || options.get('--host')
         if (!gtfHost) throw CLIFalsyError('host', '-h', '--host')
 
-        const { backupFromSchema } = await aceFetch({ url: gtfHost + '/ace', body: { request: { id: 'BackupGet', property: 'backupFromSchema' } } })
+        const { backupFromSchema } = await aceFetch({ url: gtfHost + '/ace', body: { request: { id: 'GetBackup', property: 'backupFromSchema' } } })
 
         if (!fs.existsSync(files.cwd)) await fsPromises.mkdir(files.cwd)
         if (!fs.existsSync(files.backups)) await fsPromises.mkdir(files.backups)
@@ -141,7 +141,7 @@ Private JWK:
         if (!ftgHost) throw CLIFalsyError('host', '-h', '--host')
 
         const backupFromFile = await fsPromises.readFile(resolve(process.cwd(), `./ace/backups/${ file }`), { encoding: 'utf-8' })
-        await aceFetch({ url: ftgHost + '/ace', body: { request: { id: 'BackupLoad', x: { backup: backupFromFile } } } })
+        await aceFetch({ url: ftgHost + '/ace', body: { request: { id: 'LoadBackup', x: { backup: backupFromFile } } } })
         console.log('✨ backup applied!')
         break
 

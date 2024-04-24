@@ -19,7 +19,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
     let hasValueAsResponse = false
 
     /** @type { Set<string> } If we have completed an option put it in done */
-    const done = new Set()
+    const doneOptions = new Set()
 
 
     if (xGenerated.x.$o.flow) { // do in requested flow order
@@ -45,7 +45,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
 
     /** @param { string } option */
     async function doOption (option) {
-      if (!done.has(option) && xGenerated.x.$o?.[/** @type { keyof td.AceQueryRequestItemNodeOptions } */(option)]) {
+      if (!hasValueAsResponse && !doneOptions.has(option) && xGenerated.x.$o?.[/** @type { keyof td.AceQueryRequestItemNodeOptions } */(option)]) {
         switch (option) {
           case enums.queryOptions.find:
           case enums.queryOptions.filter:
@@ -134,7 +134,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         }
       }
 
-      done.add(option)
+      doneOptions.add(option)
     }
  
 

@@ -78,14 +78,14 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 /** AcePlugin
  *
  * @typedef { object } AcePlugin
- * @property { AcePluginInstall } install
+ * @property { AceInstallPlugin } install
  *
- * @typedef { object } AcePluginInstall
+ * @typedef { object } AceInstallPlugin
  * @property { AceFnRequest } request
  * @property { AceFnStringJWKs } [ publicJWKs ]
  * @property { AceFnStringJWKs } [ privateJWKs ]
  *
- * @typedef { object } AcePluginUninstall
+ * @typedef { object } AceUninstallPlugin
  */
 
 
@@ -189,40 +189,40 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { AceMutateRequestItem | AceMutateRequestItem[] } AceMutateRequest
  * @typedef { AceMutateRequestItemBackup | AceMutateRequestItemPlugin | AceMutateRequestItemEmpty | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemSchema } AceMutateRequestItem
- * @typedef { AceMutateRequestItemInsertNode | AceMutateRequestItemInsertRelationship } AceMutateRequestItemInsert
- * @typedef { AceMutateRequestItemUpdateNode | AceMutateRequestItemUpdateRelationship } AceMutateRequestItemUpdate
+ * @typedef { AceMutateRequestItemAddNodeToGraph | AceMutateRequestItemAddRelationshipToGraph } AceMutateRequestItemInsert
+ * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
  * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemAddToSchema } AceMutateRequestItemSchema
- * @typedef { AceMutateRequestItemBackupGet | AceMutateRequestItemBackupLoad } AceMutateRequestItemBackup
- * @typedef { AceMutateRequestItemPluginInstall | AceMutateRequestItemPluginUninstall } AceMutateRequestItemPlugin
+ * @typedef { AceMutateRequestItemGetBackup | AceMutateRequestItemLoadBackup } AceMutateRequestItemBackup
+ * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
- * @typedef { object } AceMutateRequestItemBackupGet
- * @property { typeof enums.idsAce.BackupGet } id
+ * @typedef { object } AceMutateRequestItemGetBackup
+ * @property { typeof enums.idsAce.GetBackup } id
  * @property { string } property
  *
- * @typedef { object } AceMutateRequestItemBackupLoad
- * @property { typeof enums.idsAce.BackupLoad } id
+ * @typedef { object } AceMutateRequestItemLoadBackup
+ * @property { typeof enums.idsAce.LoadBackup } id
  * @property { { backup: string } } x
  *
  * @typedef { object } AceMutateRequestItemEmpty
  * @property { typeof enums.idsAce.Empty } id
  * @property { string } [ property ]
  *
- * @typedef { object } AceMutateRequestItemPluginInstall
- * @property { typeof enums.idsAce.PluginInstall } id
+ * @typedef { object } AceMutateRequestItemInstallPlugin
+ * @property { typeof enums.idsAce.InstallPlugin } id
  * @property { string } [ property ]
- * @property { AceMutateRequestItemPluginInstallX } x
- * @typedef { object } AceMutateRequestItemPluginInstallX
- * @property { AcePluginInstall } install
+ * @property { AceMutateRequestItemInstallPluginX } x
+ * @typedef { object } AceMutateRequestItemInstallPluginX
+ * @property { AceInstallPlugin } install
  *
  *
- * @typedef { object } AceMutateRequestItemPluginUninstall
- * @property { typeof enums.idsAce.PluginUninstall } id
+ * @typedef { object } AceMutateRequestItemUninstallPlugin
+ * @property { typeof enums.idsAce.UninstallPlugin } id
  * @property { string } [ property ]
- * @property { { request: AceFnRequest } } x${ typedefs.mutate.InsertNodeType }${ typedefs.mutate.InsertRelationshipType }${ typedefs.mutate.UpdateNodeType }${ typedefs.mutate.UpdateRelationshipType }
+ * @property { { request: AceFnRequest } } x${ typedefs.mutate.AddNodeToGraphType }${ typedefs.mutate.AddRelationshipToGraphType }${ typedefs.mutate.UpdateGraphNodeType }${ typedefs.mutate.UpdateGraphRelationshipType }
  * 
- * @typedef { AceMutateRequestItemUpdateNode & { [relationshipProp: string]: string[] } } AceMutateRequestItemNodeWithRelationships
+ * @typedef { AceMutateRequestItemUpdateGraphNode & { [relationshipProp: string]: string[] } } AceMutateRequestItemNodeWithRelationships
  * 
  * @typedef { object } AceMutateRequestItemDataDeleteNodes
  * @property { typeof enums.idsAce.DataDeleteNodes } id
@@ -255,15 +255,15 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { 'PrivateJWK' } id
  * @property { { name: string } } x
  *
- * @typedef { { [propName: string]: any } } AceMutateRequestItemInsertRelationshipX
- */${ typedefs.mutate.InsertNodeTypes }${ typedefs.mutate.UpdateNodeTypes }${ typedefs.mutate.InsertRelationshipTypes }${ typedefs.mutate.UpdateRelationshipTypes }
+ * @typedef { { [propName: string]: any } } AceMutateRequestItemAddRelationshipToGraphX
+ */${ typedefs.mutate.AddNodeToGraphTypes }${ typedefs.mutate.UpdateGraphNodeTypes }${ typedefs.mutate.AddRelationshipToGraphTypes }${ typedefs.mutate.UpdateGraphRelationshipTypes }
 
 
 /** AceQuery
  *
  * @typedef { AceQueryRequestItem | AceQueryRequestItem[] } AceQueryRequest
  *
- * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemBackupGet | AceQueryRequestItemSchemaGet } AceQueryRequestItem
+ * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemGetBackup | AceQueryRequestItemSchemaGet } AceQueryRequestItem
  *
  * @typedef { boolean | { alias: string } } AceQueryXPropValue
  * 
@@ -280,8 +280,8 @@ ${ typedefs.query.RelationshipType }
  * @property { typeof enums.idsAce.SchemaGet } id
  * @property { string } property
  *
- * @typedef { object } AceQueryRequestItemBackupGet
- * @property { typeof enums.idsAce.BackupGet } id
+ * @typedef { object } AceQueryRequestItemGetBackup
+ * @property { typeof enums.idsAce.GetBackup } id
  * @property { string } property
  *
  * @typedef { object } AceQueryRequestItemGeneratedXSection
@@ -578,18 +578,18 @@ function getSchemaTypedefs (schema) {
       RelationshipPropTypes: '',
     },
     mutate: {
-      InsertNodeType: '',
-      UpdateNodeType: '',
-      InsertNodePipes: '',
-      UpdateNodePipes: '',
-      InsertNodeTypes: '',
-      UpdateNodeTypes: '',
-      InsertRelationshipType: '',
-      UpdateRelationshipType: '',
-      InsertRelationshipPipes: '',
-      UpdateRelationshipPipes: '',
-      InsertRelationshipTypes: '',
-      UpdateRelationshipTypes: '',
+      AddNodeToGraphType: '',
+      UpdateGraphNodeType: '',
+      AddNodeToGraphPipes: '',
+      UpdateGraphNodePipes: '',
+      AddNodeToGraphTypes: '',
+      UpdateGraphNodeTypes: '',
+      AddRelationshipToGraphType: '',
+      UpdateGraphRelationshipType: '',
+      AddRelationshipToGraphPipes: '',
+      UpdateGraphRelationshipPipes: '',
+      AddRelationshipToGraphTypes: '',
+      UpdateGraphRelationshipTypes: '',
       SchemaAndDataDeleteNodesType: ''
     }
   }
@@ -597,8 +597,8 @@ function getSchemaTypedefs (schema) {
 
   if (Object.keys(schema?.nodes || {}).length) {
     typedefs.Nodes += '/** Nodes: (from schema)'
-    typedefs.mutate.InsertNodeTypes += '\n\n\n/** Mutate: Insert node (from schema)'
-    typedefs.mutate.UpdateNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
+    typedefs.mutate.AddNodeToGraphTypes += '\n\n\n/** Mutate: Insert node (from schema)'
+    typedefs.mutate.UpdateGraphNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
 
     for (const schemaNodeName in schema?.nodes) {
       typedefs.query.NodeProps = '' // reset props from previous loop
@@ -607,24 +607,24 @@ function getSchemaTypedefs (schema) {
 
       typedefs.query.NodePipes += `${ schemaNodeName }QueryRequestItemNode | `
 
-      typedefs.mutate.InsertNodePipes += `${ schemaNodeName }MutateRequestItemInsertNode | `
+      typedefs.mutate.AddNodeToGraphPipes += `${ schemaNodeName }MutateRequestItemAddNodeToGraph | `
 
-      typedefs.mutate.UpdateNodePipes += `${ schemaNodeName }MutateRequestItemUpdateNode | `
+      typedefs.mutate.UpdateGraphNodePipes += `${ schemaNodeName }MutateRequestItemUpdateGraphNode | `
 
       if (!ACE_NODE_NAMES.has(schemaNodeName)) typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
 
-      typedefs.mutate.InsertNodeTypes += `\n *
- * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertNode
- * @property { typeof enums.idsAce.InsertNode } id - Insert Node
+      typedefs.mutate.AddNodeToGraphTypes += `\n *
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemAddNodeToGraph
+ * @property { typeof enums.idsAce.AddNodeToGraph } id - Insert Node
  * @property { '${ schemaNodeName}' } node - Insert \`${ schemaNodeName }\` node
  * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
  * @property { AceMutateRequestPrivateJWKOption[] } [ $o ] - Mutation insert options
  * @property { string } [ uid ] - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
 
-      typedefs.mutate.UpdateNodeTypes += `\n *
- * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateNode
- * @property { typeof enums.idsAce.UpdateNode } id - Update Node
+      typedefs.mutate.UpdateGraphNodeTypes += `\n *
+ * @typedef { object } ${ schemaNodeName }MutateRequestItemUpdateGraphNode
+ * @property { typeof enums.idsAce.UpdateGraphNode } id - Update Node
  * @property { '${ schemaNodeName }' } node - Update \`${ schemaNodeName }\` node
  * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
@@ -638,8 +638,8 @@ function getSchemaTypedefs (schema) {
           case 'Prop':
             const dataType = getDataType(schemaProp.x.dataType)
             typedefs.Nodes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] ${ schemaProp.x.description || '' }`
-            typedefs.mutate.InsertNodeTypes += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${ dataType }\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
-            typedefs.mutate.UpdateNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+            typedefs.mutate.AddNodeToGraphTypes += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? schemaNodePropName : '[ ' + schemaNodePropName + ' ]'} - Set to a value with a \`${ dataType }\` data type to set the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
+            typedefs.mutate.UpdateGraphNodeTypes += `\n * @property { ${ dataType } } [ ${ schemaNodePropName } ] - Set to a value with a \`${ dataType }\` data type to update the current \`${ schemaNodePropName }\` property in the graph for this node (\`${ schemaNodeName }\`). ${ schemaProp.x.description || '' }`
             typedefs.query.NodeProps += `\n * @property { AceQueryXPropValue } [ ${ schemaNodePropName } ] - ${ getQueryPropDescription({ propName: schemaNodePropName, nodeName: schemaNodeName, schemaPropDescription: schemaProp.x.description }) }`
             break
           case 'ForwardRelationshipProp':
@@ -659,7 +659,7 @@ function getSchemaTypedefs (schema) {
 
               queryProps += rSchemaProp.id === 'Prop' ?
                 `\n * @property { AceQueryXPropValue } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.node, schemaPropDescription: rSchemaProp.x.description }) }` :
-                `\n * @property { ${ getNodePropXPropName(schemaProp.x.node, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaProp.x.node, relationshipNodePropName, rSchemaProp) }`
+                `\n * @property { ${ getNodePropXPropName(schemaProp.x.node, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryByRelationshipPropDescription(schemaProp.x.node, relationshipNodePropName, rSchemaProp) }`
             }
 
             if (schema.relationships?.[schemaProp.x.relationship]?.x?.props) {
@@ -672,7 +672,7 @@ function getSchemaTypedefs (schema) {
 
             const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
 
-            typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName} } [ ${schemaNodePropName} ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+            typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName} } [ ${schemaNodePropName} ] - ${ getQueryByRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
 
             if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
 
@@ -690,7 +690,7 @@ function getSchemaTypedefs (schema) {
 
       typedefs.query.Nodes +=` *
  * @typedef { object } ${ schemaNodeName }QueryRequestItemNode
- * @property { typeof enums.idsAce.QueryNode } id
+ * @property { typeof enums.idsAce.QueryByNode } id
  * @property { '${ schemaNodeName }' } node
  * @property { string } prop
  * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
@@ -706,8 +706,8 @@ function getSchemaTypedefs (schema) {
 
   if (Object.keys(schema?.relationships || {}).length) {
     typedefs.Relationships += '/** Relationships: (from schema)'
-    typedefs.mutate.InsertRelationshipTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
-    typedefs.mutate.UpdateRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
+    typedefs.mutate.AddRelationshipToGraphTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
+    typedefs.mutate.UpdateGraphRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'
 
     for (const schemaRelationshipName in schema?.relationships) {
       typedefs.query.RelationshipProps = '' // reset props from previous loop
@@ -716,29 +716,29 @@ function getSchemaTypedefs (schema) {
 
       typedefs.query.RelationshipPipes += `${ schemaRelationshipName }QueryRequestItemRelationship | `
 
-      typedefs.mutate.InsertRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemInsertRelationship | `
+      typedefs.mutate.AddRelationshipToGraphPipes += `${ schemaRelationshipName }MutateRequestItemAddRelationshipToGraph | `
 
-      typedefs.mutate.UpdateRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
+      typedefs.mutate.UpdateGraphRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpdateGraphRelationship | `
 
-      typedefs.mutate.UpdateRelationshipType += `${ schemaRelationshipName }MutateRequestItemUpdateRelationship | `
+      typedefs.mutate.UpdateGraphRelationshipType += `${ schemaRelationshipName }MutateRequestItemUpdateGraphRelationship | `
 
       const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ schemaRelationshipName }\` => \`_:node2\``
 
-      typedefs.mutate.InsertRelationshipTypes += `\n *
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationship
- * @property { typeof enums.idsAce.InsertRelationship } id - Insert Relationship
+      typedefs.mutate.AddRelationshipToGraphTypes += `\n *
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemAddRelationshipToGraph
+ * @property { typeof enums.idsAce.AddRelationshipToGraph } id - Insert Relationship
  * @property { '${ schemaRelationshipName }' } relationship - Insert \`${ schemaRelationshipName }\` relationship
- * @property { ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX } x
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemInsertRelationshipX
+ * @property { ${ schemaRelationshipName }MutateRequestItemAddRelationshipToGraphX } x
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemAddRelationshipToGraphX
  * @property { string } a - ${ abDescription }
  * @property { string } b - ${ abDescription }`
   
-      typedefs.mutate.UpdateRelationshipTypes += `\n *
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationship
- * @property { typeof enums.idsAce.UpdateRelationship } id - Update Relationship
+      typedefs.mutate.UpdateGraphRelationshipTypes += `\n *
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateGraphRelationship
+ * @property { typeof enums.idsAce.UpdateGraphRelationship } id - Update Relationship
  * @property { '${ schemaRelationshipName }' } relationship - Update \`${ schemaRelationshipName }\` relationship
- * @property { ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX } x
- * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateRelationshipX
+ * @property { ${ schemaRelationshipName }MutateRequestItemUpdateGraphRelationshipX } x
+ * @typedef { object } ${ schemaRelationshipName }MutateRequestItemUpdateGraphRelationshipX
  * @property { string } _uid - The relationship uid you would love to update
  * @property { string } [ a ] - ${ abDescription }
  * @property { string } [ b ] - ${ abDescription }`
@@ -751,8 +751,8 @@ function getSchemaTypedefs (schema) {
 
           typedefs.Relationships += `\n * @property { ${ dataType } } [ ${ schemaRelationshipPropName } ] ${ schemaProp.x.description || '' }`
           typedefs.query.RelationshipProps += `\n * @property { AceQueryXPropValue } [ ${schemaRelationshipPropName } ] - ${ getQueryPropDescription({ propName: schemaRelationshipPropName, relationshipName: schemaRelationshipName, schemaPropDescription: schemaProp.x.description }) }`
-          typedefs.mutate.InsertRelationshipTypes += `\n * @property { ${ dataType } } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
-          typedefs.mutate.UpdateRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
+          typedefs.mutate.AddRelationshipToGraphTypes += `\n * @property { ${ dataType } } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
+          typedefs.mutate.UpdateGraphRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
         }
       }
 
@@ -760,7 +760,7 @@ function getSchemaTypedefs (schema) {
 
       if (relationshipMapValue) {
         for (const { schemaNodeName, schemaNodePropName, schemaProp } of relationshipMapValue) {
-          typedefs.query.RelationshipProps += `\n * @property { ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+          typedefs.query.RelationshipProps += `\n * @property { ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryByRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
         }
       }
 
@@ -769,7 +769,7 @@ function getSchemaTypedefs (schema) {
 
       typedefs.query.Relationships += ` *
  * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationship
- * @property { typeof enums.idsAce.QueryRelationship } id
+ * @property { typeof enums.idsAce.QueryByRelationship } id
  * @property { '${ schemaRelationshipName }' } relationship
  * @property { string } prop
  * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } x
@@ -788,16 +788,16 @@ function getSchemaTypedefs (schema) {
   if (typedefs.Relationships) typedefs.Relationships += '/\n\n\n'
   if (typedefs.query.Relationships) typedefs.query.Relationships += ' */'
   if (typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '/'
-  if (typedefs.mutate.InsertNodeTypes) typedefs.mutate.InsertNodeTypes += '\n */'
-  if (typedefs.mutate.UpdateNodeTypes) typedefs.mutate.UpdateNodeTypes += '\n */'
-  if (typedefs.mutate.InsertRelationshipTypes) typedefs.mutate.InsertRelationshipTypes += '\n */'
-  if (typedefs.mutate.UpdateRelationshipTypes) typedefs.mutate.UpdateRelationshipTypes += '\n */'
+  if (typedefs.mutate.AddNodeToGraphTypes) typedefs.mutate.AddNodeToGraphTypes += '\n */'
+  if (typedefs.mutate.UpdateGraphNodeTypes) typedefs.mutate.UpdateGraphNodeTypes += '\n */'
+  if (typedefs.mutate.AddRelationshipToGraphTypes) typedefs.mutate.AddRelationshipToGraphTypes += '\n */'
+  if (typedefs.mutate.UpdateGraphRelationshipTypes) typedefs.mutate.UpdateGraphRelationshipTypes += '\n */'
   if (typedefs.query.NodePipes) typedefs.query.NodePipes = typedefs.query.NodePipes.slice(0, -3)
-  if (typedefs.mutate.InsertNodePipes) typedefs.mutate.InsertNodePipes = typedefs.mutate.InsertNodePipes.slice(0, -3)
-  if (typedefs.mutate.UpdateNodePipes) typedefs.mutate.UpdateNodePipes = typedefs.mutate.UpdateNodePipes.slice(0, -3)
+  if (typedefs.mutate.AddNodeToGraphPipes) typedefs.mutate.AddNodeToGraphPipes = typedefs.mutate.AddNodeToGraphPipes.slice(0, -3)
+  if (typedefs.mutate.UpdateGraphNodePipes) typedefs.mutate.UpdateGraphNodePipes = typedefs.mutate.UpdateGraphNodePipes.slice(0, -3)
   if (typedefs.query.RelationshipPipes) typedefs.query.RelationshipPipes = typedefs.query.RelationshipPipes.slice(0, -3)
-  if (typedefs.mutate.InsertRelationshipPipes) typedefs.mutate.InsertRelationshipPipes = typedefs.mutate.InsertRelationshipPipes.slice(0, -3)
-  if (typedefs.mutate.UpdateRelationshipPipes) typedefs.mutate.UpdateRelationshipPipes = typedefs.mutate.UpdateRelationshipPipes.slice(0, -3)
+  if (typedefs.mutate.AddRelationshipToGraphPipes) typedefs.mutate.AddRelationshipToGraphPipes = typedefs.mutate.AddRelationshipToGraphPipes.slice(0, -3)
+  if (typedefs.mutate.UpdateGraphRelationshipPipes) typedefs.mutate.UpdateGraphRelationshipPipes = typedefs.mutate.UpdateGraphRelationshipPipes.slice(0, -3)
   if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')[]'
 
 
@@ -806,7 +806,7 @@ function getSchemaTypedefs (schema) {
     left: ' * @typedef { ',
     right: ' } AceQueryRequestItemNode',
     default: ` * @typedef { object } AceQueryRequestItemNode
- * @property { typeof enums.idsAce.QueryNode } id
+ * @property { typeof enums.idsAce.QueryByNode } id
  * @property { string } node
  * @property { string } prop
  * @property { AceQueryRequestItemNodeX } x`
@@ -818,49 +818,49 @@ function getSchemaTypedefs (schema) {
     left: ' * @typedef { ',
     right: ' } AceQueryRequestItemRelationship',
     default: ` * @typedef { object } AceQueryRequestItemRelationship
- * @property { typeof enums.idsAce.QueryRelationship } id
+ * @property { typeof enums.idsAce.QueryByRelationship } id
  * @property { string } relationship
  * @property { string } prop
  * @property { AceQueryRequestItemRelationshipX } x`
   })
 
 
-  typedefs.mutate.InsertNodeType = plop({
-    now: typedefs.mutate.InsertNodePipes,
+  typedefs.mutate.AddNodeToGraphType = plop({
+    now: typedefs.mutate.AddNodeToGraphPipes,
     left: '\n *\n * @typedef { ',
-    right: ' } AceMutateRequestItemInsertNode',
-    default: `\n *\n * @typedef { object } AceMutateRequestItemInsertNode
- * @property { typeof enums.idsAce.InsertNode } id
+    right: ' } AceMutateRequestItemAddNodeToGraph',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemAddNodeToGraph
+ * @property { typeof enums.idsAce.AddNodeToGraph } id
  * @property { string } node
  * @property { { uid?: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
-  typedefs.mutate.UpdateNodeType = plop({
-    now: typedefs.mutate.UpdateNodePipes,
+  typedefs.mutate.UpdateGraphNodeType = plop({
+    now: typedefs.mutate.UpdateGraphNodePipes,
     left: '\n *\n * @typedef { ',
-    right: ' } AceMutateRequestItemUpdateNode',
-    default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateNode
- * @property { typeof enums.idsAce.UpdateNode } id
+    right: ' } AceMutateRequestItemUpdateGraphNode',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateGraphNode
+ * @property { typeof enums.idsAce.UpdateGraphNode } id
  * @property { string } node
  * @property { { uid: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
-  typedefs.mutate.InsertRelationshipType = plop({
-    now: typedefs.mutate.InsertRelationshipPipes,
+  typedefs.mutate.AddRelationshipToGraphType = plop({
+    now: typedefs.mutate.AddRelationshipToGraphPipes,
     left: '\n *\n * @typedef { ',
-    right: ' } AceMutateRequestItemInsertRelationship',
-    default: `\n *\n * @typedef { object } AceMutateRequestItemInsertRelationship
- * @property { typeof enums.idsAce.InsertRelationship } id
+    right: ' } AceMutateRequestItemAddRelationshipToGraph',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemAddRelationshipToGraph
+ * @property { typeof enums.idsAce.AddRelationshipToGraph } id
  * @property { string } relationship
  * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
 
-  typedefs.mutate.UpdateRelationshipType = plop({
-    now: typedefs.mutate.UpdateRelationshipPipes,
+  typedefs.mutate.UpdateGraphRelationshipType = plop({
+    now: typedefs.mutate.UpdateGraphRelationshipPipes,
     left: '\n *\n * @typedef { ',
-    right: ' } AceMutateRequestItemUpdateRelationship',
-    default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateRelationship
- * @property { typeof enums.idsAce.UpdateRelationship } id
+    right: ' } AceMutateRequestItemUpdateGraphRelationship',
+    default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateGraphRelationship
+ * @property { typeof enums.idsAce.UpdateGraphRelationship } id
  * @property { string } relationship
  * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
   })
@@ -968,6 +968,6 @@ function getQueryPropDescription (options) {
  * @param {*} schemaProp 
  * @returns 
  */
-function getQueryRelationshipPropDescription (schemaNodeName, schemaNodePropName, schemaProp) {
+function getQueryByRelationshipPropDescription (schemaNodeName, schemaNodePropName, schemaProp) {
   return `Return object to see node name: \`${ schemaNodeName }\` and prop name: \`${ schemaNodePropName }\`, that will provide properties on the \`${ schemaProp.x.node }\` node in the response`
 }

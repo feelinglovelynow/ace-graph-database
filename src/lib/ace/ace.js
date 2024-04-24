@@ -75,13 +75,13 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
       if (arrayRequest) {
         for (let i = 0; i < arrayRequest.length; i++) {
-          if (arrayRequest[i].id === enums.idsAce.UpdateNode) {
-            const mutateRequestItemUpdateNode = /** @type { td.AceMutateRequestItemUpdateNode } */(arrayRequest[i])
-            updateUids.node.push(mutateRequestItemUpdateNode.x.uid)
+          if (arrayRequest[i].id === enums.idsAce.UpdateGraphNode) {
+            const mutateRequestItemUpdateGraphNode = /** @type { td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[i])
+            updateUids.node.push(mutateRequestItemUpdateGraphNode.x.uid)
           }
 
-          if (arrayRequest[i].id === enums.idsAce.UpdateRelationship) {
-            updateUids.relationship.push(/** @type { td.AceMutateRequestItemUpdateRelationship } */(arrayRequest[i]).x._uid)
+          if (arrayRequest[i].id === enums.idsAce.UpdateGraphRelationship) {
+            updateUids.relationship.push(/** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[i]).x._uid)
           }
         }
       }
@@ -92,7 +92,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
     async function deligate () {
       let preLoopDone = false
-      const preLoopSet = new Set([enums.idsAce.Empty, enums.idsAce.PluginInstall ])
+      const preLoopSet = new Set([enums.idsAce.Empty, enums.idsAce.InstallPlugin ])
 
       for (let iRequest = 0; iRequest < arrayRequest.length; iRequest++) {
         const requestItem = arrayRequest[iRequest]
@@ -107,7 +107,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             await empty(requestItem)
             break
 
-          case enums.idsAce.PluginInstall:
+          case enums.idsAce.InstallPlugin:
             const installOptions = /** @type { td.AceFnOptions } */ ({
               passport: passport,
               request: requestItem.x.install.request,
@@ -119,16 +119,16 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             if (requestItem.property) response.now[requestItem.property] = installResponse
             break
 
-          case enums.idsAce.PluginUninstall:
+          case enums.idsAce.UninstallPlugin:
             const responseUninstall = await _ace({ passport: passport, request: requestItem.x.request })
             if (requestItem.property) response.now[requestItem.property] = responseUninstall
             break
 
-          case enums.idsAce.QueryNode:
+          case enums.idsAce.QueryByNode:
             await queryNode(requestItem, passport, response, cryptoJWKs.public, iRequest)
             break
 
-          case enums.idsAce.QueryRelationship:
+          case enums.idsAce.QueryByRelationship:
             await queryRelationship(requestItem, passport, response, cryptoJWKs.public, iRequest)
             break
 
@@ -142,21 +142,21 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             setSchemaDataStructures(passport)
             break
 
-          case enums.idsAce.BackupGet:
+          case enums.idsAce.GetBackup:
             await backupGet(requestItem)
             break
 
-          case enums.idsAce.BackupLoad:
+          case enums.idsAce.LoadBackup:
             await fileToGraph(requestItem)
             break
 
-          case enums.idsAce.InsertNode:
-          case enums.idsAce.UpdateNode:
+          case enums.idsAce.AddNodeToGraph:
+          case enums.idsAce.UpdateGraphNode:
             await inupNode(requestItem, passport, sortIndexMap, updateRequestItems, cryptoJWKs.private)
             break
 
-          case enums.idsAce.InsertRelationship:
-          case enums.idsAce.UpdateRelationship:
+          case enums.idsAce.AddRelationshipToGraph:
+          case enums.idsAce.UpdateGraphRelationship:
             await inupRelationship(requestItem, passport, updateRequestItems)
             break
 
@@ -199,7 +199,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
       }
 
 
-      /** @param { td.AceQueryRequestItemBackupGet } requestItem */
+      /** @param { td.AceQueryRequestItemGetBackup } requestItem */
       async function backupGet (requestItem) {
         passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
@@ -219,7 +219,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
       }
 
 
-      /** @param { td.AceMutateRequestItemBackupLoad } requestItem */
+      /** @param { td.AceMutateRequestItemLoadBackup } requestItem */
       async function fileToGraph (requestItem) {
         if (typeof requestItem?.x?.backup !== 'string') throw AceError('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
 
@@ -265,7 +265,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     function throwIfMissingMustProps () {
       if (passport.$aceDataStructures.putMap.size) {
         for (const requestItem of passport.$aceDataStructures.putMap.values()) {
-          const x = /** @type { td.AceMutateRequestItemInsertRelationshipX } */ (/** @type {*} */ (requestItem.x))
+          const x = /** @type { td.AceMutateRequestItemAddRelationshipToGraphX } */ (/** @type {*} */ (requestItem.x))
           const mustProps = requestItem.subId ? passport.schemaDataStructures?.mustPropsMap?.get(requestItem.subId) : null // the must props for a specific node or relationship
 
           if (mustProps) {
@@ -304,7 +304,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
         /**
-         * @param { td.AceMutateRequestItemInsertRelationship } rSchemaRelationshipProp 
+         * @param { td.AceMutateRequestItemAddRelationshipToGraph } rSchemaRelationshipProp 
          * @param { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp } schemaRelationshipProp 
          * @param { string } propName 
          */
@@ -313,7 +313,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           const storageUids = []
           const relationshipNodes = []
           const isInverse = schemaRelationshipProp.id === 'ReverseRelationshipProp'
-          const x = /** @type { td.AceMutateRequestItemInsertRelationshipX } */ (rSchemaRelationshipProp.x)
+          const x = /** @type { td.AceMutateRequestItemAddRelationshipToGraphX } */ (rSchemaRelationshipProp.x)
           const relationshipUids = x[getRelationshipProp(schemaRelationshipProp.x.relationship)]
 
           if (relationshipUids) {
