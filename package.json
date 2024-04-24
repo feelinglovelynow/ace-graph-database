@@ -5,7 +5,7 @@
   "description": "Our mission is to create, maintain and enhance the Best database for JavaScript Developers!",
   "license": "MIT",
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.ts",
   "exports": {
     "svelte": "./dist/index.js",
     "default": "./dist/index.js"

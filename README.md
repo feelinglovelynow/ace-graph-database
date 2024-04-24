@@ -266,10 +266,10 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap 
-1. expand: true
-1. Property to Prop
+1. External: Property to Prop
 1. $o values
     * symbols > words to characters
+    * `expand: true`
     * `limit: { count: 9, skip: 9, random: true },`
     * `resHide: { avgSalary: true },`
     * `newPops: { bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ] }`
@@ -282,6 +282,7 @@ ace fileToGraph
     * Sanitize / Validate Input
     * Delete `cascadeProps` array
     * Must relationship (storage fallback)
+    * id descriptions
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
     * Query Prop: `{ alias: 'hi', required: true }`

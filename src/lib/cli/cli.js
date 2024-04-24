@@ -36,7 +36,7 @@ import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
       schemas: resolve(process.cwd(), './ace/schemas'),
       enums: resolve(__dirname, root + '.ace/enums.js'),
       jsIndex: resolve(__dirname, root + '.ace/index.js'),
-      tsIndex: resolve(__dirname, root + '.ace/index.d.ts'),
+      tsIndex: resolve(__dirname, root + '.ace/index.ts'),
       jsTypedefs: resolve(__dirname, root + '.ace/typedefs.js'),
       tsConfig: resolve(__dirname, root + '.ace/tsconfig.json'),
       packageDotJson: resolve(__dirname, root + 'package.json'),
@@ -91,7 +91,7 @@ Private JWK:
         ])
 
         console.log('✨ enums ready!\n✨ typedefs ready!')
-        await util.promisify(exec)(`tsc -p ${ files.tsConfig }`) // write tsc folder AND write .d.ts type files within folder
+        await util.promisify(exec)(`tsc -p ${ files.tsConfig }`) // write tsc folder AND write .ts type files within folder
 
         await Promise.all([
           fsPromises.writeFile(files.jsIndex, jsIndex()), // write index.js

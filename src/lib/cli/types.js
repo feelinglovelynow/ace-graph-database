@@ -199,14 +199,14 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { object } AceMutateRequestItemGetBackup
  * @property { typeof enums.idsAce.GetBackup } id
- * @property { string } property
+ * @property { string } prop
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
  * @property { typeof enums.idsAce.LoadBackup } id
  * @property { { backup: string } } x
  *
  * @typedef { object } AceMutateRequestItemEmpty
- * @property { typeof enums.idsAce.Empty } id
+ * @property { typeof enums.idsAce.Empty } id - Delete all data and schema from graph
  * @property { string } [ property ]
  *
  * @typedef { object } AceMutateRequestItemInstallPlugin
@@ -909,9 +909,9 @@ export function tsConfig () {
 
 
 export function tsIndex () {
-  return `// type checking only works in ts projects that import ace if we specify .d.ts as the extension below
-export * as td from './tsc/typedefs.d.ts'
-export * as enums from './tsc/enums.d.ts'
+  return `// type checking only works in ts projects that import ace if we specify .ts as the extension below
+export * as td from './tsc/typedefs.ts'
+export * as enums from './tsc/enums.ts'
 `
 }
 

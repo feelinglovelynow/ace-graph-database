@@ -4,4 +4,4 @@
 rm -rf ./dist ./tsc &&
 tsc -p tsconfig.build.json &&
 node ./esbuild.js &&
-cp ./src/index.d.ts ./dist/index.d.ts
+cp ./src/index.ts ./dist/index.ts
