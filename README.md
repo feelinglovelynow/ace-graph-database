@@ -268,97 +268,16 @@ ace fileToGraph
 ## 🤓 Version 1 Roadmap 
 1. InsertNode to AddNodeToGraph
 1. InsertRelationship to AddRelationshipToGraph
+1. expand: true
 1. Property to Prop
 1. $o values
-  ```js
-  const query = {
-    id: 'QueryByNode',
-    node: 'Movie',
-    prop: 'matrix',
-    how: {
-      $a: { findByUid: 'matrix_uid' },
-      uid: true,
-      title: true,
-      actors: {
-        $a: {
-          alias: 'stars',
-          limit: { count: 9, skip: 9, random: true }, // skip the first 9, get random 9 more
-          flow: [ 'filter', 'sort', 'limit' ],
-          sort: { prop: 'salary', how: 'asc' }, // 2
-          filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1
-          resHide: { avgSalary: true },
-          newProps: {
-            bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
-            fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
-          },
-        },
-        uid: true,
-        firstName: true,
-        lastName: true,
-        _uid: true,
-        _salary: { alias: 'salary' },
-        friends: {
-          $a: {
-            filter: { // filter parenthesis (groups)
-              symbol: '&',
-              items: [
-                {
-                  symbol: '|',
-                  items: [
-                    [ { prop: 'name' }, '=', 'chris' ],
-                    [ { prop: 'avgSalary' }, '>', 9 ],
-                  ]
-                },
-                [ { prop: 'idk' }, '!=', 'hmm' ],
-              ]
-            }
-          },
-          lastName: true,
-          firstName: true,
-        }
-      }
-    }
-  }
-
-  const mutation = { id: 'AddNodeToGraph', node: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } }
-
-  const relationship = { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } }
-
-  const schema = {
-    id: 'AddToSchema',
-    prop: 'schemaAdd',
-    x: {
-      schema: {
-        nodes: {
-          Movie: {
-            props: {
-              title: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-              actors: { id: 'ReverseRelationshipProp', x: { has: 'many', node: 'Actor', relationship: 'actsInMovie' } },
-            }
-          },
-          Actor: {
-            props: {
-              firstName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-              lastName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-              actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'Movie', relationship: 'actsInMovie' } },
-            }
-          }
-        },
-        relationships: {
-          actsInMovie: {
-            id: 'ManyToMany',
-            props: {
-              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
-            }
-          },
-        }
-      }
-    }
-  }
-  ```
-1. No uid or _uid in data values
-1. Alphabetical Schema
-1. Add enums to schema
+    * symbols > words to characters
+    * `limit: { count: 9, skip: 9, random: true },`
+    * `resHide: { avgSalary: true },`
+    * `newPops: { bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ] }`
+    * `newPops: { fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ] }`
+1. No uid or _uid as prop name
+1. Schema Enums
 1. `ace()`
     * Function to communicate with the graph
     * fileToGraph Option: skipDataDelete: boolean
