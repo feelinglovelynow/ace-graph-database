@@ -266,8 +266,11 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap 
-1. Is revokes allowing
-1. $options array to $a object, to help w/:
+1. InsertNode to AddNodeToGraph
+1. InsertRelationship to AddRelationshipToGraph
+
+
+$options array to $o object, to help w/:
     * Improve (typing / response) intellisense
     * Less typing required
     * Property to Prop

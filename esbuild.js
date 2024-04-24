@@ -8,10 +8,10 @@ esbuild.build({ // // https://esbuild.github.io/api/
   outdir: './dist', // Sets the output directory for the build operation.
   entryPoints: [ // This is an array of files that each serve as an input to the bundling algorithm.
     "./tsc/src/lib/ace/plugins/core.js",
+    './tsc/src/lib/ace/query/doQueryOptions.js',
     './tsc/src/lib/ace/query/getDerivedValue.js',
     './tsc/src/lib/ace/query/getRelationshipNode.js',
     './tsc/src/lib/ace/query/getXGenerated.js',
-    './tsc/src/lib/ace/query/implementQueryOptions.js',
     './tsc/src/lib/ace/query/query.js',
     './tsc/src/lib/ace/query/queryWhere.js',
     './tsc/src/lib/ace/ace.js',

@@ -12,16 +12,13 @@ export function getXGeneratedById (requestItem, passport) {
   if (requestItem.id === 'QueryNode' && !passport.schema?.nodes[requestItem.node]) throw AceError('getXGeneratedById__x-section-id-node-invalid', 'This request is failing b/c request.x.nodeName is not a node in your schema', { query: requestItem })
   if (requestItem.id === 'QueryRelationship' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
 
-  const rLoop = loopOptions(requestItem.x)
-
   const response = /** @type { td.AceQueryRequestItemGeneratedXSection } */ ({
-    ...rLoop,
     x: requestItem.x,
     id: requestItem.id,
     has: enums.has.many,
     xPropName: requestItem.prop,
-    aliasPropName: rLoop.aliasPropName,
-    propName: rLoop.aliasPropName || requestItem.prop,
+    aliasPropName: requestItem.x.$o?.alias,
+    propName: requestItem.x.$o?.alias || requestItem.prop,
   })
 
   if (/** @type { td.AceQueryRequestItemNode } */(requestItem).node) response.nodeName = /** @type { td.AceQueryRequestItemNode } */(requestItem).node
@@ -57,55 +54,13 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
 
   if (!schemaPropValue) throw AceError('getXGeneratedByParent__falsy-query-x-id', `This request is failing b/c node name "${xGeneratedParent?.nodeName }" with property name "${ xKey }" is not defined in your schema`, { schemaPropName: xKey, nodeName: xGeneratedParent?.id })
 
-  const rLoop = loopOptions(xValue)
-
   return {
-    ...rLoop,
     x: xValue,
     nodeName: schemaPropValue.x.node,
     has: schemaPropValue.x.has,
     xPropName: xKey,
-    aliasPropName: rLoop.aliasPropName,
-    propName: rLoop.aliasPropName || xKey,
+    aliasPropName: xValue.$o?.alias,
+    propName: xValue.$o?.alias || xKey,
     relationshipName: schemaPropValue.x.relationship,
-  }
-}
-
-
-/**
- * @param { td.AceQueryRequestItemNodeX } x
- * @returns { { sets: Map<('FilterByUids' | 'FilterBy_Uids' | 'FilterByUniques'), Set<string>>, hasCountOne: boolean, hasOptionsFind: boolean, hasValueAsResponse: boolean, priorityOptions: td.AceQueryRequestItemGeneratedXSectionPriorityOptions, aliasPropName?: string } }
- */ 
-function loopOptions (x) {
-  let aliasPropName
-  const sets = new Map()
-  let hasCountOne = false
-  let hasOptionsFind = false
-  let hasValueAsResponse = false
-  const priorityOptions = new Map()
-
-  if (x?.$o?.length) {
-    for (const $o of x.$o) {
-      if ($o.id === 'Sort') priorityOptions.set('Sort', $o)
-      else if ($o.id === 'Alias') aliasPropName = $o.property
-      else if ($o.id === 'Limit') { if ($o.x.count === 1) hasCountOne = true }
-      else if ($o.id === 'FilterByUids') { priorityOptions.set('FilterByUids', $o); sets.set('FilterByUids', new Set($o.x.uids)) }
-      else if ($o.id === 'FilterBy_Uids') { priorityOptions.set('FilterBy_Uids', $o); sets.set('FilterBy_Uids', new Set($o.x._uids)) }
-      else if ($o.id === 'FilterByUniques') { priorityOptions.set('FilterByUniques', $o); sets.set('FilterByUniques', new Set($o.x.uniques)) }
-      else if ($o.id === 'FindByUid') { priorityOptions.set('FindByUid', $o); hasOptionsFind = true }
-      else if ($o.id === 'FindBy_Uid') { priorityOptions.set('FindBy_Uid', $o); hasOptionsFind = true }
-      else if ($o.id === 'FindByUnique') { priorityOptions.set('FindByUnique', $o); hasOptionsFind = true }
-      else if ($o.id === 'Find' || $o.id === 'FindGroup' || $o.id === 'FindDefined' || $o.id === 'FindUndefined') hasOptionsFind = true
-      else if ($o.id === 'SumAsResponse' || $o.id === 'CountAsResponse' || $o.id === 'AverageAsResponse' || $o.id === 'MinNodeAsResponse' || $o.id === 'MaxNodeAsResponse' || $o.id === 'PropertyAsResponse' || $o.id === 'MinAmountAsResponse' || $o.id === 'MaxAmountAsResponse') hasValueAsResponse = true
-    }
-  }
-
-  return {
-    sets,
-    hasCountOne,
-    aliasPropName,
-    hasOptionsFind,
-    priorityOptions,
-    hasValueAsResponse,
   }
 }

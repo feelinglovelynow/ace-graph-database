@@ -1,6 +1,6 @@
 import { td, enums } from '#ace'
+import { doQueryOptions } from './doQueryOptions.js'
 import { AceAuthError } from '../../objects/AceError.js'
-import { implementQueryOptions } from './implementQueryOptions.js'
 import { getXGeneratedByParent, getXGeneratedById } from './getXGenerated.js'
 import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey, getNodeUidsKey, getRelationshipUidsKey } from '../../variables.js'
 
@@ -47,14 +47,9 @@ async function getInitialUids (requestItem, passport) {
   let uids
 
   const xGenerated = getXGeneratedById(requestItem, passport)
-  const sortOptions = /** @type { td.AceQuerySort } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.Sort))
-  const findByUid = /** @type { td.AceQueryFindByUid } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FindByUid))
-  const findByUnique = /** @type { td.AceQueryFindByUnique } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FindByUnique))
-  const filterByUids = /** @type { td.AceQueryFilterByUids } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FilterByUids))
-  const filterByUniques = /** @type { td.AceQueryFilterByUniques } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FilterByUniques))
 
-  if (sortOptions) {
-    const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', sortOptions.x.property) // IF sorting by an property requested => see if property is a sort index
+  if (xGenerated.x.$o?.sort) {
+    const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x.$o?.sort.prop) // IF sorting by an property requested => see if property is a sort index
     if (indexKey) uids = await passport.storage.get(indexKey)
   }
 
@@ -64,23 +59,22 @@ async function getInitialUids (requestItem, passport) {
   else {
     let isValid = true
 
-    if (findByUid) uids = [ findByUid.x.uid ]
-    else if (filterByUids) {
-      uids = filterByUids.x.uids
+    if (xGenerated.x.$o?.findByUid) uids = [ xGenerated.x.$o.findByUid ]
+    else if (xGenerated.x.$o?.filterByUids) {
+      uids = xGenerated.x.$o.filterByUids.x.uids
       if (!uids.length) isValid = false
-    } else if (findByUnique) {
-      const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', findByUnique.x.property, findByUnique.x.value)
-      const rCache = await passport.storage.get(key)
-      const uid = rCache.get(key)
-      uids = uid ? [uid ] : []
+    } else if (xGenerated.x.$o?.findByUnique) {
+      const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x.$o.findByUnique.x.prop, xGenerated.x.$o?.findByUnique.x.value)
+      const uid = await passport.storage.get(key)
+      uids = uid ? [ uid ] : []
       if (!uids.length) isValid = false
-    } else if (filterByUniques) {
-      const keys = filterByUniques.x.uniques.map(value => {
-        return getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', value.property, value.value)
+    } else if (xGenerated.x.$o?.filterByUniques) {
+      const keys = xGenerated.x.$o.filterByUniques.x.uniques.map(unique => {
+        return getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', unique.prop, unique.value)
       })
 
-      const rCache = await passport.storage.get(keys)
-      uids = [ ...(rCache.values()) ]
+      const map = await passport.storage.get(keys)
+      uids = [...(map.values()) ]
       if (!uids.length) isValid = false
     }
 
@@ -121,10 +115,10 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
 
   for (let i = 0; i < uids.length; i++) {
     const node = rCache.get(uids[i])
-    if (isRevokesAllowed(node.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { node }, graphRelationships?.[i] || null, passport, publicJWKs, iRequest) // call desired function on each node
+    if (isRevokesAllowing(node.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { node }, graphRelationships?.[i] || null, passport, publicJWKs, iRequest) // call desired function on each node
   }
 
-  await implementQueryOptions(xGenerated, response, isUsingSortIndex, publicJWKs, passport)
+  await doQueryOptions(xGenerated, response, isUsingSortIndex, publicJWKs, passport)
 }
 
 
@@ -134,7 +128,7 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
  * @param { td.AcePassport } passport
  * @returns { boolean }
  */
-function isRevokesAllowed (node, options, passport) {
+function isRevokesAllowing (node, options, passport) {
   let revokesValue
   let isAllowed = false
 
@@ -193,10 +187,10 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
         { key: getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop: xKey }) } :
         { key: getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop: xKey }) }
 
-      if (isRevokesAllowed(responseOriginalItem, revokesOptions, passport)) {
+      if (isRevokesAllowing(responseOriginalItem, revokesOptions, passport)) {
         const xValue = xGenerated.x[xKey]
         const isTruthy = xValue === true
-        const alias = xValue?.id === enums.idsQueryOptions.Alias ? xValue.property : null
+        const alias = xValue?.alias
 
         /** @type { { schemaNodeProp?: td.AceSchemaProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp, schemaRelationshipProp?: td.AceSchemaRelationshipProp } } - If graphItemType is node, add node info to this object  */
         const parentNodeOptions = {}
@@ -269,18 +263,14 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
 
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { relationship: xGenerated.relationshipName })
 
-  const findBy_Uid = /** @type { td.AceQueryFindBy_Uid } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FindBy_Uid))
-
-  if (findBy_Uid) {
-    if (uids.includes(findBy_Uid.x._uid) ) uids = [ findBy_Uid.x._uid ]
+  if (xGenerated.x.$o?.findBy_Uid) {
+    if (uids.includes(xGenerated.x.$o.findBy_Uid.x._uid)) uids = [ xGenerated.x.$o.findBy_Uid.x._uid ]
   } else {
-    const filterBy_Uids = /** @type { td.AceQueryFilterBy_Uids } */ (xGenerated.priorityOptions.get(enums.idsQueryOptions.FilterBy_Uids))
+    if (xGenerated.x.$o?.filterBy_Uids?.x?._uids?.length) {
+      const set = new Set(xGenerated.x.$o.filterBy_Uids.x._uids)
 
-    if (filterBy_Uids) {
-      if (xGenerated.sets.get(enums.idsQueryOptions.FilterBy_Uids)?.size) {
-        for (let i = uids.length - 1; i >= 0; i--) {
-          if (!xGenerated.sets.get(enums.idsQueryOptions.FilterBy_Uids)?.has(uids[i])) uids.splice(i, 1)
-        }
+      for (let i = uids.length - 1; i >= 0; i--) {
+        if (!set.has(uids[i])) uids.splice(i, 1)
       }
     }
   }
@@ -290,10 +280,10 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
   for (let i = 0; i < uids.length; i++) {
     const relationship = rCache.get(uids[i])
 
-    if (isRevokesAllowed(relationship.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { relationship }, null, passport, publicJWKs, iRequest)
+    if (isRevokesAllowing(relationship.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { relationship }, null, passport, publicJWKs, iRequest)
   }
 
-  await implementQueryOptions(xGenerated, response, isUsingSortIndex, publicJWKs, passport)
+  await doQueryOptions(xGenerated, response, isUsingSortIndex, publicJWKs, passport)
 }
 
 
@@ -319,17 +309,12 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
     const graphRelationships = /** @type { any[] } */ ([])
     const relationshipGeneratedQueryXSection = getXGeneratedByParent(xValue, xKey, passport, xGenerated)  
 
-    const findByUid = /** @type { td.AceQueryFindByUid } */ (relationshipGeneratedQueryXSection.priorityOptions.get(enums.idsQueryOptions.FindByUid))
-    const findBy_Uid = /** @type { td.AceQueryFindBy_Uid } */ (relationshipGeneratedQueryXSection.priorityOptions.get(enums.idsQueryOptions.FindBy_Uid))
-    const findByUnique = /** @type { td.AceQueryFindByUnique } */ (relationshipGeneratedQueryXSection.priorityOptions.get(enums.idsQueryOptions.FindByUnique))
-    const filterByUniques = /** @type { td.AceQueryFilterByUniques } */ (relationshipGeneratedQueryXSection.priorityOptions.get(enums.idsQueryOptions.FilterByUniques))
-    
     const uniqueKeys = /** @type { string[] } */ ([])
 
-    if (findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', findByUnique.x.property, findByUnique.x.value))
-    else if (filterByUniques) {
-      for (const unique of filterByUniques.x.uniques) {
-        uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', unique.property, unique.value))
+    if (xGenerated.x.$o?.findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', xGenerated.x.$o.findByUnique.x.prop, xGenerated.x.$o.findByUnique.x.value))
+    else if (xGenerated.x.$o?.filterByUniques) {
+      for (const unique of xGenerated.x.$o.filterByUniques.x.uniques) {
+        uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', unique.prop, unique.value))
       }
     }
 
@@ -346,35 +331,35 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
     switch (schemaNodeProp.id) {
       case enums.idsSchema.ForwardRelationshipProp:
         graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
-          if (uid === graphRelationship?.x.a) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          if (uid === graphRelationship?.x.a) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
         })
         break
       case enums.idsSchema.ReverseRelationshipProp:
         graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
-          if (uid === graphRelationship?.x.b) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          if (uid === graphRelationship?.x.b) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
         })
         break
       case enums.idsSchema.BidirectionalRelationshipProp:
         graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
-          validateAndPushUids(relationshipGeneratedQueryXSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          validateAndPushUids(relationshipGeneratedQueryXSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
         })
         break
     }
 
     let isValid = true
 
-    if (findByUid) {
-      if (findByUidFound) nodeUids = [ findByUid.x.uid ]
+    if (xGenerated.x.$o?.findByUid) {
+      if (findByUidFound) nodeUids = [ xGenerated.x.$o.findByUid ]
       else isValid = false
     }
 
-    if (findByUnique) {
+    if (xGenerated.x.$o?.findByUnique) {
       if (findByUniqueFound) nodeUids = [ uniqueUids[0] ]
       else isValid = false
     }
 
-    if (findBy_Uid) {
-      if (findBy_UidFound) nodeUids = [ findBy_Uid.x._uid ]
+    if (xGenerated.x.$o?.findBy_Uid) {
+      if (findBy_UidFound) nodeUids = [xGenerated.x.$o.findBy_Uid.x._uid ]
       else isValid = false
     }
 
@@ -390,28 +375,29 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
  * @param { any } graphRelationship 
  * @param { string } graphRelationshipKey 
  * @param { string[] } nodeUids 
- * @param { td.AceQueryFindByUid } findByUid 
- * @param { td.AceQueryFindBy_Uid } findBy_Uid 
- * @param { td.AceQueryFindByUnique } findByUnique
- * @param { td.AceQueryFilterByUniques } filterByUniques 
  * @param { string[] } uniqueUids 
  * @param { boolean } findByUidFound 
  * @param { boolean } findByUniqueFound 
  * @param { boolean } findBy_UidFound 
  */
-function validateAndPushUids (relationshipGeneratedQueryXSection, uid, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, findByUid, findBy_Uid, findByUnique, filterByUniques, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound) {
-  const filterByUids = /** @type { td.AceQueryFilterByUids } */ (relationshipGeneratedQueryXSection.priorityOptions.get(enums.idsQueryOptions.FilterByUids))
-  const filterBy_Uids = /** @type { td.AceQueryFilterBy_Uids } */ (relationshipGeneratedQueryXSection.priorityOptions.get(enums.idsQueryOptions.FilterBy_Uids))
+function validateAndPushUids (relationshipGeneratedQueryXSection, uid, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound) {
+  const filterByUids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterByUids?.x.uids)
 
-  if (!filterByUids || relationshipGeneratedQueryXSection.sets.get(enums.idsQueryOptions.FilterByUids)?.has(uid)) {
-    if (!filterBy_Uids || relationshipGeneratedQueryXSection.sets.get(enums.idsQueryOptions.FilterBy_Uids)?.has(graphRelationshipKey)) {
-      if (!filterByUniques || relationshipGeneratedQueryXSection.sets.get(enums.idsQueryOptions.FilterByUniques)?.has(uid)) {
+  if (!filterByUids.has(uid)) {
+    const filterBy_Uids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterBy_Uids?.x._uids)
+
+    if (!filterBy_Uids.has(graphRelationshipKey)) {
+      const filterByUniques = relationshipGeneratedQueryXSection.x.$o?.filterByUniques?.x.uniques?.find((unique => {
+        return unique.prop === graphRelationshipKey && unique.value === graphRelationship.x
+      }))
+
+      if (!filterByUniques) {
         nodeUids.push(uid)
         graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
 
-        if (findByUid && findByUid.x.uid === uid) findByUidFound = true
-        else if (findBy_Uid && findBy_Uid.x._uid === graphRelationshipKey) findBy_UidFound = true
-        else if (findByUnique && uniqueUids.length && uniqueUids[0] === uid) findByUniqueFound = true
+        if (String(relationshipGeneratedQueryXSection.x.$o?.findByUid) === uid) findByUidFound = true
+        else if (String(relationshipGeneratedQueryXSection.x.$o?.findBy_Uid?.x._uid) === graphRelationshipKey) findBy_UidFound = true
+        else if (String(relationshipGeneratedQueryXSection.x.$o?.findByUnique?.x) && uniqueUids.length && uniqueUids[0] === uid) findByUniqueFound = true
       }
     }
   }

@@ -136,9 +136,9 @@ async function getUser (_passport) {
         node: 'AceToken',
         prop: 'token',
         x: {
-          $o: [
-            { id: 'FindByUid', x: { uid: _passport.token } }
-          ],
+          $o: {
+            findByUid: _passport.token
+          },
           user: {
             uid: true,
             password: true,
@@ -204,10 +204,10 @@ async function getIsEnforcePermissionsOn (_passport) {
       node: 'AceSetting',
       prop: 'isOn',
       x: {
-        $o: [
-          { id: 'FindByUid', x: { uid } },
-          { id: 'PropertyAsResponse', x: { property: 'isOn' } }
-        ]
+        $o: {
+          findByUid: uid,
+          propAsRes: { prop: 'isOn' }
+        }
       }
     }
   })

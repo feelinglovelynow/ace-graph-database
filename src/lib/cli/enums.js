@@ -5,11 +5,12 @@ import { idsQueryOptions } from '../enums/idsQueryOptions.js'
 import { idsSchema } from '../enums/idsSchema.js'
 import { passportSource } from '../enums/passportSource.js'
 import { permissionActions } from '../enums/permissionActions.js'
+import { queryOptions, postQueryOptions } from '../enums/queryOptions.js'
 import { queryDerivedSymbol } from '../enums/queryDerivedSymbol.js'
 import { queryWhereGroupSymbol } from '../enums/queryWhereGroupSymbol.js'
 import { queryWhereSymbol } from '../enums/queryWhereSymbol.js'
 import { settings } from '../enums/settings.js'
-import { sortOptions } from '../enums/sortOptions.js'
+import { sortHow } from '../enums/sortHow.js'
 
 
 
@@ -27,13 +28,15 @@ function setEnumsMap (schema) {
   enumsMap.set('idsQueryOptions', idsQueryOptions)
   enumsMap.set('passportSource', passportSource)
   enumsMap.set('permissionActions', permissionActions)
+  enumsMap.set('queryOptions', queryOptions)
+  enumsMap.set('postQueryOptions', postQueryOptions)
   enumsMap.set('queryDerivedSymbol', queryDerivedSymbol)
   enumsMap.set('queryWhereGroupSymbol', queryWhereGroupSymbol)
   enumsMap.set('queryWhereSymbol', queryWhereSymbol)
   enumsMap.set('nodeNames', new Set(Object.keys(schema?.nodes || {})))
   enumsMap.set('relationshipNames', new Set(Object.keys(schema?.relationships || {})))
   enumsMap.set('settings', settings)
-  enumsMap.set('sortOptions', sortOptions)
+  enumsMap.set('sortHow', sortHow)
 
   return enumsMap
 }

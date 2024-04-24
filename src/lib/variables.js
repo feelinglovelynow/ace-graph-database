@@ -4,6 +4,51 @@ export const ADD_NOW_DATE = 'now'
 export const REQUEST_UID_PREFIX = '_:'
 export const REQUEST_TOKEN_HEADER = 'ace_api_token'
 
+export const PRE_QUERY_OPTIONS_FLOW = [
+  'flow',
+  'alias',
+  'sort', // IF sort schema index is defined for the sort prop, then we get sorted uids from index
+  'findByUid',
+  'findBy_Uid',
+  'findByUnique',
+  'filterByUids',
+  'filterBy_Uids',
+  'filterByUniques',
+]
+
+export const DEFAULT_QUERY_OPTIONS_FLOW = [ // configurable
+  'countAsProp',
+  'sumAsProp',
+  'avgAsProp',
+  'minAmtAsProp',
+  'maxAmtAsProp',
+
+  'newProps',
+  'propAdjToRes',
+
+  'find',
+  'findByDefined',
+  'findByUndefined',
+
+  'filter',
+  'filterByDefined',
+  'filterByUndefined',
+
+  'sort', // IF sort schema index is not defined for the sort prop then we manually sort
+  'limit',
+]
+
+export const POST_QUERY_OPTIONS_FLOW = [
+  'propAsRes',
+  'countAsRes',
+  'sumAsRes',
+  'avgAsRes',
+  'minAmtAsRes',
+  'maxAmtAsRes',
+  'minNodeAsRes',
+  'maxNodeAsRes',
+]
+
 
 /** @returns { string } */
 export function getNow () {
@@ -20,10 +65,10 @@ export function getNow () {
 export const DELIMITER = '___'
 export const SCHEMA_KEY = '$schema'
 export const RELATIONSHIP_PREFIX = '$r' + DELIMITER
-export const NODE_UIDS_PREFIX = '$node' + DELIMITER + 'uids' + DELIMITER
+export const NODE_UIDS_PREFIX = '$index' + DELIMITER + 'nodes' + DELIMITER
 export const INDEX_SORT_PREFIX = '$index' + DELIMITER + 'sort' + DELIMITER
 export const INDEX_UNIQUE_PREFIX = '$index' + DELIMITER + 'unique' + DELIMITER
-export const RELATIONSHIP_UIDS_PREFIX = '$relationship' + DELIMITER + 'uids' + DELIMITER
+export const RELATIONSHIP_UIDS_PREFIX = '$index' + DELIMITER + 'relationships' + DELIMITER
 
 export const ACE_NODE_NAMES = new Set([
   'AceSetting',

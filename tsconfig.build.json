@@ -1,10 +1,10 @@
 {
   "files": [
     "src/lib/ace/plugins/core.js",
+    "src/lib/ace/query/doQueryOptions.js",
     "src/lib/ace/query/getDerivedValue.js",
     "src/lib/ace/query/getRelationshipNode.js",
     "src/lib/ace/query/getXGenerated.js",
-    "src/lib/ace/query/implementQueryOptions.js",
     "src/lib/ace/query/query.js",
     "src/lib/ace/query/queryWhere.js",
     "src/lib/ace/ace.js",
