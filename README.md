@@ -14,7 +14,7 @@
 ## 🙋‍♀️ Queries, Mutations and Data Management
 1. The Ace query language is a typesafe (JS/TS) function called `ace()`, that provides expressive queries and transactional mutations
 1. Roles and permissions by node, relationship or property, for the actions read, insert, update, upsert, or delete can be easily configured thanks to our `core` plugin
-1. Our cli scipt provides a way to save encrypted backups locally to a file or to Cloudflare KV for free... & applying backups to a graph is simple with our cli too
+1. Our cli scipt provides functionality to save a zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple with our cli too
 
 
 ## 🎬 Create a Movie Graph 
@@ -268,117 +268,97 @@ ace fileToGraph
 ## 🤓 Version 1 Roadmap 
 1. InsertNode to AddNodeToGraph
 1. InsertRelationship to AddRelationshipToGraph
-
-
-$options array to $o object, to help w/:
-    * Improve (typing / response) intellisense
-    * Less typing required
-    * Property to Prop
-```js
-const query = {
-  id: 'QueryByNode',
-  node: 'Movie',
-  prop: 'matrix',
-  how: {
-    $a: { findByUid: 'matrix_uid' },
-    uid: true,
-    title: true,
-    actors: {
-      $a: {
-        alias: 'stars',
-        limit: { count: 9, skip: 9, random: true }, // skip the first 9, get random 9 more
-        flow: [ 'filter', 'sort', 'limit' ],
-        sort: { prop: 'salary', how: 'asc' }, // 2
-        filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1
-        resHide: { avgSalary: true },
-        newProps: {
-          bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
-          fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
-        },
-      },
+1. Property to Prop
+1. $o values
+  ```js
+  const query = {
+    id: 'QueryByNode',
+    node: 'Movie',
+    prop: 'matrix',
+    how: {
+      $a: { findByUid: 'matrix_uid' },
       uid: true,
-      firstName: true,
-      lastName: true,
-      _uid: true,
-      _salary: { alias: 'salary' },
-      friends: {
+      title: true,
+      actors: {
         $a: {
-          filter: { // filter parenthesis (groups)
-            symbol: '&',
-            items: [
-              {
-                symbol: '|',
-                items: [
-                  [ { prop: 'name' }, '=', 'chris' ],
-                  [ { prop: 'avgSalary' }, '>', 9 ],
-                ]
-              },
-              [ { prop: 'idk' }, '!=', 'hmm' ],
-            ]
-          }
+          alias: 'stars',
+          limit: { count: 9, skip: 9, random: true }, // skip the first 9, get random 9 more
+          flow: [ 'filter', 'sort', 'limit' ],
+          sort: { prop: 'salary', how: 'asc' }, // 2
+          filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // 1
+          resHide: { avgSalary: true },
+          newProps: {
+            bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
+            fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
+          },
         },
-        lastName: true,
+        uid: true,
         firstName: true,
-      }
-    }
-  }
-}
-
-const mutation = { id: 'AddNodeToGraph', node: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } }
-
-const relationship = { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } }
-
-const schema = {
-  id: 'AddToSchema',
-  prop: 'schemaAdd',
-  x: {
-    schema: {
-      nodes: {
-        Movie: {
-          props: {
-            title: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actors: { id: 'ReverseRelationshipProp', x: { has: 'many', node: 'Actor', relationship: 'actsInMovie' } },
-          }
-        },
-        Actor: {
-          props: {
-            firstName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            lastName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
-            actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'Movie', relationship: 'actsInMovie' } },
-          }
+        lastName: true,
+        _uid: true,
+        _salary: { alias: 'salary' },
+        friends: {
+          $a: {
+            filter: { // filter parenthesis (groups)
+              symbol: '&',
+              items: [
+                {
+                  symbol: '|',
+                  items: [
+                    [ { prop: 'name' }, '=', 'chris' ],
+                    [ { prop: 'avgSalary' }, '>', 9 ],
+                  ]
+                },
+                [ { prop: 'idk' }, '!=', 'hmm' ],
+              ]
+            }
+          },
+          lastName: true,
+          firstName: true,
         }
-      },
-      relationships: {
-        actsInMovie: {
-          id: 'ManyToMany',
-          props: {
-            _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
-          }
-        },
       }
     }
   }
-}
-```
-* firstOptions
-    * alias, find, filter
-* Do firstOptions
-* flowOptions
-* flowOrder <- options.flow || defaultFlow
-* for key of flowOrder
-    * IF flowOptions.has(key) -> do() AND flowOptions.delete(key)
-* flowOptions.forEach()
-    * do()
+
+  const mutation = { id: 'AddNodeToGraph', node: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } }
+
+  const relationship = { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } }
+
+  const schema = {
+    id: 'AddToSchema',
+    prop: 'schemaAdd',
+    x: {
+      schema: {
+        nodes: {
+          Movie: {
+            props: {
+              title: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+              actors: { id: 'ReverseRelationshipProp', x: { has: 'many', node: 'Actor', relationship: 'actsInMovie' } },
+            }
+          },
+          Actor: {
+            props: {
+              firstName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+              lastName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
+              actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'Movie', relationship: 'actsInMovie' } },
+            }
+          }
+        },
+        relationships: {
+          actsInMovie: {
+            id: 'ManyToMany',
+            props: {
+              _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
+            }
+          },
+        }
+      }
+    }
+  }
+  ```
 1. No uid or _uid in data values
 1. Alphabetical Schema
 1. Add enums to schema
-1. (TS / JSDoc)
-    * What
-        * Run time validation support
-        * Alter `ace()` response based on the request
-    * How
-        * Generics
-        * Conditional Types
 1. `ace()`
     * Function to communicate with the graph
     * fileToGraph Option: skipDataDelete: boolean
@@ -409,8 +389,8 @@ const schema = {
           * Request Item can support
 1. On Error Flow
     * Retry: Count, MS Before Trying Again
-    * Log to KV
-    * Backup To KV
+    * Log to R2
+    * Backup To R2
     * Email Log
     * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
@@ -434,6 +414,8 @@ const schema = {
     * Put [ Key, Original, Now, Request Item, API Token ]
     * Delete [ Key, API Token ]
 1. Response Types
+    * Generics
+    * Conditional Types
 1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
 1. Security
