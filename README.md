@@ -99,7 +99,7 @@ const response = await ace({
         name: true,
         actors: {
           $o: {
-            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // respond with actors that have a salary greater then the average salary
+            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // respond with actors that have a salary greater than the average salary
             sort: { prop: 'salary', how: 'dsc' }, // sort actors by salary
             limit: { count: 2, skip: 1 }, // skip the first actor then show the next 2
             flow: [ 'filter', 'sort', 'limit', 'newProps' ], // do options in this order
@@ -264,21 +264,31 @@ ace fileToGraph
 ```
 
 
-## 🤓 Version 1 Roadmap 
-1. Learn about GitHub versioning
+## 🤓 Version 1 Roadmap
+1. GitHub Versioning
+    * Get email for us@acedatabasefoundation.org working
+    * Signup for GitHub
+    * Create a GitHub Organization
+    * Deploy main 0.0.1 to GitHub
+    * Tag a release
     * Create a qa branch
-    * Deploy to qa branch
-    * On Thursday's deploy qa to main and update the version
-    * On Friday's publish a blog post that (lists / commit links) the new features for the version
+    * Deploy to qa branch over the course of the week
+    * On Thursday's deploy qa to main, update the version in the package.json, commit message is 0.0.x
+    * On Thursday's publish a blog post that lists the new features for the version with commit links
         * 0.0.x
             * Version 1 Roadmap Items
             * Bug Fixes
             * Quality of Life Impovements
-            * Support Request
+            * Support
+                * Star us on GitHub
+                * Contribute
+                * Donate
+            * Thanks
     * On the Last Friday of the month post a blog post that:
-        * (lists / blog links) the new versions for the month
+        * Lists the new versions for the month w/ blog links
         * Mentions goals for next month
-        * Support Request
+        * Support
+        * Thanks
 1. External: Property to Prop
 1. $o values
     * symbols > words to characters

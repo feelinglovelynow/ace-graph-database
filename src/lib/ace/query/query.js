@@ -199,7 +199,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
     /** @type { Map<string, td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp> | undefined } */
     const relationshipPropsMap = (item.relationship && passport.schemaDataStructures?.relationshipPropsMap) ? passport.schemaDataStructures.relationshipPropsMap.get(xGenerated.relationshipName || '') : undefined
 
-    if (xGenerated.x.$o?.expand) { // expand
+    if (xGenerated.x.$o?.all) { // show all not relationship props
       for (const prop in responseOriginalItem) {
         if ((!item.relationship || (prop !== 'a' && prop !== 'b')) && validateAddProps(item, xGenerated, prop, responseOriginalItem, passport)) { // on relationships, skip the a and b props AND ensure this user may query this data
           responseNowItem[xGenerated.x?.[prop]?.alias || prop] = responseOriginalItem[prop]

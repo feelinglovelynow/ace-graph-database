@@ -7,7 +7,7 @@ export const REQUEST_TOKEN_HEADER = 'ace_api_token'
 export const PRE_QUERY_OPTIONS_FLOW = [
   'flow',
   'alias',
-  'expand',
+  'all',
   'sort', // IF sort schema index is defined for the sort prop, then we get sorted uids from index
   'findByUid',
   'findBy_Uid',
