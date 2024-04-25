@@ -14,7 +14,7 @@
 ## 🙋‍♀️ Queries, Mutations and Data Management
 1. The Ace query language is a typesafe (JS/TS) function called `ace()`, that provides expressive queries and transactional mutations
 1. Roles and permissions by node, relationship or property, for the actions read, insert, update, upsert, or delete can be easily configured thanks to our `core` plugin
-1. Our cli scipt provides functionality to save a zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple with our cli too
+1. Our cli scipt provides functionality to save zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple with our cli too
 
 
 ## 🎬 Create a Movie Graph 
@@ -75,7 +75,8 @@ const response = await ace({
     { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
     { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
 
-    // IF a uid is not specified THEN Ace creates one before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
+    // IF a uid is not specified for AddNodeToGraph as seen below THEN Ace creates one before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
+    // IF a uid is set (crypto.randomUUID()) THEN Ace won't create a uid before placing the node into storage AND this node can be used in relationships for this ace() call by using the uid in relationships
     { id: 'AddNodeToGraph', node: 'Movie', x: { name: 'Avatar' } },
 
     // put a backup of the graph @ response.backup
@@ -264,6 +265,20 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap 
+1. Learn about GitHub versioning
+    * Create a qa branch
+    * Deploy to qa branch
+    * On Thursday's deploy qa to main and update the version
+    * On Friday's publish a blog post that (lists / commit links) the new features for the version
+        * 0.0.x
+            * Version 1 Roadmap Items
+            * Bug Fixes
+            * Quality of Life Impovements
+            * Support Request
+    * On the Last Friday of the month post a blog post that:
+        * (lists / blog links) the new versions for the month
+        * Mentions goals for next month
+        * Support Request
 1. External: Property to Prop
 1. $o values
     * symbols > words to characters
