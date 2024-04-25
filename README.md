@@ -84,51 +84,25 @@ const response = await ace({
     // put the current graph schema @ response.schema
     { id: 'GetSchema', prop: 'schema' },
 
-    // put the response of SELECT * FROM Actor @ response.actors
-    {
-      id: 'QueryByNode',
-      node: 'Actor',
-      prop: 'actors',
-      x: { // values in x change based on the id and the node
-        $o: { // options for the following props
-          expand: true // add all none relationship Actor props available for each node to the response
-        }
-      }
-    },
 
-    {
-      id: 'QueryByRelationship',
-      relationship: 'actsInMovie',
-      prop: 'actsInMovie',
-      x: {
-        _uid: true,
-        actors: {
-          name: true,
-        },
-        actsIn: {
-          $o: { alias: 'movie' }, // response will show movie rather then actsIn
-          name: true,
-        }
-      }
-    }
-
-    // put the response of this query @ response.matrix
+    // QueryByNode - example: { matrix: { uid: 'abc', name: 'The Matrix', actors: [ ... ] } }
     {
       id: 'QueryByNode',
       node: 'Movie',
       prop: 'matrix',
-      x: { // ace settings (intellisense changes here based on values above for id and node)
-        $o: { findByUid: '_:Matrix' }, // ace options, response.matrix will only have the matrix object b/c this option is set, without this find, an array of all movies would be in the response
+      x: { // intellisense below changes here based on id and node above
+        $o: {
+          findByUid: '_:Matrix' // option: response.matrix will only have the matrix object b/c this option is set, without this find, an array of all movies would be in the response
+        },
         uid: true, // put uid into the response @ response.matrix.uid
         name: true,
         actors: {
-          // actors: options
           $o: {
-            limit: { count: 2, skip: 1 },
-            flow: [ 'filter', 'sort', 'limit' ], // do filter, then do sort, then do limit
-            sort: { prop: 'salary', how: 'asc' },
-            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ],
-            newProps: {
+            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // option: respond with actos that have a salary greater then the average salary
+            sort: { prop: 'salary', how: 'dsc' }, // sort actors by salary
+            limit: { count: 2, skip: 1 }, // option: skip the first actor then show the next 2
+            flow: [ 'filter', 'sort', 'limit', 'newProps' ], // option: do options in this order
+            newProps: { // option: add these props to each actor
               bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
               fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
             },
@@ -137,10 +111,36 @@ const response = await ace({
           // actors: props
           uid: true, // node prop (Actor)
           _uid: true, // relationship prop (actsInMovie)
-          _salary: { alias: 'salary' }, // alias property will be @ response.matrix.actors[i].salary
+          _salary: { alias: 'salary' }, // alias prop will be @ response.matrix.actors[i].salary
         }
       }
     },
+
+
+    // QueryByNode - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' } ... ] }
+    {
+      id: 'QueryByNode',
+      node: 'Actor',
+      prop: 'actors',
+      x: { $o: { all: true } } // option: response.actors will have all not relationship props (uid, firstName, lastName)
+    },
+
+
+    // QueryByRelationship - example: { actsInMovie: [ { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }, ... ] }
+    {
+      id: 'QueryByRelationship',
+      relationship: 'actsInMovie',
+      prop: 'actsInMovie',
+      x: {
+        $o: { all: true }, // option: response.actsInMovie will have all not relationship props (_uid, _salary)
+        actors: {
+          $o: { alias: 'star', all: true }, // option: response.actsInMovie[i].star rather then response.actsInMovie[i].actors
+        },
+        actsIn: {
+          $o: { alias: 'movie', all: true }, // option: response.actsInMovie[i].movie rather then response.actsInMovie[i].actsIn
+        }
+      }
+    }
   ]
 })
 ```
@@ -273,6 +273,7 @@ ace fileToGraph
     * `resHide: { avgSalary: true },`
     * `newPops: { bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ] }`
     * `newPops: { fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ] }`
+    * `filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ]`
 1. No uid or _uid as prop name
 1. Schema Enums
 1. `ace()`
