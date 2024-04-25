@@ -36,7 +36,7 @@ const response = await ace({
   request: [
     {
       id: 'AddToSchema', // add the Actor node, the Movie node and the actsInMovie relationship to the schema
-      x: {
+      x: { // intellisense below changes based on id above
         schema: {
           nodes: {
             Actor: {
@@ -90,7 +90,7 @@ const response = await ace({
       id: 'QueryByNode',
       node: 'Movie',
       prop: 'matrix',
-      x: { // intellisense below changes here based on id and node above
+      x: { // intellisense below changes based on id and node above
         $o: {
           findByUid: '_:Matrix' // option: response.matrix will only have the matrix object b/c this option is set, without this find, an array of all movies would be in the response
         },
@@ -98,20 +98,18 @@ const response = await ace({
         name: true,
         actors: {
           $o: {
-            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // option: respond with actos that have a salary greater then the average salary
+            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // respond with actors that have a salary greater then the average salary
             sort: { prop: 'salary', how: 'dsc' }, // sort actors by salary
-            limit: { count: 2, skip: 1 }, // option: skip the first actor then show the next 2
-            flow: [ 'filter', 'sort', 'limit', 'newProps' ], // option: do options in this order
-            newProps: { // option: add these props to each actor
-              bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ],
+            limit: { count: 2, skip: 1 }, // skip the first actor then show the next 2
+            flow: [ 'filter', 'sort', 'limit', 'newProps' ], // do options in this order
+            newProps: { // add these props to each actor
+              bonus: [ 0.7 '*' [ { prop: 'salary' }, '/', 12 ] ], // [] items in newProps is like () items in math
               fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
             },
           },
-
-          // actors: props
-          uid: true, // node prop (Actor)
-          _uid: true, // relationship prop (actsInMovie)
-          _salary: { alias: 'salary' }, // alias prop will be @ response.matrix.actors[i].salary
+          uid: true, // put Actor.uid into response @ response.matrix.actors[i].uid
+          _uid: true, // put actsInMovie._uid into response @ response.matrix.actors[i]._uid
+          _salary: { alias: 'salary' }, // put actsInMovie._salary into response @ response.matrix.actors[i].salary
         }
       }
     },
