@@ -1,7 +1,7 @@
 export const idsAce = new Set([
   'Empty',
 
-  'SchemaGet',
+  'GetSchema',
   'AddToSchema',
 
   'GetBackup',

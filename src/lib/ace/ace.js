@@ -1,5 +1,5 @@
-import { put } from './storage.js'
 import { td, enums } from '#ace'
+import { put } from './storage.js'
 import { aceFetch } from '../aceFetch.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
 import { queryNode, queryRelationship } from './query/query.js'
@@ -37,14 +37,14 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     const cryptoJWKs = /** @type { { public: td.AceFnCryptoJWKs, private: td.AceFnCryptoJWKs } } */ ({ private: {}, public: {} })
 
     /** @type { (td.AceQueryRequestItem | td.AceMutateRequestItem)[] } Request as an array */
-    const arrayRequest = Array.isArray(request) ? request : [request ]
+    const arrayRequest = Array.isArray(request) ? request : [ request ]
 
     /** @type { td.AceFnFullResponse } - Nodes with all properties will be in original, nodes with requested properties from `query.x` will be in now. */
     const response = { now: {}, original: {} }
 
     await setPrivateJWKs()
     await setPublicJWKs()
-    await prepLoop()
+    await preDeligate()
     await deligate()
     throwIfMissingMustProps()
     await addSortIndicesToGraph()
@@ -69,7 +69,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     }
 
 
-    async function prepLoop () {
+    async function preDeligate () {
       /** @type { { node: string[], relationship: string[] } } - We will convert uids to graph nodes to help with updating */
       const updateUids = { node: [], relationship: [] }
 
@@ -90,94 +90,111 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
       updateRequestItems.relationships = (!updateUids.relationship.length) ? [] : await passport.storage.get(updateUids.relationship)
     }
 
+
     async function deligate () {
-      let preLoopDone = false
-      const preLoopSet = new Set([enums.idsAce.Empty, enums.idsAce.InstallPlugin ])
-
       for (let iRequest = 0; iRequest < arrayRequest.length; iRequest++) {
-        const requestItem = arrayRequest[iRequest]
-
-        if (!preLoopDone && !preLoopSet.has(/** @type {*} */ (requestItem.id))) {
-          prepLoop()
-          preLoopDone = true
-        }
-
-        switch (requestItem.id) {
+        switch (arrayRequest[iRequest].id) {
           case enums.idsAce.Empty:
-            await empty(requestItem)
+            await empty(/** @type { td.AceMutateRequestItemEmpty } */(arrayRequest[iRequest]))
+            await preDeligate()
             break
+
 
           case enums.idsAce.InstallPlugin:
-            const installOptions = /** @type { td.AceFnOptions } */ ({
+            const ipReq = /** @type { td.AceMutateRequestItemInstallPlugin } */ (arrayRequest[iRequest])
+
+            const ipOptions = /** @type { td.AceFnOptions } */ ({
               passport: passport,
-              request: requestItem.x.install.request,
-              publicJWKs: requestItem.x.install.publicJWKs,
-              privateJWKs: requestItem.x.install.privateJWKs,
+              request: ipReq.x.install.request,
+              publicJWKs: ipReq.x.install.publicJWKs,
+              privateJWKs: ipReq.x.install.privateJWKs,
             })
 
-            const installResponse = await _ace(installOptions)
-            if (requestItem.property) response.now[requestItem.property] = installResponse
+            const ipRes = await _ace(ipOptions)
+            if (ipReq.prop) response.now[ipReq.prop] = ipRes
+            await preDeligate()
             break
+
 
           case enums.idsAce.UninstallPlugin:
-            const responseUninstall = await _ace({ passport: passport, request: requestItem.x.request })
-            if (requestItem.property) response.now[requestItem.property] = responseUninstall
+            const upReq = /** @type { td.AceMutateRequestItemUninstallPlugin } */ (arrayRequest[iRequest])
+            const responseUninstall = await _ace({ passport: passport, request: upReq.x.request })
+            if (upReq.prop) response.now[upReq.prop] = responseUninstall
+            await preDeligate()
             break
+
 
           case enums.idsAce.QueryByNode:
-            await queryNode(requestItem, passport, response, cryptoJWKs.public, iRequest)
+            await queryNode(/** @type { td.AceQueryRequestItemNode } */(arrayRequest[iRequest]), passport, response, cryptoJWKs.public, iRequest)
             break
+
 
           case enums.idsAce.QueryByRelationship:
-            await queryRelationship(requestItem, passport, response, cryptoJWKs.public, iRequest)
+            await queryRelationship(/** @type { td.AceQueryRequestItemRelationship } */(arrayRequest[iRequest]), passport, response, cryptoJWKs.public, iRequest)
             break
 
-          case enums.idsAce.SchemaGet:
-            await schemaGet(requestItem)
+
+          case enums.idsAce.GetSchema:
+            await schemaGet(/** @type { td.AceQueryRequestItemGetSchema } */(arrayRequest[iRequest]))
             break
+
 
           case enums.idsAce.AddToSchema:
-            const addToSchemaResponse = addToSchema(passport, requestItem.x.schema)
-            if (requestItem.prop) response.now[requestItem.prop] = addToSchemaResponse
+            const atsReq = /** @type { td.AceMutateRequestItemAddToSchema } */ (arrayRequest[iRequest])
+            const atsRes = addToSchema(passport, atsReq.x.schema)
+            if (atsReq.prop) response.now[atsReq.prop] = atsRes
             setSchemaDataStructures(passport)
             break
 
+
           case enums.idsAce.GetBackup:
-            await backupGet(requestItem)
+            await backupGet(/** @type { td.AceQueryRequestItemGetBackup } */(arrayRequest[iRequest]))
             break
 
+
           case enums.idsAce.LoadBackup:
-            await fileToGraph(requestItem)
+            await fileToGraph(/** @type { td.AceMutateRequestItemLoadBackup } */(arrayRequest[iRequest]))
             break
+
 
           case enums.idsAce.AddNodeToGraph:
           case enums.idsAce.UpdateGraphNode:
-            await inupNode(requestItem, passport, sortIndexMap, updateRequestItems, cryptoJWKs.private)
+            await inupNode(/** @type { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[iRequest]), passport, sortIndexMap, updateRequestItems, cryptoJWKs.private)
             break
+
 
           case enums.idsAce.AddRelationshipToGraph:
           case enums.idsAce.UpdateGraphRelationship:
-            await inupRelationship(requestItem, passport, updateRequestItems)
+            await inupRelationship(/** @type { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[iRequest]), passport, updateRequestItems)
             break
+
 
           case enums.idsAce.DataDeleteNodes:
-            if (requestItem.x?.uids?.length) await deleteNodesByUids(requestItem.x.uids, passport)
+            const ddnReq = /** @type { td.AceMutateRequestItemDataDeleteNodes } */ (arrayRequest[iRequest])
+            if (ddnReq.x?.uids?.length) await deleteNodesByUids(ddnReq.x.uids, passport)
             break
+
 
           case enums.idsAce.DataDeleteRelationships:
-            if (requestItem.x?._uids?.length) await deleteRelationshipsBy_Uids(requestItem.x._uids, passport)
+            const ddrReq = /** @type { td.AceMutateRequestItemDataDeleteRelationships } */ (arrayRequest[iRequest])
+            if (ddrReq.x?._uids?.length) await deleteRelationshipsBy_Uids(ddrReq.x._uids, passport)
             break
+
 
           case enums.idsAce.DataDeleteNodeProps:
-            if (requestItem.x?.uids?.length && requestItem.x?.props?.length) await dataDeleteNodeProps(requestItem, passport)
+            const ddnpReq = /** @type { td.AceMutateRequestItemDataDeleteNodeProps } */ (arrayRequest[iRequest])
+            if (ddnpReq.x?.uids?.length && ddnpReq.x?.props?.length) await dataDeleteNodeProps(ddnpReq, passport)
             break
+
 
           case enums.idsAce.DataDeleteRelationshipProps:
-            if (requestItem.x?._uids?.length && requestItem.x?.props?.length) await dataDeleteRelationshipProps(requestItem, passport)
+            const ddrpReq = /** @type { td.AceMutateRequestItemDataDeleteRelationshipProps } */ (arrayRequest[iRequest])
+            if (ddrpReq.x?._uids?.length && ddrpReq.x?.props?.length) await dataDeleteRelationshipProps(ddrpReq, passport)
             break
 
+
           case enums.idsAce.SchemaAndDataDeleteNodes:
-            await schemaAndDataDeleteNodes(requestItem, passport)
+            await schemaAndDataDeleteNodes(/** @type { td.AceMutateRequestItemSchemaAndDataDeleteNodes } */(arrayRequest[iRequest]), passport)
             break
         }
       }
@@ -195,7 +212,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
         passport.schema = undefined
         passport.schemaDataStructures = {}
         
-        if (requestItem.property) response.now[requestItem.property] = { success: true }
+        if (requestItem.prop) response.now[requestItem.prop] = { success: true }
       }
 
 
@@ -215,7 +232,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           if (!passport.$aceDataStructures.deletedKeys.has(key)) rList[key] = value
         })
 
-        response.now[requestItem.property] = rList
+        response.now[requestItem.prop] = rList
       }
 
 
@@ -242,11 +259,11 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
     /**
-     * @param { td.AceQueryRequestItemSchemaGet } requstItem 
+     * @param { td.AceQueryRequestItemGetSchema } requstItem 
      */
     function schemaGet (requstItem) {
       if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
-      response.now[requstItem.property] = passport.schema
+      response.now[requstItem.prop] = passport.schema
     }
 
 

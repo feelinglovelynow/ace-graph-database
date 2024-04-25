@@ -6,8 +6,8 @@ import { ACE_NODE_NAMES, DELIMITER } from '../variables.js'
  */
 export function typedefs (schema) {
   const typedefs = getSchemaTypedefs(schema)
-  const queryRequestItemNodeOptions = '{ flow?: enums.queryOptions[],  alias?: string,  sort?: AceQuerySort,  findByUid?: AceQueryFindByUid,  findBy_Uid?: AceQueryFindBy_Uid,  findByUnique?: AceQueryFindByUnique,  filterByUids?: AceQueryFilterByUids,  filterBy_Uids?: AceQueryFilterBy_Uids,  filterByUniques?: AceQueryFilterByUniques,   countAsProp?: AceQueryCountAsProperty,   sumAsProp?: AceQuerySumAsProperty,  avgAsProp?: AceQueryAverageAsProperty,  minAmtAsProp?: AceQueryMinAmountAsProperty,   maxAmtAsProp?: AceQueryMaxAmountAsProperty,  newProps?: { [propName: string ]: AceQueryDerivedProperty },  propAdjToRes?: AceQueryPropertyAdjacentToResponse,  find?: AceQueryFind,   findByDefined?: AceQueryFindDefined,  findByUndefined?: AceQueryFindUndefined,  filter?: AceQueryFilter,  filterByDefined?: AceQueryFilterDefined,  filterByUndefined?: AceQueryFilterUndefined,  limit?: AceQueryLimit,   propAsRes?: AceQueryPropertyAsResponse,  countAsRes?: AceQueryCountAsResponse,  sumAsRes?: AceQuerySumAsResponse,  avgAsRes?: AceQueryAverageAsResponse,  minAmtAsRes?: AceQueryMinAmountAsResponse,  maxAmtAsRes?: AceQueryMaxAmountAsResponse,  minNodeAsRes?: AceQueryMinNodeAsResponse,  maxNodeAsRes?: AceQueryMaxNodeAsResponse }'
-  const queryRequestItemRelationshipOptions = '{ flow?: enums.queryOptions[],  alias?: string,  sort?: AceQuerySort,  findBy_Uid?: AceQueryFindBy_Uid,  filterBy_Uids?: AceQueryFilterBy_Uids,  countAsProp?: AceQueryCountAsProperty,  sumAsProp?: AceQuerySumAsProperty,  avgAsProp?: AceQueryAverageAsProperty,  minAmtAsProp?: AceQueryMinAmountAsProperty,  maxAmtAsProp?: AceQueryMaxAmountAsProperty,  newProps?: { [propName: string ]: AceQueryDerivedProperty },  propAdjToRes?: AceQueryPropertyAdjacentToResponse,  find?: AceQueryFind,   findByDefined?: AceQueryFindDefined,  findByUndefined?: AceQueryFindUndefined,  filter?: AceQueryFilter,  filterByDefined?: AceQueryFilterDefined, filterByUndefined?: AceQueryFilterUndefined,  limit?: AceQueryLimit,  propAsRes?: AceQueryPropertyAsResponse,  countAsRes?: AceQueryCountAsResponse, sumAsRes?: AceQuerySumAsResponse,  avgAsRes?: AceQueryAverageAsResponse,   minAmtAsRes?: AceQueryMinAmountAsResponse,  maxAmtAsRes?: AceQueryMaxAmountAsResponse,   minNodeAsRes?: AceQueryMinNodeAsResponse,  maxNodeAsRes?: AceQueryMaxNodeAsResponse }'
+  const queryRequestItemNodeOptions = '{ flow?: enums.queryOptions[],  alias?: string,  expand?: boolean,  sort?: AceQuerySort,  findByUid?: AceQueryFindByUid,  findBy_Uid?: AceQueryFindBy_Uid,  findByUnique?: AceQueryFindByUnique,  filterByUids?: AceQueryFilterByUids,  filterBy_Uids?: AceQueryFilterBy_Uids,  filterByUniques?: AceQueryFilterByUniques,   countAsProp?: AceQueryCountAsProperty,   sumAsProp?: AceQuerySumAsProperty,  avgAsProp?: AceQueryAverageAsProperty,  minAmtAsProp?: AceQueryMinAmountAsProperty,   maxAmtAsProp?: AceQueryMaxAmountAsProperty,  newProps?: { [propName: string ]: AceQueryDerivedProperty },  propAdjToRes?: AceQueryPropertyAdjacentToResponse,  find?: AceQueryFind,   findByDefined?: AceQueryFindDefined,  findByUndefined?: AceQueryFindUndefined,  filter?: AceQueryFilter,  filterByDefined?: AceQueryFilterDefined,  filterByUndefined?: AceQueryFilterUndefined,  limit?: AceQueryLimit,   propAsRes?: AceQueryPropertyAsResponse,  countAsRes?: AceQueryCountAsResponse,  sumAsRes?: AceQuerySumAsResponse,  avgAsRes?: AceQueryAverageAsResponse,  minAmtAsRes?: AceQueryMinAmountAsResponse,  maxAmtAsRes?: AceQueryMaxAmountAsResponse,  minNodeAsRes?: AceQueryMinNodeAsResponse,  maxNodeAsRes?: AceQueryMaxNodeAsResponse }'
+  const queryRequestItemRelationshipOptions = '{ flow?: enums.queryOptions[],  alias?: string,  expand?: boolean,  sort?: AceQuerySort,  findBy_Uid?: AceQueryFindBy_Uid,  filterBy_Uids?: AceQueryFilterBy_Uids,  countAsProp?: AceQueryCountAsProperty,  sumAsProp?: AceQuerySumAsProperty,  avgAsProp?: AceQueryAverageAsProperty,  minAmtAsProp?: AceQueryMinAmountAsProperty,  maxAmtAsProp?: AceQueryMaxAmountAsProperty,  newProps?: { [propName: string ]: AceQueryDerivedProperty },  propAdjToRes?: AceQueryPropertyAdjacentToResponse,  find?: AceQueryFind,   findByDefined?: AceQueryFindDefined,  findByUndefined?: AceQueryFindUndefined,  filter?: AceQueryFilter,  filterByDefined?: AceQueryFilterDefined, filterByUndefined?: AceQueryFilterUndefined,  limit?: AceQueryLimit,  propAsRes?: AceQueryPropertyAsResponse,  countAsRes?: AceQueryCountAsResponse, sumAsRes?: AceQuerySumAsResponse,  avgAsRes?: AceQueryAverageAsResponse,   minAmtAsRes?: AceQueryMinAmountAsResponse,  maxAmtAsRes?: AceQueryMaxAmountAsResponse,   minNodeAsRes?: AceQueryMinNodeAsResponse,  maxNodeAsRes?: AceQueryMaxNodeAsResponse }'
 
   return `import * as enums from './enums.js'
 
@@ -187,19 +187,12 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 
 /** AceMutate
  *
- * @typedef { AceMutateRequestItem | AceMutateRequestItem[] } AceMutateRequest
- * @typedef { AceMutateRequestItemBackup | AceMutateRequestItemPlugin | AceMutateRequestItemEmpty | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemSchema } AceMutateRequestItem
+ * @typedef { AceMutateRequestItemLoadBackup | AceMutateRequestItemPlugin | AceMutateRequestItemEmpty | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemAddToSchema } AceMutateRequestItem
  * @typedef { AceMutateRequestItemAddNodeToGraph | AceMutateRequestItemAddRelationshipToGraph } AceMutateRequestItemInsert
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
  * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes } AceMutateRequestItemSchemaAndData
- * @typedef { AceMutateRequestItemAddToSchema } AceMutateRequestItemSchema
- * @typedef { AceMutateRequestItemGetBackup | AceMutateRequestItemLoadBackup } AceMutateRequestItemBackup
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
- *
- * @typedef { object } AceMutateRequestItemGetBackup
- * @property { typeof enums.idsAce.GetBackup } id
- * @property { string } prop
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
  * @property { typeof enums.idsAce.LoadBackup } id
@@ -207,19 +200,18 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { object } AceMutateRequestItemEmpty
  * @property { typeof enums.idsAce.Empty } id - Delete all data and schema from graph
- * @property { string } [ property ]
+ * @property { string } [ prop ]
  *
  * @typedef { object } AceMutateRequestItemInstallPlugin
  * @property { typeof enums.idsAce.InstallPlugin } id
- * @property { string } [ property ]
+ * @property { string } [ prop ]
  * @property { AceMutateRequestItemInstallPluginX } x
  * @typedef { object } AceMutateRequestItemInstallPluginX
  * @property { AceInstallPlugin } install
  *
- *
  * @typedef { object } AceMutateRequestItemUninstallPlugin
  * @property { typeof enums.idsAce.UninstallPlugin } id
- * @property { string } [ property ]
+ * @property { string } [ prop ]
  * @property { { request: AceFnRequest } } x${ typedefs.mutate.AddNodeToGraphType }${ typedefs.mutate.AddRelationshipToGraphType }${ typedefs.mutate.UpdateGraphNodeType }${ typedefs.mutate.UpdateGraphRelationshipType }
  * 
  * @typedef { AceMutateRequestItemUpdateGraphNode & { [relationshipProp: string]: string[] } } AceMutateRequestItemNodeWithRelationships
@@ -261,9 +253,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 
 /** AceQuery
  *
- * @typedef { AceQueryRequestItem | AceQueryRequestItem[] } AceQueryRequest
- *
- * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemGetBackup | AceQueryRequestItemSchemaGet } AceQueryRequestItem
+ * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemGetBackup | AceQueryRequestItemGetSchema } AceQueryRequestItem
  *
  * @typedef { boolean | { alias: string } } AceQueryXPropValue
  * 
@@ -271,18 +261,18 @@ ${ typedefs.query.NodeType }
  *
 ${ typedefs.query.RelationshipType }
  *
- * @typedef { { [propertyName: string]: any,   uid?: AceQueryXPropValue,  $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemNodeX
- * @typedef { { [propertyName: string]: any,   _uid?: AceQueryXPropValue, $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemRelationshipX
+ * @typedef { { [propertyName: string]: any,   uid?: AceQueryXPropValue,   $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemNodeX
+ * @typedef { { [propertyName: string]: any,   _uid?: AceQueryXPropValue,  $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemRelationshipX
  * @typedef { ${ queryRequestItemNodeOptions } } AceQueryRequestItemNodeOptions
  * @typedef { ${ queryRequestItemRelationshipOptions } } AceQueryRequestItemRelationshipOptions
  * 
- * @typedef { object } AceQueryRequestItemSchemaGet
- * @property { typeof enums.idsAce.SchemaGet } id
- * @property { string } property
+ * @typedef { object } AceQueryRequestItemGetSchema
+ * @property { typeof enums.idsAce.GetSchema } id
+ * @property { string } prop
  *
  * @typedef { object } AceQueryRequestItemGetBackup
  * @property { typeof enums.idsAce.GetBackup } id
- * @property { string } property
+ * @property { string } prop
  *
  * @typedef { object } AceQueryRequestItemGeneratedXSection
  * @property { string } xPropName
@@ -502,6 +492,8 @@ ${ typedefs.query.RelationshipType }
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { { [key: string]: CryptoKey } } AceQueryPublicJWKs
+ * 
+ * @typedef { { node?: any, relationship?: any, uid?: string } } AceQueryAddPropsItem
  *
 */${ typedefs.query.Nodes } ${ typedefs.query.Relationships } ${ typedefs.query.RelationshipPropTypes }
 
@@ -748,10 +740,9 @@ function getSchemaTypedefs (schema) {
           const schemaProp = schema.relationships[schemaRelationshipName].x.props[schemaRelationshipPropName]
           const dataType = getDataType(schemaProp.x.dataType)
           const description = `Set to a ${ dataType } value if you would love to update this relationship property, \`${ schemaRelationshipPropName }\`, in the graph`
-
           typedefs.Relationships += `\n * @property { ${ dataType } } [ ${ schemaRelationshipPropName } ] ${ schemaProp.x.description || '' }`
-          typedefs.query.RelationshipProps += `\n * @property { AceQueryXPropValue } [ ${schemaRelationshipPropName } ] - ${ getQueryPropDescription({ propName: schemaRelationshipPropName, relationshipName: schemaRelationshipName, schemaPropDescription: schemaProp.x.description }) }`
-          typedefs.mutate.AddRelationshipToGraphTypes += `\n * @property { ${ dataType } } ${schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
+          typedefs.query.RelationshipProps += `\n * @property { AceQueryXPropValue } [ ${ schemaRelationshipPropName } ] - ${ getQueryPropDescription({ propName: schemaRelationshipPropName, relationshipName: schemaRelationshipName, schemaPropDescription: schemaProp.x.description }) }`
+          typedefs.mutate.AddRelationshipToGraphTypes += `\n * @property { ${ dataType } } ${ schemaProp.x.mustBeDefined ? schemaRelationshipPropName : '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
           typedefs.mutate.UpdateGraphRelationshipTypes += `\n * @property { ${ dataType } } ${ '[ ' + schemaRelationshipPropName + ' ]' } - ${ description }`
         }
       }
@@ -909,9 +900,8 @@ export function tsConfig () {
 
 
 export function tsIndex () {
-  return `// type checking only works in ts projects that import ace if we specify .ts as the extension below
-export * as td from './tsc/typedefs.ts'
-export * as enums from './tsc/enums.ts'
+  return `export * as td from './tsc/typedefs.js'
+export * as enums from './tsc/enums.js'
 `
 }
 

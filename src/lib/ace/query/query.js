@@ -143,9 +143,26 @@ function isRevokesAllowing (node, options, passport) {
 
 
 /**
+ * @param { td.AceQueryAddPropsItem } item 
+ * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
+ * @param { string } prop 
+ * @param { any } responseOriginalItem 
+ * @param { td.AcePassport } passport 
+ * @returns 
+ */
+function validateAddProps (item, xGenerated, prop, responseOriginalItem, passport) {
+  const revokesOptions = item.relationship ?
+    { key: getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop }) } :
+    { key: getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop }) }
+
+  return isRevokesAllowing(responseOriginalItem, revokesOptions, passport)
+}
+
+
+/**
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
  * @param { td.AceFnFullResponse } response 
- * @param { { node?: any, relationship?: any, uid?: string } } item 
+ * @param { td.AceQueryAddPropsItem } item 
  * @param { { key: string, value: any } | null } graphRelationship
  * @param { td.AcePassport } passport
  * @param { td.AceFnCryptoJWKs } publicJWKs
@@ -182,12 +199,16 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
     /** @type { Map<string, td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp> | undefined } */
     const relationshipPropsMap = (item.relationship && passport.schemaDataStructures?.relationshipPropsMap) ? passport.schemaDataStructures.relationshipPropsMap.get(xGenerated.relationshipName || '') : undefined
 
-    for (const xKey in xGenerated.x) { // loop a section of query.x object
-      const revokesOptions = item.relationship ?
-        { key: getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop: xKey }) } :
-        { key: getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop: xKey }) }
+    if (xGenerated.x.$o?.expand) { // expand
+      for (const prop in responseOriginalItem) {
+        if ((!item.relationship || (prop !== 'a' && prop !== 'b')) && validateAddProps(item, xGenerated, prop, responseOriginalItem, passport)) { // on relationships, skip the a and b props AND ensure this user may query this data
+          responseNowItem[xGenerated.x?.[prop]?.alias || prop] = responseOriginalItem[prop]
+        }
+      }
+    }
 
-      if (isRevokesAllowing(responseOriginalItem, revokesOptions, passport)) {
+    for (const xKey in xGenerated.x) { // loop a section of query.x object
+      if (validateAddProps(item, xGenerated, xKey, responseOriginalItem, passport)) {
         const xValue = xGenerated.x[xKey]
         const isTruthy = xValue === true
         const alias = xValue?.alias

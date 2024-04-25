@@ -10,8 +10,8 @@ import { getCliOptions } from './options.js'
 import fsPromises from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { execSync, exec } from 'node:child_process'
-import { AceError, CLIFalsyError } from '../objects/AceError.js'
 import { createJWKs } from '../security/createJWKs.js'
+import { CLIFalsyError } from '../objects/AceError.js'
 import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
 
 
@@ -109,7 +109,7 @@ Private JWK:
         if (!fs.existsSync(files.cwd)) await fsPromises.mkdir(files.cwd)
         if (!fs.existsSync(files.schemas)) await fsPromises.mkdir(files.schemas)
 
-        const { stfSchema } = await aceFetch({ url: stfHost + '/ace', body: { request: { id: 'SchemaGet', property: 'stfSchema' } } })
+        const stfSchema = await getSchemaFromHost(stfHost)
         const stfLocation = resolve(process.cwd(), `./ace/schemas/${ stfName }.json`)
         await fsPromises.writeFile(stfLocation, JSON.stringify(stfSchema, null, 2))
         console.log(`✨ schema saved to ${ stfLocation }`)
@@ -122,7 +122,7 @@ Private JWK:
         const gtfHost = options.get('-h') || options.get('--host')
         if (!gtfHost) throw CLIFalsyError('host', '-h', '--host')
 
-        const { backupFromSchema } = await aceFetch({ url: gtfHost + '/ace', body: { request: { id: 'GetBackup', property: 'backupFromSchema' } } })
+        const { backupFromSchema } = await aceFetch({ url: gtfHost + '/ace', body: { request: { id: 'GetBackup', prop: 'backupFromSchema' } } })
 
         if (!fs.existsSync(files.cwd)) await fsPromises.mkdir(files.cwd)
         if (!fs.existsSync(files.backups)) await fsPromises.mkdir(files.backups)
@@ -164,7 +164,7 @@ Private JWK:
       else {
         const response = await aceFetch({
           url: host + '/ace',
-          body: { request: { id: 'SchemaGet', property: 'schema' } }
+          body: { request: { id: 'GetSchema', prop: 'schema' } }
         })
 
         return response?.schema || null
@@ -174,7 +174,7 @@ Private JWK:
 
    async function help () {
      const version = await getVersion()
-     console.log(`Ace Graph Database CLI v${version }
+     console.log(`Ace Graph Database CLI v${ version }
 
 
 
@@ -289,15 +289,6 @@ ace fileToGraph
      const str = await fsPromises.readFile(files.packageDotJson, 'utf-8')
      const json = JSON.parse(str)
      return json.version
-   }
-
-
-   /**
-    * @param { string } [ location ]
-    * @returns { * }
-    */
-   function getLocationError (location) {
-     return AceError('cli__location__invalid', 'Ace CLI is throwing an error b/c the option --location which may be also specified like this -l is not file or folder', { location })
    }
   } catch (error) {
     console.log('error', error)

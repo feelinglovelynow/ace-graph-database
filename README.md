@@ -269,7 +269,6 @@ ace fileToGraph
 1. External: Property to Prop
 1. $o values
     * symbols > words to characters
-    * `expand: true`
     * `limit: { count: 9, skip: 9, random: true },`
     * `resHide: { avgSalary: true },`
     * `newPops: { bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ] }`
