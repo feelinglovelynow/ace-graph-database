@@ -15,6 +15,7 @@ export const PRE_QUERY_OPTIONS_FLOW = [
   'filterByUids',
   'filterBy_Uids',
   'filterByUniques',
+  'publicJWKs',
 ]
 
 export const DEFAULT_QUERY_OPTIONS_FLOW = [ // configurable

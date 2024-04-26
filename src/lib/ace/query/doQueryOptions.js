@@ -37,7 +37,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
     }
 
 
-    if (hasValueAsResponse || xGenerated.has === enums.has.one || xGenerated.x.$o?.limit?.count === 1 || xGenerated.x.$o?.findByOr || xGenerated.x.$o?.findByAnd || xGenerated.x.$o?.findByDefined || xGenerated.x.$o?.findByUndefined || xGenerated.x.$o?.findByPropValue || xGenerated.x.$o?.findByPropProp) {
+    if (hasValueAsResponse || xGenerated.has === enums.has.one || xGenerated.x.$o?.limit?.count === 1 || xGenerated.x.$o?.findByUid || xGenerated.x.$o?.findBy_Uid || xGenerated.x.$o?.findByUnique || xGenerated.x.$o?.findByOr || xGenerated.x.$o?.findByAnd || xGenerated.x.$o?.findByDefined || xGenerated.x.$o?.findByUndefined || xGenerated.x.$o?.findByPropValue || xGenerated.x.$o?.findByPropProp) {
       response.now[xGenerated.propName] = typeof response.now[xGenerated.propName]?.[0] === 'undefined' ? null : response.now[xGenerated.propName][0]
       response.original[xGenerated.propName] = typeof response.original[xGenerated.propName]?.[0] === 'undefined' ? null : response.original[xGenerated.propName][0]
     }

@@ -241,9 +241,8 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AceMutateRequestItemAddToSchemaX
  * @property { AceSchema } schema
  *
- * @typedef { object } AceMutateRequestPrivateJWKOption
- * @property { 'PrivateJWK' } id
- * @property { { name: string } } x
+ * @typedef { object } AceMutateRequestOptions
+ * @property { string } [ privateJWK ]
  *
  * @typedef { { [propName: string]: any } } AceMutateRequestItemAddRelationshipToGraphX
  */${ typedefs.mutate.AddNodeToGraphTypes }${ typedefs.mutate.UpdateGraphNodeTypes }${ typedefs.mutate.AddRelationshipToGraphTypes }${ typedefs.mutate.UpdateGraphRelationshipTypes }
@@ -287,6 +286,7 @@ ${ typedefs.query.RelationshipType }
  * @property { string[] } [ filterByUids ]
  * @property { string[] } [ filterBy_Uids ]
  * @property { AceQueryFilterByUniques } [ filterByUniques ]
+ * @property { { [jwkName: string]: string } } [ publicJWKs ]
  * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this \`prop\` to each node in the response
  * @property { AceQuerySumAsProperty } [ sumAsProp ]
  * @property { AceQueryAverageAsProperty } [ avgAsProp ]
@@ -323,6 +323,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQuerySort } [ sort ]
  * @property { string } [ findBy_Uid ]
  * @property { string[] } [ filterBy_Uids ]
+ * @property { { [jwkName: string]: string } } [ publicJWKs ]
  * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this \`prop\` to each node in the response
  * @property { AceQuerySumAsProperty } [ sumAsProp ]
  * @property { AceQueryAverageAsProperty } [ avgAsProp ]
@@ -356,8 +357,7 @@ ${ typedefs.query.RelationshipType }
  * @property { string } prop
  * @property { string[] } [ relationships ]
  *
- * @typedef { object } AceQueryWhereItemValue
- * @property { any } value
+ * @typedef { * } AceQueryWhereItemValue
  *
  * @typedef { { isPropDefined: string } } AceQueryWhereDefined
  * @typedef { { isPropUndefined: string } } AceQueryWhereUndefined
@@ -543,7 +543,7 @@ function getSchemaTypedefs (schema) {
  * @property { '${ schemaNodeName}' } node - Insert \`${ schemaNodeName }\` node
  * @property { ${ schemaNodeName }MutateRequestItemInsertX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestItemInsertX
- * @property { AceMutateRequestPrivateJWKOption[] } [ $o ] - Mutation insert options
+ * @property { AceMutateRequestOptions } [ $o ] - Mutation insert options
  * @property { string } [ uid ] - If you are setting your own \`uid\`, it must be a unique \`uid\` to all other relationships or nodes in your graph. If you are allowing Ace to set this uid, it must look like this \`_:chris\` - The beginning must have the uid prefix which is \`_:\` and the end must have a unique identifier string, this way you can reuse this uid in other mutations`
 
       typedefs.mutate.UpdateGraphNodeTypes += `\n *
@@ -552,7 +552,7 @@ function getSchemaTypedefs (schema) {
  * @property { '${ schemaNodeName }' } node - Update \`${ schemaNodeName }\` node
  * @property { ${ schemaNodeName }MutateRequestUpdateItemX } x
  * @typedef { object } ${ schemaNodeName }MutateRequestUpdateItemX
- * @property { AceMutateRequestPrivateJWKOption[] } [ $o ] - Mutation update options
+ * @property { AceMutateRequestOptions } [ $o ] - Mutation update options
  * @property { string } uid - The node's unique identifier`
 
       for (const schemaNodePropName in schema.nodes[schemaNodeName]) {
@@ -755,7 +755,7 @@ function getSchemaTypedefs (schema) {
     default: `\n *\n * @typedef { object } AceMutateRequestItemAddNodeToGraph
  * @property { typeof enums.idsAce.AddNodeToGraph } id
  * @property { string } node
- * @property { { uid?: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { { uid?: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x`
   })
 
   typedefs.mutate.UpdateGraphNodeType = plop({
@@ -765,7 +765,7 @@ function getSchemaTypedefs (schema) {
     default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateGraphNode
  * @property { typeof enums.idsAce.UpdateGraphNode } id
  * @property { string } node
- * @property { { uid: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { { uid: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x`
   })
 
   typedefs.mutate.AddRelationshipToGraphType = plop({
@@ -775,7 +775,7 @@ function getSchemaTypedefs (schema) {
     default: `\n *\n * @typedef { object } AceMutateRequestItemAddRelationshipToGraph
  * @property { typeof enums.idsAce.AddRelationshipToGraph } id
  * @property { string } relationship
- * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x`
   })
 
   typedefs.mutate.UpdateGraphRelationshipType = plop({
@@ -785,7 +785,7 @@ function getSchemaTypedefs (schema) {
     default: `\n *\n * @typedef { object } AceMutateRequestItemUpdateGraphRelationship
  * @property { typeof enums.idsAce.UpdateGraphRelationship } id
  * @property { string } relationship
- * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestPrivateJWKOption[] } } x`
+ * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x`
   })
 
   return typedefs

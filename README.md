@@ -36,7 +36,7 @@ const response = await ace({
   request: [
     {
       id: 'AddToSchema', // add the Actor node, the Movie node and the actsInMovie relationship to the schema
-      x: { // intellisense below changes based on id above
+      x: { // intellisense within x changes based on above id
         schema: {
           nodes: {
             Actor: {
@@ -277,8 +277,9 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap
+1. ace types last
 1. Query Where:
-    * Public JWK
+    * findByDefined
     * PropRes
 1. $o values
     * symbols > words to characters
@@ -291,6 +292,8 @@ ace fileToGraph
     * Sanitize / Validate Input
     * Delete `cascadeProps` array
     * Must relationship (storage fallback)
+    * Where _:
+    * Update _: (Install plugin, update the value)
     * id descriptions
     * Upsert, won't throw an error if the item exists
     * Multiple Queries - Values from previous query available in current query
@@ -337,6 +340,7 @@ ace fileToGraph
             * Version 1 Roadmap Items
             * Bug Fixes
             * Quality of Life Impovements
+            * Breaking Changes
             * Support
                 * Star us on GitHub
                 * Contribute

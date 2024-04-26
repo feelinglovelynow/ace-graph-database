@@ -38,7 +38,7 @@ export async function inupNode (requestItem, passport, sortIndexMap, updateReque
         graphNode = /** @type { Map<string, any> } */(updateRequestItems.nodes).get(requestItem.x.uid)
 
         if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${requestItem.x.uid}\` is not defined in your graph`, { requestItem })
-        if (graphNode.nodeName !== requestItem.node) throw AceError('mutate__invalid-update-nodeName', `Please pass a request item uid that is a uid defined in your graph with a matching graphNode.nodeName: \`${graphNode.nodeName}\`and requestItem.node: \`${ requestItem.node }\``, { requestItem, graphNodeName: graphNode.nodeName })
+        if (graphNode.node !== requestItem.node) throw AceError('mutate__invalid-update-nodeName', `Please pass a request item uid that is a uid defined in your graph with a matching graphNode.node: \`${ graphNode.node }\`and requestItem.node: \`${ requestItem.node }\``, { requestItem, graphNodeName: graphNode.node })
 
         validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.inup, graphNode, passport, { node: requestItem.node }, inupPermission)
         validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.update, graphNode, passport, { node: requestItem.node }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.update, node: requestItem.node, prop: '*' })))
@@ -94,12 +94,12 @@ export async function inupNode (requestItem, passport, sortIndexMap, updateReque
           if (schemaProp.x.dataType === enums.dataTypes.boolean && typeof nodePropValue !== 'boolean') throw AceError('mutate__invalid-property-value__boolean', `The node name ${ requestItem.node } with the prop name ${ nodePropName } is invalid because when the schema property data type is "boolean", the request typeof must be a "boolean"`, _errorData)
 
           if (schemaProp.x.dataType === enums.dataTypes.hash) {
-            const jwkName = requestItem.x.$o?.find(o => o.id === 'PrivateJWK')?.x.name
+            const jwkName = requestItem.x.$o?.privateJWK
 
             if (!jwkName) throw AceError('mutate__falsy-options-private-jwk', `The node name ${ requestItem.node } with the prop name ${ nodePropName } is invalid because requestItem.x.$o does not have a PrivateJWK. Example: requestItem.$o: [ { id: 'PrivateJWK', x: { name: 'password' } } ]`, _errorData)
             if (!privateJWKs?.[jwkName]) throw AceError('mutate__falsy-request-item-private-jwk', `The node name ${ requestItem.node } with the prop name ${ nodePropName } is invalid because requestItem.x.$o[PrivateJWK].name does not align with any request.privateJWKs. Names must align.`, _errorData)
 
-            requestItemX[nodePropName] = await sign(privateJWKs[jwkName], nodePropValue?.value)
+            requestItemX[nodePropName] = await sign(privateJWKs[jwkName], nodePropValue)
           }
 
           if (schemaProp.x.uniqueIndex) put(getUniqueIndexKey(requestItem.node, nodePropName, nodePropValue), graphUid, passport)
@@ -318,9 +318,9 @@ async function inupRelationshipPut (requestItem, schemaRelationship, passport, g
 function deleteUidFromRelationshipProp (relationshipNode, prop, _uid, passport) {
   if (Array.isArray(relationshipNode[prop])) {
     const relationshipName = getRelationshipNameFromProp(prop)
-    const schemaPropName = passport.schemaDataStructures?.nodeNamePlusRelationshipNameToNodePropNameMap?.get(getNodeNamePlusRelationshipNameToNodePropNameMapKey(relationshipNode.nodeName, relationshipName))
+    const schemaPropName = passport.schemaDataStructures?.nodeNamePlusRelationshipNameToNodePropNameMap?.get(getNodeNamePlusRelationshipNameToNodePropNameMapKey(relationshipNode.node, relationshipName))
 
-    if (schemaPropName) validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { node: relationshipNode.nodeName, prop: schemaPropName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: relationshipNode.nodeName, prop: schemaPropName })))
+    if (schemaPropName) validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { node: relationshipNode.node, prop: schemaPropName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: relationshipNode.node, prop: schemaPropName })))
 
     if (relationshipNode[prop].length === 1 && relationshipNode[prop][0] === _uid) delete relationshipNode[prop]
     else {
@@ -380,7 +380,7 @@ export async function deleteNodesByUids (uids, passport) {
   const graphNodes = await passport.storage.get(uids)
 
   for (const graphNode of graphNodes.values()) {
-    validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.nodeName, relationship: graphNode.relationshipName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.nodeName, relationship: graphNode.relationshipName, prop: '*' })))
+    validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, relationship: graphNode.relationship }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, relationship: graphNode.relationship, prop: '*' })))
 
     const relationshipUidsArray = []
 
@@ -390,16 +390,16 @@ export async function deleteNodesByUids (uids, passport) {
     for (const propName in graphNode) {
       if (propName.startsWith(RELATIONSHIP_PREFIX)) {
         const relationshipName = getRelationshipNameFromProp(propName)
-        const schemaPropName = passport.schemaDataStructures?.nodeNamePlusRelationshipNameToNodePropNameMap?.get(getNodeNamePlusRelationshipNameToNodePropNameMapKey(graphNode.nodeName, relationshipName))
+        const schemaPropName = passport.schemaDataStructures?.nodeNamePlusRelationshipNameToNodePropNameMap?.get(getNodeNamePlusRelationshipNameToNodePropNameMapKey(graphNode.node, relationshipName))
 
-        if (schemaPropName) validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.nodeName, prop: schemaPropName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.nodeName, prop: schemaPropName })))
+        if (schemaPropName) validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop: schemaPropName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop: schemaPropName })))
 
         for (const relationshipUid of graphNode[propName]) {
           relationshipUidsArray.push(relationshipUid)
           relationshipUidsMap.set(relationshipUid, { propName, relationshipName })
         }
       } else if (propName !== 'uid') {
-        validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.nodeName, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.nodeName, prop: propName })))
+        validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop: propName })))
       }
     }
 
@@ -492,7 +492,7 @@ export async function dataDeleteNodeProps (requestItem, passport) {
     for (const relationshipNode of relationshipNodes.values()) {
       for (const propName of requestItem.x.props) {
         if (propName !== 'uid' && !propName.startsWith(RELATIONSHIP_PREFIX) && typeof relationshipNode.x[propName] !== 'undefined') {
-          validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { node: relationshipNode.nodeName, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: relationshipNode.nodeName, prop: propName })))
+          validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { node: relationshipNode.node, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: relationshipNode.node, prop: propName })))
           delete relationshipNode.x[propName]
           put(relationshipNode.x.uid, relationshipNode, passport)
         }
@@ -533,7 +533,7 @@ export async function schemaAndDataDeleteNodes (requestItem, passport) {
     const nodeUidsKey = getNodeUidsKey(requestNodeName)
     const nodeUids = await passport.storage.get(nodeUidsKey)
 
-    if (!nodeUids?.length) throw AceError('mutate__delete-nodes__invalid-node', `Please provide a valid nodeName, \`${requestNodeName}\` is not a valid nodeName`, { nodeName: requestNodeName, requestItem })
+    if (!nodeUids?.length) throw AceError('mutate__delete-nodes__invalid-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName`, { nodeName: requestNodeName, requestItem })
     if (ACE_NODE_NAMES.has(requestNodeName)) throw AceError('mutate__delete-nodes__ace-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName because it is an Ace node name that is required for your graph to function optimally`, { nodeName: requestNodeName, requestItem, ACE_NODE_NAMES: [ ...ACE_NODE_NAMES.keys() ] })
 
     await deleteNodesByUids(nodeUids, passport)
