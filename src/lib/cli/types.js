@@ -359,12 +359,14 @@ ${ typedefs.query.RelationshipType }
  *
  * @typedef { * } AceQueryWhereItemValue
  *
+ * @typedef { { or: AceQueryFindGroup } } AceQueryWhereOr
+ * @typedef { { and: AceQueryFindGroup } } AceQueryWhereAnd
  * @typedef { { isPropDefined: string } } AceQueryWhereDefined
  * @typedef { { isPropUndefined: string } } AceQueryWhereUndefined
  * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemProp ] } AceQueryWherePropProp
  * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemValue ] } AceQueryWherePropValue
- * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | { or: AceQueryFindGroup } | { and: AceQueryFindGroup })[] } AceQueryFindGroup
- * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | { or: AceQueryFilterGroup } | { and: AceQueryFilterGroup })[] } AceQueryFilterGroup
+ * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | AceQueryWhereOr | AceQueryWhereAnd)[] } AceQueryFindGroup
+ * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | AceQueryWhereOr | AceQueryWhereAnd)[] } AceQueryFilterGroup
  *
  * @typedef { object } AceQueryFilterByUniques
  * @property { AceQueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)

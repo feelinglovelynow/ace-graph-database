@@ -99,7 +99,7 @@ const response = await ace({
         name: true,
         actors: {
           $o: {
-            filterByPropValue: [ { prop: 'firstName' }, 'doesNotEqual', { value: 'Laurence' } ], // respond with actors other then Lauence, filterByPropProp is also available where the 2nd index of this array is a prop
+            filterByPropValue: [ { prop: 'firstName' }, 'doesNotEqual', 'Laurence' ], // respond with actors other then Lauence, filterByPropProp is also available where the 2nd index of this array is a prop
             sort: { prop: 'salary', how: 'dsc' }, // sort actors by salary
             limit: { count: 2, skip: 1 }, // skip the first actor then show the next 2
             flow: [ 'filterByPropValue', 'sort', 'limit', 'newProps' ], // do options in this order
@@ -139,8 +139,8 @@ const response = await ace({
         $o: {
           all: true, // response.actsInMovie will have all not relationship props (_uid, _salary)
           findByAnd: [ // return the first actor that fulfils both criteria
-            [ { prop: '_salary' }, 'greaterThan', { value: 90 } ],
-            [ { prop: 'name' }, 'doesNotEqual', { value: 'Carrie-Anne Moss' } ],
+            [ { prop: '_salary' }, 'greaterThan', 90 ],
+            [ { prop: 'name' }, 'doesNotEqual', 'Carrie-Anne Moss' ],
           ]
         },
         $o: { all: true },
@@ -279,7 +279,6 @@ ace fileToGraph
 ## 🤓 Version 1 Roadmap
 1. ace types last
 1. Query Where:
-    * findByDefined
     * PropRes
 1. $o values
     * symbols > words to characters
