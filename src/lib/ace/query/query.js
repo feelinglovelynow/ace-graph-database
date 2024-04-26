@@ -118,7 +118,7 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
     if (isRevokesAllowing(node.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { node }, graphRelationships?.[i] || null, passport, publicJWKs, iRequest) // call desired function on each node
   }
 
-  await doQueryOptions(xGenerated, response, isUsingSortIndex, publicJWKs, passport)
+  await doQueryOptions(xGenerated, response, isUsingSortIndex, uids, publicJWKs, passport)
 }
 
 
@@ -261,8 +261,8 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
         response.now[ xGenerated.propName ].push(responseNowItem)
         response.original[ xGenerated.propName ].push(responseOriginalItem)
       } else {
-        response.now[ xGenerated.propName ] = [responseNowItem]
-        response.original[ xGenerated.propName ] = [responseOriginalItem]
+        response.now[ xGenerated.propName ] = [ responseNowItem ]
+        response.original[ xGenerated.propName ] = [ responseOriginalItem ]
       }
     }
   }
@@ -304,7 +304,7 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
     if (isRevokesAllowing(relationship.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { relationship }, null, passport, publicJWKs, iRequest)
   }
 
-  await doQueryOptions(xGenerated, response, isUsingSortIndex, publicJWKs, passport)
+  await doQueryOptions(xGenerated, response, isUsingSortIndex, uids, publicJWKs, passport)
 }
 
 

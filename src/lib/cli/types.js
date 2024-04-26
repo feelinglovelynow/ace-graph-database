@@ -308,7 +308,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryWherePropValue } [ filterByPropProp ]
  * @property { AceQueryLimit } [ limit ]
  * @property { AceQueryPropertyAsResponse } [ propAsRes ]
- * @property { string } [ countAsRes ]
+ * @property { boolean } [ countAsRes ] - Display the count of results as the response
  * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
  * @property { string } [ avgAsRes ] - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
  * @property { string } [ minAmtAsRes ] - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
@@ -345,7 +345,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryWherePropValue } [ filterByPropProp ]
  * @property { AceQueryLimit } [ limit ]
  * @property { AceQueryPropertyAsResponse } [ propAsRes ]
- * @property { string } [ countAsRes ]
+ * @property { boolean } [ countAsRes ] - Display the count of results as the response
  * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
  * @property { string } [ avgAsRes ] - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
  * @property { string } [ minAmtAsRes ] - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response

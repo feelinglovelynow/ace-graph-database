@@ -9,11 +9,12 @@ import { DEFAULT_QUERY_OPTIONS_FLOW, POST_QUERY_OPTIONS_FLOW } from '../../varia
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
  * @param { td.AceFnFullResponse } response 
  * @param { boolean } isUsingSortIndex 
+ * @param { string[] } uids 
  * @param { td.AceQueryPublicJWKs | null } publicJWKs 
  * @param { td.AcePassport } passport 
  * @returns { Promise<void> }
  */
-export async function doQueryOptions (xGenerated, response, isUsingSortIndex, publicJWKs, passport) {
+export async function doQueryOptions (xGenerated, response, isUsingSortIndex, uids, publicJWKs, passport) {
   if (xGenerated.x.$o) {
     /** @type { boolean } Set to true when ...AsRes is used */
     let hasValueAsResponse = false
@@ -408,9 +409,14 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
 
 
     function doCountAsRes () {
-      if (xGenerated.x.$o?.countAsRes && response.original[xGenerated.propName].length) {
-        response.now[xGenerated.propName] = [response.original[xGenerated.propName].length]
-        response.original[xGenerated.propName] = [response.original[xGenerated.propName].length]
+      if (xGenerated.x.$o?.countAsRes) {
+        let length
+
+        if (Object.keys(xGenerated.x).length === 1) length = uids.length // IF x only has $o then there are no props, which means original is an empty aray, which means counting the uids length is optimal
+        else length = response.original[xGenerated.propName].length
+
+        response.now[xGenerated.propName] = [length]
+        response.original[xGenerated.propName] = [length]
       }
     }
 
