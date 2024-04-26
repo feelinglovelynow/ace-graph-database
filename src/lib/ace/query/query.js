@@ -61,15 +61,15 @@ async function getInitialUids (requestItem, passport) {
 
     if (xGenerated.x.$o?.findByUid) uids = [ xGenerated.x.$o.findByUid ]
     else if (xGenerated.x.$o?.filterByUids) {
-      uids = xGenerated.x.$o.filterByUids.x.uids
+      uids = xGenerated.x.$o.filterByUids
       if (!uids.length) isValid = false
     } else if (xGenerated.x.$o?.findByUnique) {
-      const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x.$o.findByUnique.x.prop, xGenerated.x.$o?.findByUnique.x.value)
+      const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x.$o.findByUnique.prop, xGenerated.x.$o?.findByUnique.value)
       const uid = await passport.storage.get(key)
       uids = uid ? [ uid ] : []
       if (!uids.length) isValid = false
     } else if (xGenerated.x.$o?.filterByUniques) {
-      const keys = xGenerated.x.$o.filterByUniques.x.uniques.map(unique => {
+      const keys = xGenerated.x.$o.filterByUniques.uniques.map(unique => {
         return getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', unique.prop, unique.value)
       })
 
@@ -285,10 +285,10 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { relationship: xGenerated.relationshipName })
 
   if (xGenerated.x.$o?.findBy_Uid) {
-    if (uids.includes(xGenerated.x.$o.findBy_Uid.x._uid)) uids = [ xGenerated.x.$o.findBy_Uid.x._uid ]
+    if (uids.includes(xGenerated.x.$o.findBy_Uid)) uids = [ xGenerated.x.$o.findBy_Uid ]
   } else {
-    if (xGenerated.x.$o?.filterBy_Uids?.x?._uids?.length) {
-      const set = new Set(xGenerated.x.$o.filterBy_Uids.x._uids)
+    if (xGenerated.x.$o?.filterBy_Uids?.length) {
+      const set = new Set(xGenerated.x.$o.filterBy_Uids)
 
       for (let i = uids.length - 1; i >= 0; i--) {
         if (!set.has(uids[i])) uids.splice(i, 1)
@@ -332,9 +332,9 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
 
     const uniqueKeys = /** @type { string[] } */ ([])
 
-    if (xGenerated.x.$o?.findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', xGenerated.x.$o.findByUnique.x.prop, xGenerated.x.$o.findByUnique.x.value))
+    if (xGenerated.x.$o?.findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', xGenerated.x.$o.findByUnique.prop, xGenerated.x.$o.findByUnique.value))
     else if (xGenerated.x.$o?.filterByUniques) {
-      for (const unique of xGenerated.x.$o.filterByUniques.x.uniques) {
+      for (const unique of xGenerated.x.$o.filterByUniques.uniques) {
         uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', unique.prop, unique.value))
       }
     }
@@ -380,7 +380,7 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
     }
 
     if (xGenerated.x.$o?.findBy_Uid) {
-      if (findBy_UidFound) nodeUids = [xGenerated.x.$o.findBy_Uid.x._uid ]
+      if (findBy_UidFound) nodeUids = [xGenerated.x.$o.findBy_Uid ]
       else isValid = false
     }
 
@@ -402,13 +402,13 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
  * @param { boolean } findBy_UidFound 
  */
 function validateAndPushUids (relationshipGeneratedQueryXSection, uid, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound) {
-  const filterByUids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterByUids?.x.uids)
+  const filterByUids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterByUids)
 
   if (!filterByUids.has(uid)) {
-    const filterBy_Uids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterBy_Uids?.x._uids)
+    const filterBy_Uids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterBy_Uids)
 
     if (!filterBy_Uids.has(graphRelationshipKey)) {
-      const filterByUniques = relationshipGeneratedQueryXSection.x.$o?.filterByUniques?.x.uniques?.find((unique => {
+      const filterByUniques = relationshipGeneratedQueryXSection.x.$o?.filterByUniques?.uniques?.find((unique => {
         return unique.prop === graphRelationshipKey && unique.value === graphRelationship.x
       }))
 
@@ -417,8 +417,8 @@ function validateAndPushUids (relationshipGeneratedQueryXSection, uid, graphRela
         graphRelationships.push({ key: graphRelationshipKey, value: graphRelationship.x })
 
         if (String(relationshipGeneratedQueryXSection.x.$o?.findByUid) === uid) findByUidFound = true
-        else if (String(relationshipGeneratedQueryXSection.x.$o?.findBy_Uid?.x._uid) === graphRelationshipKey) findBy_UidFound = true
-        else if (String(relationshipGeneratedQueryXSection.x.$o?.findByUnique?.x) && uniqueUids.length && uniqueUids[0] === uid) findByUniqueFound = true
+        else if (String(relationshipGeneratedQueryXSection.x.$o?.findBy_Uid) === graphRelationshipKey) findBy_UidFound = true
+        else if (String(relationshipGeneratedQueryXSection.x.$o?.findByUnique) && uniqueUids.length && uniqueUids[0] === uid) findByUniqueFound = true
       }
     }
   }

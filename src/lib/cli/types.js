@@ -6,8 +6,6 @@ import { ACE_NODE_NAMES, DELIMITER } from '../variables.js'
  */
 export function typedefs (schema) {
   const typedefs = getSchemaTypedefs(schema)
-  const queryRequestItemNodeOptions = '{ flow?: enums.queryOptions[],  alias?: string,  all?: boolean,  sort?: AceQuerySort,  findByUid?: AceQueryFindByUid,  findBy_Uid?: AceQueryFindBy_Uid,  findByUnique?: AceQueryFindByUnique,  filterByUids?: AceQueryFilterByUids,  filterBy_Uids?: AceQueryFilterBy_Uids,  filterByUniques?: AceQueryFilterByUniques,   countAsProp?: AceQueryCountAsProperty,   sumAsProp?: AceQuerySumAsProperty,  avgAsProp?: AceQueryAverageAsProperty,  minAmtAsProp?: AceQueryMinAmountAsProperty,   maxAmtAsProp?: AceQueryMaxAmountAsProperty,  newProps?: { [propName: string ]: AceQueryDerivedProperty },  propAdjToRes?: AceQueryPropertyAdjacentToResponse,  find?: AceQueryFind,   findByDefined?: AceQueryFindDefined,  findByUndefined?: AceQueryFindUndefined,  filter?: AceQueryFilter,  filterByDefined?: AceQueryFilterDefined,  filterByUndefined?: AceQueryFilterUndefined,  limit?: AceQueryLimit,   propAsRes?: AceQueryPropertyAsResponse,  countAsRes?: AceQueryCountAsResponse,  sumAsRes?: AceQuerySumAsResponse,  avgAsRes?: AceQueryAverageAsResponse,  minAmtAsRes?: AceQueryMinAmountAsResponse,  maxAmtAsRes?: AceQueryMaxAmountAsResponse,  minNodeAsRes?: AceQueryMinNodeAsResponse,  maxNodeAsRes?: AceQueryMaxNodeAsResponse }'
-  const queryRequestItemRelationshipOptions = '{ flow?: enums.queryOptions[],  alias?: string,  all?: boolean,  sort?: AceQuerySort,  findBy_Uid?: AceQueryFindBy_Uid,  filterBy_Uids?: AceQueryFilterBy_Uids,  countAsProp?: AceQueryCountAsProperty,  sumAsProp?: AceQuerySumAsProperty,  avgAsProp?: AceQueryAverageAsProperty,  minAmtAsProp?: AceQueryMinAmountAsProperty,  maxAmtAsProp?: AceQueryMaxAmountAsProperty,  newProps?: { [propName: string ]: AceQueryDerivedProperty },  propAdjToRes?: AceQueryPropertyAdjacentToResponse,  find?: AceQueryFind,   findByDefined?: AceQueryFindDefined,  findByUndefined?: AceQueryFindUndefined,  filter?: AceQueryFilter,  filterByDefined?: AceQueryFilterDefined, filterByUndefined?: AceQueryFilterUndefined,  limit?: AceQueryLimit,  propAsRes?: AceQueryPropertyAsResponse,  countAsRes?: AceQueryCountAsResponse, sumAsRes?: AceQuerySumAsResponse,  avgAsRes?: AceQueryAverageAsResponse,   minAmtAsRes?: AceQueryMinAmountAsResponse,  maxAmtAsRes?: AceQueryMaxAmountAsResponse,   minNodeAsRes?: AceQueryMinNodeAsResponse,  maxNodeAsRes?: AceQueryMaxNodeAsResponse }'
 
   return `import * as enums from './enums.js'
 
@@ -252,28 +250,15 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
 
 
 /** AceQuery
- *
- * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemGetBackup | AceQueryRequestItemGetSchema } AceQueryRequestItem
- *
- * @typedef { boolean | { alias: string } } AceQueryXPropValue
  * 
 ${ typedefs.query.NodeType }
  *
 ${ typedefs.query.RelationshipType }
  *
- * @typedef { { [propertyName: string]: any,   uid?: AceQueryXPropValue,   $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemNodeX
- * @typedef { { [propertyName: string]: any,   _uid?: AceQueryXPropValue,  $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemRelationshipX
- * @typedef { ${ queryRequestItemNodeOptions } } AceQueryRequestItemNodeOptions
- * @typedef { ${ queryRequestItemRelationshipOptions } } AceQueryRequestItemRelationshipOptions
+ * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemGetBackup | AceQueryRequestItemGetSchema } AceQueryRequestItem
+ *
+ * @typedef { boolean | { alias: string } } AceQueryXPropValue
  * 
- * @typedef { object } AceQueryRequestItemGetSchema
- * @property { typeof enums.idsAce.GetSchema } id
- * @property { string } prop
- *
- * @typedef { object } AceQueryRequestItemGetBackup
- * @property { typeof enums.idsAce.GetBackup } id
- * @property { string } prop
- *
  * @typedef { object } AceQueryRequestItemGeneratedXSection
  * @property { string } xPropName
  * @property { string } propName
@@ -283,9 +268,124 @@ ${ typedefs.query.RelationshipType }
  * @property { string } [ nodeName ]
  * @property { string } [ relationshipName ]
  * @property { AceQueryRequestItemNodeX } x
+ *
+ * @typedef { { [key: string]: CryptoKey } } AceQueryPublicJWKs
+ *
+ * @typedef { { node?: any, relationship?: any, uid?: string } } AceQueryAddPropsItem
  * 
- * @typedef { { id: typeof enums.idsQueryOptions.Value, x: { value: any } } } AceQueryValue
- * @typedef { { id: typeof enums.idsQueryOptions.DerivedGroup, x: { newProperty: string, symbol: enums.queryDerivedSymbol, items: (AceQueryProperty | AceQueryValue | AceQueryDerivedGroup)[] } } } AceQueryDerivedGroup
+ * @typedef { { [propertyName: string]: any,   uid?: AceQueryXPropValue,   $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemNodeX
+ * @typedef { { [propertyName: string]: any,   _uid?: AceQueryXPropValue,  $o?: AceQueryRequestItemNodeOptions } } AceQueryRequestItemRelationshipX
+ * 
+ * @typedef { object } AceQueryRequestItemNodeOptions
+ * @property { enums.queryOptions[] } [ flow ]
+ * @property { string } [ alias ]
+ * @property { boolean } [ all ]
+ * @property { AceQuerySort } [ sort ]
+ * @property { string } [ findByUid ]
+ * @property { string } [ findBy_Uid ]
+ * @property { AceQueryFindByUnique } [ findByUnique ]
+ * @property { string[] } [ filterByUids ]
+ * @property { string[] } [ filterBy_Uids ]
+ * @property { AceQueryFilterByUniques } [ filterByUniques ]
+ * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this \`prop\` to each node in the response
+ * @property { AceQuerySumAsProperty } [ sumAsProp ]
+ * @property { AceQueryAverageAsProperty } [ avgAsProp ]
+ * @property { AceQueryMinAmountAsProperty } [ minAmtAsProp ]
+ * @property { AceQueryMaxAmountAsProperty } [ maxAmtAsProp ]
+ * @property { AceQueryDerivedProperty } [ newProps ]
+ * @property { AceQueryPropertyAdjacentToResponse } [ propAdjToRes ]
+ * @property { AceQueryFindGroup } [ findByOr ]
+ * @property { AceQueryFindGroup } [ findByAnd ]
+ * @property { AceQueryWherePropValue } [ findByPropValue ]
+ * @property { AceQueryWherePropProp } [ findByPropProp ]
+ * @property { string } [ findByDefined ]
+ * @property { string } [ findByUndefined ]
+ * @property { AceQueryFilterGroup } [ filterByOr ]
+ * @property { AceQueryFilterGroup } [ filterByAnd ]
+ * @property { string } [ filterByDefined ]
+ * @property { string } [ filterByUndefined ]
+ * @property { AceQueryWherePropValue } [ filterByPropValue ]
+ * @property { AceQueryWherePropValue } [ filterByPropProp ]
+ * @property { AceQueryLimit } [ limit ]
+ * @property { AceQueryPropertyAsResponse } [ propAsRes ]
+ * @property { string } [ countAsRes ]
+ * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
+ * @property { string } [ avgAsRes ] - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
+ * @property { string } [ minAmtAsRes ] - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
+ * @property { string } [ maxAmtAsRes ] - Loop the items in the response, find the max amount of this property, amongst all response items and set it as the response
+ * @property { string } [ minNodeAsRes ] - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * @property { string } [ maxNodeAsRes ] - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * 
+ * @typedef { object } AceQueryRequestItemRelationshipOptions
+ * @property { enums.queryOptions[] } [ flow ]
+ * @property { string } [ alias ]
+ * @property { boolean } [ all ]
+ * @property { AceQuerySort } [ sort ]
+ * @property { string } [ findBy_Uid ]
+ * @property { string[] } [ filterBy_Uids ]
+ * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this \`prop\` to each node in the response
+ * @property { AceQuerySumAsProperty } [ sumAsProp ]
+ * @property { AceQueryAverageAsProperty } [ avgAsProp ]
+ * @property { AceQueryMinAmountAsProperty } [ minAmtAsProp ]
+ * @property { AceQueryMaxAmountAsProperty } [ maxAmtAsProp ]
+ * @property { AceQueryDerivedProperty } [ newProps ]
+ * @property { AceQueryPropertyAdjacentToResponse } [ propAdjToRes ]
+ * @property { AceQueryFindGroup } [ findByOr ]
+ * @property { AceQueryFindGroup } [ findByAnd ]
+ * @property { string } [ findByDefined ]
+ * @property { string } [ findByUndefined ]
+ * @property { AceQueryWherePropValue } [ findByPropValue ]
+ * @property { AceQueryWherePropProp } [ findByPropProp ]
+ * @property { AceQueryFilterGroup } [ filterByOr ]
+ * @property { AceQueryFilterGroup } [ filterByAnd ]
+ * @property { string } [ filterByDefined ]
+ * @property { string } [ filterByUndefined ]
+ * @property { AceQueryWherePropValue } [ filterByPropValue ]
+ * @property { AceQueryWherePropValue } [ filterByPropProp ]
+ * @property { AceQueryLimit } [ limit ]
+ * @property { AceQueryPropertyAsResponse } [ propAsRes ]
+ * @property { string } [ countAsRes ]
+ * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
+ * @property { string } [ avgAsRes ] - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
+ * @property { string } [ minAmtAsRes ] - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
+ * @property { string } [ maxAmtAsRes ] - Loop the items in the response, find the max amount of this property, amongst all response items and set it as the response
+ * @property { string } [ minNodeAsRes ] - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ * @property { string } [ maxNodeAsRes ] - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ *
+ * @typedef { object } AceQueryWhereItemProp
+ * @property { string } prop
+ * @property { string[] } [ relationships ]
+ *
+ * @typedef { object } AceQueryWhereItemValue
+ * @property { any } value
+ *
+ * @typedef { { isPropDefined: string } } AceQueryWhereDefined
+ * @typedef { { isPropUndefined: string } } AceQueryWhereUndefined
+ * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemProp ] } AceQueryWherePropProp
+ * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemValue ] } AceQueryWherePropValue
+ * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | { or: AceQueryFindGroup } | { and: AceQueryFindGroup })[] } AceQueryFindGroup
+ * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | { or: AceQueryFilterGroup } | { and: AceQueryFilterGroup })[] } AceQueryFilterGroup
+ *
+ * @typedef { object } AceQueryFilterByUniques
+ * @property { AceQueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)
+ * @typedef { object } AceQueryFilterByUniquesXUnique
+ * @property { string } value - The value Ace will query to find a unique match for
+ * @property { string } prop - Find node by this prop that has a unique index
+ *
+ * @typedef { object } AceQueryFindByUnique
+ * @property { string } value - The value Ace will query to find a unique match for
+ * @property { string } prop - Find node by this prop that has a unique index
+ *
+ * @typedef { object } AceQueryRequestItemGetSchema
+ * @property { typeof enums.idsAce.GetSchema } id
+ * @property { string } prop
+ *
+ * @typedef { object } AceQueryRequestItemGetBackup
+ * @property { typeof enums.idsAce.GetBackup } id
+ * @property { string } prop
+ * 
+ * @typedef { object } AceQueryValue
+ * @property { any } value
  *
  * @typedef { object } AceQuerySort
  * @property { enums.sortHow } how
@@ -294,142 +394,12 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQueryLimit
  * @property { number } [ skip ]
  * @property { number } [ count ]
- * 
- * @typedef { object } AceQueryFind
- * @property { typeof enums.idsQueryOptions.Find } id
- * @property { AceQueryFindX } x
- * @typedef { object } AceQueryFindX
- * @property { enums.queryWhereSymbol } symbol
- * @property { [ AceQueryProperty, AceQueryProperty ] | [ AceQueryValue, AceQueryProperty ] | [ AceQueryProperty, AceQueryValue ] } items
- * @property { string } [ publicJWK ]
- *
- * @typedef { object } AceQueryFilter
- * @property { typeof enums.idsQueryOptions.Filter } id
- * @property { AceQueryFilterX } x
- * @typedef { object } AceQueryFilterX
- * @property { enums.queryWhereSymbol } symbol
- * @property { [ AceQueryProperty, AceQueryProperty ] | [ AceQueryValue, AceQueryProperty ] | [ AceQueryProperty, AceQueryValue ] } items
- * @property { string } [ publicJWK ]
  *
  * @typedef { object } AceQueryProperty
- * @property { typeof enums.idsQueryOptions.Property } id - Define a property
- * @property { AceQueryPropertyX } x
- * @typedef { object } AceQueryPropertyX
- * @property { string } property - String property name
+ * @property { string } prop - String property name
  * @property { string[] } [ relationships ] - If this property is not on the node, list the relationship properties to get to the desired nodes
  *
- * @typedef { object } AceQueryFilterGroup
- * @property { typeof enums.idsQueryOptions.FilterGroup } id - Do an (and / or) operand on a group of filters
- * @property { AceQueryFilterGroupX } x
- * @typedef { object } AceQueryFilterGroupX
- * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
- * @property { (AceQueryFilter | AceQueryFilterDefined | AceQueryFilterUndefined | AceQueryFilterGroup)[] } items - The items you'd love to do an (and / or) operand on
- *
- * @typedef { object } AceQueryFindGroup
- * @property { typeof enums.idsQueryOptions.FindGroup } id - Do an (and / or) operand on a group of filters
- * @property { AceQueryFindGroupX } x
- * @typedef { object } AceQueryFindGroupX
- * @property { enums.queryWhereGroupSymbol } symbol - (And / Or)
- * @property { (AceQueryFind | AceQueryFindDefined | AceQueryFindUndefined | AceQueryFindGroup)[] } items - The items you'd love to do an (and / or) operand on
- *
- * @typedef { object } AceQueryFindUndefined
- * @property { typeof enums.idsQueryOptions.FindUndefined } id - Loop the items and return the first item that is undefined at a specific property
- * @property { AceQueryFindUndefinedX } x
- * @typedef { object } AceQueryFindUndefinedX
- * @property { AceQueryProperty } property - Loop the items and return the first item that is undefined at this property
- *
- * @typedef { object } AceQueryFindDefined
- * @property { typeof enums.idsQueryOptions.FindDefined } id - Loop the items and return the first item that is defined at a specific property
- * @property { AceQueryFindDefinedX } x
- * @typedef { object } AceQueryFindDefinedX
- * @property { AceQueryProperty } property - Loop the items and return the first item that is defined at this property
- *
- * @typedef { object } AceQueryFilterUndefined
- * @property { typeof enums.idsQueryOptions.FilterUndefined } id - Loop the items and only return the items that are undefined at a specific property
- * @property { AceQueryFilterUndefinedX } x
- * @typedef { object } AceQueryFilterUndefinedX
- * @property { AceQueryProperty } property - Loop the items and only return the items that are undefined at this property
- *
- * @typedef { object } AceQueryFilterDefined
- * @property { typeof enums.idsQueryOptions.FilterDefined } id - Loop the items and only return the items that are defined at a specific property
- * @property { AceQueryFilterDefinedX } x
- * @typedef { object } AceQueryFilterDefinedX
- * @property { AceQueryProperty } property - Loop the items and only return the items that are defined at this property
- *
- * @typedef { object } AceQueryFilterByUids
- * @property { typeof enums.idsQueryOptions.FilterByUids } id - Recieves an array of uids and returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
- * @property { AceQueryFilterByUidsX } x
- * @typedef { object } AceQueryFilterByUidsX
- * @property { string[] } uids - With this array of uids, returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
- *
- * @typedef { object } AceQueryFilterByUniques
- * @property { typeof enums.idsQueryOptions.FilterByUniques } id - Recieves an array of unique values and returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)
- * @property { AceQueryFilterByUniquesX } x
- * @typedef { object } AceQueryFilterByUniquesX
- * @property { AceQueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)
- * @typedef { object } AceQueryFilterByUniquesXUnique
- * @property { string } value - The value Ace will query to find a unique match for
- * @property { string } prop - Find node by this prop that has a unique index
- *
- * @typedef { object } AceQueryFilterBy_Uids
- * @property { typeof enums.idsQueryOptions.FilterBy_Uids } id - Recieves an array of _uids and returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
- * @property { AceQueryFilterBy_UidsX } x
- * @typedef { object } AceQueryFilterBy_UidsX
- * @property { string[] } _uids - With this array of _uids, returns an array of valid nodes (valid meaning: found in graph & $o qualifiying)
- *
- * @typedef { object } AceQueryFindByUnique
- * @property { typeof enums.idsQueryOptions.FindByUnique } id - Find node by a prop that has a unique index
- * @property { AceQueryFindByUniqueX } x
- * @typedef { object } AceQueryFindByUniqueX
- * @property { string } value - The value Ace will query to find a unique match for
- * @property { string } prop - Find node by this prop that has a unique index
- *
- * @typedef { string } AceQueryFindByUid
- *
- * @typedef { object } AceQueryFindBy_Uid
- * @property { typeof enums.idsQueryOptions.FindBy_Uid } id - Find relationship by a _uid
- * @property { AceQueryFindBy_UidX } x
- * @typedef { object } AceQueryFindBy_UidX
- * @property { string } _uid - Find relationship by this _uid
- *
- * @typedef { object } AceQueryCountAsResponse
- * @property { typeof enums.idsQueryOptions.CountAsResponse } id - Set the count for the number of items in the response as the response
- *
- * @typedef { object } AceQueryMinAmountAsResponse
- * @property { typeof enums.idsQueryOptions.MinAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
- * @property { AceQueryMinAmountAsResponseX } x
- * @typedef { object } AceQueryMinAmountAsResponseX
- * @property { string } prop - Loop the items in the response, find the min amount of this property, amongst all response items and set it as the response
- *
- * @typedef { object } AceQueryMaxAmountAsResponse
- * @property { typeof enums.idsQueryOptions.MaxAmountAsResponse } id - Loop the items in the response, find the min amount of the provided property and set it as the response
- * @property { AceQueryMaxAmountAsResponseX } x
- * @typedef { object } AceQueryMaxAmountAsResponseX
- * @property { string } prop - Loop the items in the response, find the max amount of this property, amongst all response items and set it as the response
- *
- * @typedef { object } AceQuerySumAsResponse
- * @property { typeof enums.idsQueryOptions.SumAsResponse } id - Loop the items in the response, calculate the sum of the provided property and set it as the response
- * @property { AceQuerySumAsResponseX } x
- * @typedef { object } AceQuerySumAsResponseX
- * @property { string } prop - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
- *
- * @typedef { object } AceQueryAverageAsResponse
- * @property { typeof enums.idsQueryOptions.AverageAsResponse } id - Loop the items in the response, calculate the average of the provided property and set it as the response
- * @property { AceQueryAverageAsResponseX } x
- * @typedef { object } AceQueryAverageAsResponseX
- * @property { string } prop - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
- *
- * @typedef { object } AceQueryCountAsProperty
- * @property { typeof enums.idsQueryOptions.CountAsProperty } id - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { AceQueryCountAsPropertyX } x
- * @typedef { object } AceQueryCountAsPropertyX
- * @property { string } newProp - Find the count for the number of items in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
- *
  * @typedef { object } AceQuerySumAsProperty
- * @property { typeof enums.idsQueryOptions.SumAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
- * @property { AceQuerySumAsPropertyX } x
- * @typedef { object } AceQuerySumAsPropertyX
  * @property { string } computeProp - Add the sum of the \`computeProperty\` of each node in the response
  * @property { string } newProp - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
@@ -439,62 +409,28 @@ ${ typedefs.query.RelationshipType }
  * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.enum, the relationships will be \`[ 'role' ]\`, property is \`'enum'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
  *
  * @typedef { object } AceQueryPropertyAdjacentToResponse
- * @property { typeof enums.idsQueryOptions.PropertyAdjacentToResponse } id - If many results returned, show a property of the first node in the response as a response. If one result is returned, show a property of the node in the response as the reponse.
- * @property { AceQueryPropertyAdjacentToResponseX } x
- * @typedef { object } AceQueryPropertyAdjacentToResponseX
  * @property { string } sourceProp
  * @property { string } adjacentProp
  * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.enum, the relationships will be \`[ 'role' ]\`, property is \`'enum'\` and in the query I've got \`{ x: { role: { uid: true } } }\`
  *
  * @typedef { object } AceQueryAverageAsProperty
- * @property { typeof enums.idsQueryOptions.AverageAsProperty } id - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
- * @property { AceQueryAverageAsPropertyX } x
- * @typedef { object } AceQueryAverageAsPropertyX
  * @property { string } computeProp - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response
  * @property { string } newProp - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMinAmountAsProperty
- * @property { typeof enums.idsQueryOptions.MinAmountAsProperty } id - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { AceQueryMinAmountAsPropertyX } x
- * @typedef { object } AceQueryMinAmountAsPropertyX
  * @property { string } computeProp - Find the smallest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProp - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMaxAmountAsProperty
- * @property { typeof enums.idsQueryOptions.MaxAmountAsProperty } id - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { AceQueryMaxAmountAsPropertyX } x
- * @typedef { object } AceQueryMaxAmountAsPropertyX
  * @property { string } computeProp - Find the largest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProp - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
  * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
- * @typedef { object } AceQueryMinNodeAsResponse
- * @property { typeof enums.idsQueryOptions.MinNodeAsResponse } id - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
- * @property { AceQueryMinNodeAsResponseX } x
- * @typedef { object } AceQueryMinNodeAsResponseX
- * @property { string } prop - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
- *
- * @typedef { object } AceQueryMaxNodeAsResponse
- * @property { typeof enums.idsQueryOptions.MaxNodeAsResponse } id - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
- * @property { AceQueryMaxNodeAsResponseX } x
- * @typedef { object } AceQueryMaxNodeAsResponseX
- * @property { string } prop - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
- *
- * @typedef { object } AceQueryDerivedProperty
- * @property { typeof enums.idsQueryOptions.DerivedProperty } id - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
- * @property { AceQueryDerivedPropertyX } x
- * @typedef { object } AceQueryDerivedPropertyX
- * @property { string } newProp - Derive a value based on the provided \`symbol\` and \`items\` and add the value as a \`newProperty\` to each node in the response
- * @property { enums.queryDerivedSymbol } symbol - Derive a value based on the provided \`symbol\` which include basic math symbols found at \`enums.queryDerivedSymbol\`
- * @property { (AceQueryProperty | AceQueryValue | AceQueryDerivedGroup)[] } items - Collection of items (Value, Property and/or a Derived Group) that will combine based on the \`symbol\`
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
- *
- * @typedef { { [key: string]: CryptoKey } } AceQueryPublicJWKs
- * 
- * @typedef { { node?: any, relationship?: any, uid?: string } } AceQueryAddPropsItem
- *
+ * @typedef { { [propName: string]: AceQueryDerivedGroup } } AceQueryDerivedProperty
+ * @typedef { { add: AceQueryDerivedGroupItem[], subtract?: never, multiply?: never, divide?: never } | { subtract: AceQueryDerivedGroupItem[], add?: never, multiply?: never, divide?: never } | { multiply: AceQueryDerivedGroupItem[], add?: never, subtract?: never, divide?: never } | { divide: AceQueryDerivedGroupItem[], add?: never, subtract?: never, multiply?: never } } AceQueryDerivedGroup
+ * @typedef { number | string | AceQueryProperty | AceQueryDerivedGroup } AceQueryDerivedGroupItem
 */${ typedefs.query.Nodes } ${ typedefs.query.Relationships } ${ typedefs.query.RelationshipPropTypes }
 
 

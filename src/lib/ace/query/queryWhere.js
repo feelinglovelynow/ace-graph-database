@@ -7,23 +7,34 @@ import { getRelationshipNode } from './getRelationshipNode.js'
 /**
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
  * @param { td.AceFnFullResponse } response 
- * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup | td.AceQueryFind | td.AceQueryFilter | td.AceQueryFindDefined | td.AceQueryFindUndefined | td.AceQueryFilterDefined | td.AceQueryFilterUndefined } $where 
+ * @param { enums.queryOptions} option 
  * @param { td.AceQueryPublicJWKs | null } publicJWKs 
  * @param { td.AcePassport } passport 
  */
-export async function queryWhere (xGenerated, response, $where, publicJWKs, passport) {
+export async function queryWhere (xGenerated, response, option, publicJWKs, passport) {
   if (Array.isArray(response.original[xGenerated.propName])) {
     let iOrignal = 0
     const clone = [ ...(response.original[xGenerated.propName]) ]
+    const $where = xGenerated.x.$o?.[option]
+
+    /** @type { Set<string> } If we did not splice that means we found a match. If we found a match for any findOptions we can break the loop */
+    const findOptions = new Set([
+      enums.queryOptions.findByOr,
+      enums.queryOptions.findByAnd,
+      enums.queryOptions.findByDefined,
+      enums.queryOptions.findByUndefined,
+      enums.queryOptions.findByPropValue,
+      enums.queryOptions.findByPropProp,
+    ])
 
     for (let iClone = 0; iClone < clone.length; iClone++) {
       let spliced = false
 
-      if ($where.id === enums.idsQueryOptions.FindGroup || $where.id === enums.idsQueryOptions.FilterGroup) spliced = await loopGroupQueries(($where), iOrignal, true)
-      else spliced = await verifySplice($where, iOrignal, clone[iClone], true)
+      if (option === enums.queryOptions.findByOr || option === enums.queryOptions.findByAnd || option === enums.queryOptions.filterByOr || option === enums.queryOptions.filterByAnd) spliced = await loopGroupQueries(/** @type { td.AceQueryFindGroup | td.AceQueryFilterGroup } */($where), option, iOrignal, true)
+      else spliced = await verifySplice($where, option, iOrignal, clone[iClone], true)
 
-      if (!spliced && ($where.id === enums.idsQueryOptions.Find || $where.id === enums.idsQueryOptions.FindDefined || $where.id === enums.idsQueryOptions.FindUndefined)) {
-        response.now[xGenerated.propName] = [response.now[xGenerated.propName][iOrignal] ]
+      if (!spliced && findOptions.has(option)) { // If we did not splice that means we found a match. If we found a match for any findOptions we can break the loop
+        response.now[xGenerated.propName] = [ response.now[xGenerated.propName][iOrignal] ]
         response.original[xGenerated.propName] = [ response.original[xGenerated.propName][iOrignal] ]
         break
       }
@@ -40,26 +51,29 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
   /**
    * @typedef { object } GetValueResponse
-   * @property { null | 'Value' | 'Property' } id
    * @property { any } value
+   * @property { 'value' | 'prop' } is
    * @property { null | td.AceQueryRequestItemGeneratedXSection } xGenerated
    */
 
 
   /**
    * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup } group 
+   * @param { enums.queryOptions} option 
    * @param { number } i 
    * @param { boolean } doSplice 
+   * @returns { Promise<boolean> }
    */
-  async function loopGroupQueries (group, i, doSplice) {
+  async function loopGroupQueries (group, option, i, doSplice) {
     let spliced = false
 
-    switch (group.x.symbol) {
-      case enums.queryWhereGroupSymbol.or:
+    switch (option) {
+      case enums.queryOptions.findByOr:
+      case enums.queryOptions.filterByOr:
         let keepArrayItem = false
 
-        for (const query of group.x.items) {
-          if ((await innerLoopGroupQueries(query)) === false) { // on first splice false => keepArrayItem <- true
+        for (const groupItem of group) {
+          if ((await innerLoopGroupQueries(/** @type { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), option)) === false) { // on first splice false => keepArrayItem <- true
             keepArrayItem = true
             break
           }
@@ -72,11 +86,12 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
           }	
         }
         break
-      case enums.queryWhereGroupSymbol.and:
+      case enums.queryOptions.findByAnd:
+      case enums.queryOptions.filterByAnd:
         let removeArrayItem = false
 
-        for (const query of group.x.items) {
-          if ((await innerLoopGroupQueries(query)) === true) { // on first splice true => removeArrayItem <- true
+        for (const groupItem of group) {
+          if ((await innerLoopGroupQueries(/** @type { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), option)) === true) { // on first splice true => removeArrayItem <- true
             removeArrayItem = true
             break
           }
@@ -91,24 +106,38 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
 
     /**
-     * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup | td.AceQueryFind | td.AceQueryFilter | td.AceQueryFindDefined | td.AceQueryFindUndefined | td.AceQueryFilterDefined | td.AceQueryFilterUndefined } query 
+     * @param { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } groupItem
+     * @param { enums.queryOptions} option 
      * @returns { Promise<boolean | undefined> }
      */
-    async function innerLoopGroupQueries (query) {
+    async function innerLoopGroupQueries(groupItem, option) {
       let r
 
-      switch (query.id) {
-        case enums.idsQueryOptions.Find:
-        case enums.idsQueryOptions.Filter:
-        case enums.idsQueryOptions.FindDefined:
-        case enums.idsQueryOptions.FindUndefined:
-        case enums.idsQueryOptions.FilterDefined:
-        case enums.idsQueryOptions.FilterUndefined:
-          r = await verifySplice(query, i, response.original[xGenerated.propName][i], false)
+      switch (option) {
+        case enums.queryOptions.findByDefined:
+        case enums.queryOptions.findByUndefined:
+        case enums.queryOptions.findByPropValue:
+        case enums.queryOptions.findByPropProp:
+        case enums.queryOptions.filterByDefined:
+        case enums.queryOptions.filterByUndefined:
+        case enums.queryOptions.filterByPropValue:
+        case enums.queryOptions.filterByPropProp:
+          r = await verifySplice(groupItem, option, i, response.original[xGenerated.propName][i], false)
           break
-        case enums.idsQueryOptions.FindGroup:
-        case enums.idsQueryOptions.FilterGroup:
-          r = loopGroupQueries(query, i, false)
+        case enums.queryOptions.findByOr:
+        case enums.queryOptions.findByAnd:
+        case enums.queryOptions.filterByOr:
+        case enums.queryOptions.filterByAnd:
+          let innerOption
+          const startsWith = option.startsWith('find') ? 'find' : 'filter'
+
+          if (/** @type {*} */(groupItem).or) innerOption = startsWith + 'ByOr'
+          else if (/** @type {*} */(groupItem).and) innerOption = startsWith + 'ByAnd'
+          else if (/** @type { td.AceQueryWherePropProp } */(groupItem)?.length === 3 && /** @type { td.AceQueryWherePropProp } */(groupItem)?.[0]?.prop) innerOption = (/** @type { td.AceQueryWherePropProp } */(groupItem)[2].prop) ? (startsWith + 'PropProp') : (startsWith + 'PropValue')
+          else if (/** @type { td.AceQueryWhereDefined } */(groupItem)?.isPropDefined) innerOption = startsWith + 'ByDefined'
+          else if (/** @type { td.AceQueryWhereUndefined } */(groupItem)?.isPropUndefined) innerOption = startsWith + 'ByUndefined'
+
+          r = loopGroupQueries(/** @type { td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), /** @type { enums.queryOptions } */ (innerOption), i, false)
           break
       }
 
@@ -130,12 +159,13 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
   /**
    * @param { any } $where 
+   * @param { enums.queryOptions} option 
    * @param { number } arrayIndex 
    * @param { any } graphNode 
    * @param { boolean } doSplice 
    * @returns { Promise<boolean> }
    */
-  async function verifySplice ($where, arrayIndex, graphNode, doSplice) {
+  async function verifySplice ($where, option, arrayIndex, graphNode, doSplice) {
     let spliced = false
 
     const bye = () => {
@@ -143,22 +173,21 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
       spliced = true
     }
 
-    if ($where.id === enums.idsQueryOptions.FilterDefined || $where.id === enums.idsQueryOptions.FindDefined) {
-      if (typeof getValue($where.x.property, graphNode).value === 'undefined') bye()
-    } else if ($where.id === enums.idsQueryOptions.FilterUndefined || $where.id === enums.idsQueryOptions.FindUndefined) {
-      if (typeof getValue($where.x.property, graphNode).value !== 'undefined') bye()
+    if (option === enums.queryOptions.findByDefined || option === enums.queryOptions.filterByDefined) {
+      if (typeof getValue($where.x.property, 'prop', graphNode).value === 'undefined') bye()
+    } else if (option === enums.queryOptions.findByUndefined || option === enums.queryOptions.filterByUndefined) {
+      if (typeof getValue($where.x.property, 'prop', graphNode).value !== 'undefined') bye()
     } else {
-      const qw = /** @type { td.AceQueryFilter | td.AceQueryFind } */ ($where)
-
-      const left = getValue(qw.x.items[0], graphNode)
-      const right = getValue(qw.x. items[1], graphNode)
+      const qw = /** @type { td.AceQueryWherePropProp | td.AceQueryWherePropValue } */ ($where)
+      const left = getValue(qw[0], 'prop', graphNode)
+      const right = getValue(qw[2], option === 'findByPropProp' ? 'prop' : 'value', graphNode)
       const isUndefined = typeof left.value === 'undefined' || typeof right.value === 'undefined'
 
-      switch (qw.x.symbol) {
+      switch (qw[1]) {
         case enums.queryWhereSymbol.equals:
           if (isUndefined) bye()
-          else if (isLeftOrRightHash(qw, left, right, 0)) { if (!(await isHashValid(qw, left, right, 0))) bye() }
-          else if (isLeftOrRightHash(qw, left, right, 1)) { if (!(await isHashValid(qw, left, right, 1))) bye() }
+          // else if (isLeftOrRightHash(qw, left, right, 0)) { if (!(await isHashValid(qw, left, right, 0))) bye() }
+          // else if (isLeftOrRightHash(qw, left, right, 1)) { if (!(await isHashValid(qw, left, right, 1))) bye() }
           else if (left.value !== right.value) bye()
           break
         case enums.queryWhereSymbol.doesNotEqual:
@@ -202,41 +231,35 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
 
 
   /**
-   * @param { td.AceQueryProperty | td.AceQueryValue } propertyOrValue 
+   * @param { td.AceQueryWhereItemProp | td.AceQueryWhereItemValue } propertyOrValue 
+   * @param { 'prop' | 'value' } is
    * @param { any } graphNode
    * @returns { GetValueResponse }
    */
-  function getValue (propertyOrValue, graphNode) {
-    let response = /** @type { GetValueResponse } */ ({
-      id: null,
-      value: null,
-      xGenerated: null
-    })
+  function getValue (propertyOrValue, is, graphNode) {
+    let response = /** @type { GetValueResponse } */ ({ is, value: null, xGenerated: null })
 
-    switch (propertyOrValue.id) {
-      case enums.idsQueryOptions.Value:
-        const queryValue = /** @type { td.AceQueryValue } */ (propertyOrValue)
+    switch (is) {
+      case 'value':
+        const queryValue = /** @type { td.AceQueryWhereItemValue } */ (propertyOrValue)
 
-        response.value = queryValue.x.value
-        response.id = propertyOrValue.id
+        response.value = queryValue.value
         response.xGenerated = xGenerated
         break
-      case enums.idsQueryOptions.Property:
-        const queryProperty = /** @type { td.AceQueryProperty } */ (propertyOrValue)
+      case 'prop':
+        const queryProp = /** @type { td.AceQueryWhereItemProp } */ (propertyOrValue)
 
-        if (!queryProperty.x.relationships?.length) {
-          response.value = graphNode[queryProperty.x.property]
+        if (!queryProp.relationships?.length) {
+          response.value = graphNode[queryProp.prop]
           response.xGenerated = xGenerated
         } else {
-          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, queryProperty.x.relationships)
+          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, queryProp.relationships)
 
-          if (rRelationshipNode?.node?.[queryProperty.x.property]) {
+          if (rRelationshipNode?.node?.[queryProp.prop]) {
             response.xGenerated = rRelationshipNode.xGenerated
-            response.value = rRelationshipNode.node[queryProperty.x.property]
+            response.value = rRelationshipNode.node[queryProp.prop]
           }
         }
-
-        response.id = propertyOrValue.id
         break
     }
 
@@ -244,32 +267,32 @@ export async function queryWhere (xGenerated, response, $where, publicJWKs, pass
   }
 
 
-  /**
-   * @param { td.AceQueryFind | td.AceQueryFilter } qw 
-   * @param { GetValueResponse } left
-   * @param { GetValueResponse } right
-   * @param { number } sideIndex 
-   * @returns { boolean }
-   */
-  function isLeftOrRightHash (qw, left, right, sideIndex) {
-    const side = sideIndex === 0 ? left : right
-    return Boolean(side.id === 'Property' && side.xGenerated && /** @type { td.AceSchemaProp } */ (passport.schema?.nodes?.[side.xGenerated.nodeName || '']?.[/** @type { td.AceQueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
-  }
+  // /**
+  //  * @param { td.AceQueryFind | td.AceQueryFilter } qw 
+  //  * @param { GetValueResponse } left
+  //  * @param { GetValueResponse } right
+  //  * @param { number } sideIndex 
+  //  * @returns { boolean }
+  //  */
+  // function isLeftOrRightHash (qw, left, right, sideIndex) {
+  //   const side = sideIndex === 0 ? left : right
+  //   return Boolean(side.id === 'Property' && side.xGenerated && /** @type { td.AceSchemaProp } */ (passport.schema?.nodes?.[side.xGenerated.nodeName || '']?.[/** @type { td.AceQueryProperty } */(qw.x.items[sideIndex]).x.property])?.x?.dataType === enums.dataTypes.hash)
+  // }
 
 
-  /**
-   * @param { td.AceQueryFind | td.AceQueryFilter } qw 
-   * @param { GetValueResponse } left
-   * @param { GetValueResponse } right
-   * @param { number } base64Index
-   * @returns { Promise<boolean> }
-   */
-  async function isHashValid (qw, left, right, base64Index) {
-    if (!qw.x.publicJWK) throw AceError('query__falsy-hash-public-key', 'The request is invalid because qw.x.hashPublicKey is falsy', { qw })
-    if (!publicJWKs?.[qw.x.publicJWK]) throw AceError('query__invalid-hash-public-key', 'The request is invalid because qw.x.hashPublicKey does not match request.publicJWKs', { qw })
+  // /**
+  //  * @param { td.AceQueryFind | td.AceQueryFilter } qw 
+  //  * @param { GetValueResponse } left
+  //  * @param { GetValueResponse } right
+  //  * @param { number } base64Index
+  //  * @returns { Promise<boolean> }
+  //  */
+//   async function isHashValid (qw, left, right, base64Index) {
+//     if (!qw.x.publicJWK) throw AceError('query__falsy-hash-public-key', 'The request is invalid because qw.x.hashPublicKey is falsy', { qw })
+//     if (!publicJWKs?.[qw.x.publicJWK]) throw AceError('query__invalid-hash-public-key', 'The request is invalid because qw.x.hashPublicKey does not match request.publicJWKs', { qw })
 
-    return base64Index ?
-      await verify(publicJWKs[qw.x.publicJWK], left.value, right.value) :
-      await verify(publicJWKs[qw.x.publicJWK], right.value, left.value)
-  }
+//     return base64Index ?
+//       await verify(publicJWKs[qw.x.publicJWK], left.value, right.value) :
+//       await verify(publicJWKs[qw.x.publicJWK], right.value, left.value)
+//   }
 }

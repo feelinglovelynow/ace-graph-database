@@ -27,13 +27,19 @@ export const DEFAULT_QUERY_OPTIONS_FLOW = [ // configurable
   'newProps',
   'propAdjToRes',
 
-  'find',
+  'findByOr',
+  'findByAnd',
   'findByDefined',
   'findByUndefined',
+  'findByPropValue',
+  'findByPropProp',
 
-  'filter',
+  'filterByOr',
+  'filterByAnd',
   'filterByDefined',
   'filterByUndefined',
+  'filterByPropValue',
+  'filterByPropProp',
 
   'sort', // IF sort schema index is not defined for the sort prop then we manually sort
   'limit',

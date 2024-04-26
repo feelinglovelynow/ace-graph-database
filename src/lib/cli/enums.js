@@ -1,7 +1,6 @@
 import { dataTypes } from '../enums/dataTypes.js'
 import { has } from '../enums/has.js'
 import { idsAce } from '../enums/idsAce.js'
-import { idsQueryOptions } from '../enums/idsQueryOptions.js'
 import { idsSchema } from '../enums/idsSchema.js'
 import { passportSource } from '../enums/passportSource.js'
 import { permissionActions } from '../enums/permissionActions.js'
@@ -25,7 +24,6 @@ function setEnumsMap (schema) {
   enumsMap.set('has', has)
   enumsMap.set('idsAce', idsAce)
   enumsMap.set('idsSchema', idsSchema)
-  enumsMap.set('idsQueryOptions', idsQueryOptions)
   enumsMap.set('passportSource', passportSource)
   enumsMap.set('permissionActions', permissionActions)
   enumsMap.set('queryOptions', queryOptions)

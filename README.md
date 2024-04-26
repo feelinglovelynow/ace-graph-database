@@ -99,14 +99,19 @@ const response = await ace({
         name: true,
         actors: {
           $o: {
-            filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ], // respond with actors that have a salary greater than the average salary
+            filterByPropValue: [ { prop: 'firstName' }, 'doesNotEqual', { value: 'Laurence' } ], // respond with actors other then Lauence, filterByPropProp is also available where the 2nd index of this array is a prop
             sort: { prop: 'salary', how: 'dsc' }, // sort actors by salary
             limit: { count: 2, skip: 1 }, // skip the first actor then show the next 2
-            flow: [ 'filter', 'sort', 'limit', 'newProps' ], // do options in this order
-            newProps: { // add these props to each actor
-              bonus: [ 0.7 '*' [ { prop: 'salary' }, '/', 12 ] ], // [] items in newProps is like () items in math
-              fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ],
-            },
+            flow: [ 'filterByPropValue', 'sort', 'limit', 'newProps' ], // do options in this order
+            newProps: {
+              bonus: { // add bonus prop to each actor
+                multiply: [
+                  0.7,
+                  { divide: [ { prop: 'salary' }, 12 ] }
+                ]
+              },
+              fullName: { add: [ { prop: 'firstName' }, ' ',  { prop: 'lastName' } ] }, // add fullName prop to each actor
+            }
           },
           uid: true, // put Actor.uid into response @ response.matrix.actors[i].uid
           _uid: true, // put actsInMovie._uid into response @ response.matrix.actors[i]._uid
@@ -125,13 +130,20 @@ const response = await ace({
     },
 
 
-    // QueryByRelationship - example: { actsInMovie: [ { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }, ... ] }
+    // QueryByRelationship - example: { actsInMovie: { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }
     {
       id: 'QueryByRelationship',
       relationship: 'actsInMovie',
       prop: 'actsInMovie',
       x: {
-        $o: { all: true }, // option: response.actsInMovie will have all not relationship props (_uid, _salary)
+        $o: {
+          all: true, // response.actsInMovie will have all not relationship props (_uid, _salary)
+          findByAnd: [ // return the first actor that fulfils both criteria
+            [ { prop: '_salary' }, 'greaterThan', { value: 90 } ],
+            [ { prop: 'name' }, 'doesNotEqual', { value: 'Carrie-Anne Moss' } ],
+          ]
+        },
+        $o: { all: true },
         actors: {
           $o: { alias: 'star', all: true }, // option: response.actsInMovie[i].star rather then response.actsInMovie[i].actors
         },
@@ -265,8 +277,10 @@ ace fileToGraph
 
 
 ## 🤓 Version 1 Roadmap
+1. Query Where:
+    * Public JWK
+    * PropRes
 1. GitHub Versioning
-    * Get email for us@acedatabasefoundation.org working
     * Signup for GitHub
     * Create a GitHub Organization
     * Deploy main 0.0.1 to GitHub
@@ -293,7 +307,7 @@ ace fileToGraph
 1. $o values
     * symbols > words to characters
     * `limit: { count: 9, skip: 9, random: true },`
-    * `resHide: { avgSalary: true },`
+    * `resHide: { avgSalary: true },` (deprecate isResponseHidden) (b4 adding to now, check if in resHide set)
     * `newPops: { bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ] }`
     * `newPops: { fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ] }`
     * `filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ]`

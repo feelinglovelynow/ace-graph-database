@@ -37,7 +37,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
     }
 
 
-    if (hasValueAsResponse || xGenerated.has === enums.has.one || xGenerated.x.$o?.find || xGenerated.x.$o?.limit?.count === 1) {
+    if (hasValueAsResponse || xGenerated.has === enums.has.one || xGenerated.x.$o?.limit?.count === 1 || xGenerated.x.$o?.findByOr || xGenerated.x.$o?.findByAnd || xGenerated.x.$o?.findByDefined || xGenerated.x.$o?.findByUndefined || xGenerated.x.$o?.findByPropValue || xGenerated.x.$o?.findByPropProp) {
       response.now[xGenerated.propName] = typeof response.now[xGenerated.propName]?.[0] === 'undefined' ? null : response.now[xGenerated.propName][0]
       response.original[xGenerated.propName] = typeof response.original[xGenerated.propName]?.[0] === 'undefined' ? null : response.original[xGenerated.propName][0]
     }
@@ -47,13 +47,19 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
     async function doOption (option) {
       if (!hasValueAsResponse && !doneOptions.has(option) && xGenerated.x.$o?.[/** @type { keyof td.AceQueryRequestItemNodeOptions } */(option)]) {
         switch (option) {
-          case enums.queryOptions.find:
-          case enums.queryOptions.filter:
+          case enums.queryOptions.findByOr:
+          case enums.queryOptions.findByAnd:
           case enums.queryOptions.findByDefined:
-          case enums.queryOptions.findByDefined:
+          case enums.queryOptions.findByUndefined:
+          case enums.queryOptions.findByPropValue:
+          case enums.queryOptions.findByPropProp:
+          case enums.queryOptions.filterByOr:
+          case enums.queryOptions.filterByAnd:
           case enums.queryOptions.filterByDefined:
           case enums.queryOptions.filterByUndefined:
-            await queryWhere(xGenerated, response, /** @type { td.AceQueryFind } */ (xGenerated.x.$o?.[option]), publicJWKs, passport)
+          case enums.queryOptions.filterByPropValue:
+          case enums.queryOptions.filterByPropProp:
+            await queryWhere(xGenerated, response, option, publicJWKs, passport)
             break
 
           case enums.queryOptions.limit:
@@ -191,11 +197,11 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
       if (newPropKeys.length) {
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) { // looping graph nodes
           for (const prop of newPropKeys) {
-            const options = /** @type { td.AceQueryDerivedProperty } */ (xGenerated.x.$o?.newProps?.[prop])
-            const derivedValue = getDerivedValue(xGenerated, response.original[xGenerated.propName][i], options.x.symbol, options.x.items, passport)
+            const derivedGroup = /** @type { td.AceQueryDerivedGroup } */ (xGenerated.x.$o?.newProps?.[prop])
+            const derivedValue = getDerivedValue(xGenerated, response.original[xGenerated.propName][i], derivedGroup, passport)
 
-            response.original[xGenerated.propName][i][options.x.newProp] = derivedValue
-            if (!options.x.isResponseHidden) response.now[xGenerated.propName][i][options.x.newProp] = derivedValue
+            response.original[xGenerated.propName][i][prop] = derivedValue
+            response.now[xGenerated.propName][i][prop] = derivedValue
           }
         }
       }
@@ -208,12 +214,12 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const sumAsProp = xGenerated.x.$o.sumAsProp
 
         for (let arrayItem of response.original[xGenerated.propName]) {
-          sum += arrayItem[sumAsProp.x.computeProp]
+          sum += arrayItem[sumAsProp.computeProp]
         }
 
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
-          response.original[xGenerated.propName][i][sumAsProp.x.newProp] = sum
-          if (!sumAsProp.x.isResponseHidden) response.now[xGenerated.propName][i][sumAsProp.x.newProp] = sum
+          response.original[xGenerated.propName][i][sumAsProp.newProp] = sum
+          response.now[xGenerated.propName][i][sumAsProp.newProp] = sum
         }
       }
     }
@@ -225,7 +231,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const sumAsRes = xGenerated.x.$o.sumAsRes
 
         for (let arrayItem of response.original[xGenerated.propName]) {
-          sum += arrayItem[sumAsRes.x.prop]
+          sum += arrayItem[sumAsRes]
         }
 
         response.now[xGenerated.propName] = [sum]
@@ -242,14 +248,14 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
-          sum += arrayItem[avgAsProp.x.computeProp]
+          sum += arrayItem[avgAsProp.computeProp]
         }
 
         const average = original.length ? sum / original.length : 0
 
         for (let i = 0; i < original.length; i++) {
-          original[i][avgAsProp.x.newProp] = average
-          if (!avgAsProp.x.isResponseHidden) response.now[xGenerated.propName][i][avgAsProp.x.newProp] = average
+          original[i][avgAsProp.newProp] = average
+          response.now[xGenerated.propName][i][avgAsProp.newProp] = average
         }
       }
     }
@@ -263,7 +269,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
-          sum += arrayItem[avgAsRes.x.prop]
+          sum += arrayItem[avgAsRes]
         }
 
         const average = original.length ? sum / original.length : 0
@@ -282,12 +288,12 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
-          if (!amount || arrayItem[minAmtAsProp.x.computeProp] < amount) amount = arrayItem[minAmtAsProp.x.computeProp]
+          if (!amount || arrayItem[minAmtAsProp.computeProp] < amount) amount = arrayItem[minAmtAsProp.computeProp]
         }
 
         for (let i = 0; i < original.length; i++) {
-          original[i][minAmtAsProp.x.newProp] = amount
-          if (!minAmtAsProp.x.isResponseHidden) response.now[xGenerated.propName][i][minAmtAsProp.x.newProp] = amount
+          original[i][minAmtAsProp.newProp] = amount
+          response.now[xGenerated.propName][i][minAmtAsProp.newProp] = amount
         }
       }
     }
@@ -301,7 +307,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
-          if (!amount || arrayItem[minAmtAsRes.x.prop] < amount) amount = arrayItem[minAmtAsRes.x.prop]
+          if (!amount || arrayItem[minAmtAsRes] < amount) amount = arrayItem[minAmtAsRes]
         }
 
         response.now[xGenerated.propName] = [amount]
@@ -319,8 +325,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let i = 0; i < original.length; i++) {
-          if (!node || original[i][minNodeAsRes.x.prop] < amount) {
-            amount = original[i][minNodeAsRes.x.prop]
+          if (!node || original[i][minNodeAsRes] < amount) {
+            amount = original[i][minNodeAsRes]
             node = response.now[xGenerated.propName][i]
           }
         }
@@ -340,8 +346,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let i = 0; i < original.length; i++) {
-          if (!node || original[i][maxNodeAsRes.x.prop] > amount) {
-            amount = original[i][maxNodeAsRes.x.prop]
+          if (!node || original[i][maxNodeAsRes] > amount) {
+            amount = original[i][maxNodeAsRes]
             node = response.now[xGenerated.propName][i]
           }
         }
@@ -360,12 +366,12 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
-          if (!amount || arrayItem[maxAmtAsProp.x.computeProp] > amount) amount = arrayItem[maxAmtAsProp.x.computeProp]
+          if (!amount || arrayItem[maxAmtAsProp.computeProp] > amount) amount = arrayItem[maxAmtAsProp.computeProp]
         }
 
         for (let i = 0; i < original.length; i++) {
-          original[i][maxAmtAsProp.x.newProp] = amount
-          if (!maxAmtAsProp.x.isResponseHidden) response.now[xGenerated.propName][i][maxAmtAsProp.x.newProp] = amount
+          original[i][maxAmtAsProp.newProp] = amount
+          response.now[xGenerated.propName][i][maxAmtAsProp.newProp] = amount
         }
       }
     }
@@ -379,7 +385,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
-          if (!amount || arrayItem[maxAmtAsRes.x.prop] > amount) amount = arrayItem[maxAmtAsRes.x.prop]
+          if (!amount || arrayItem[maxAmtAsRes] > amount) amount = arrayItem[maxAmtAsRes]
         }
 
         response.now[xGenerated.propName] = [amount]
@@ -394,8 +400,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
         const count = response.original[xGenerated.propName].length
 
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
-          if (!countAsProp.x.isResponseHidden) response.now[xGenerated.propName][i][countAsProp.x.newProp] = count
-          response.original[xGenerated.propName][i][countAsProp.x.newProp] = count
+          response.now[xGenerated.propName][i][countAsProp] = count
+          response.original[xGenerated.propName][i][countAsProp] = count
         }
       }
     }
@@ -437,15 +443,15 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, pu
 
         const propAdjToRes = xGenerated.x.$o.propAdjToRes
 
-        if (!propAdjToRes.x.relationships?.length) value = original?.[0]?.[propAdjToRes.x.sourceProp]
+        if (!propAdjToRes.relationships?.length) value = original?.[0]?.[propAdjToRes.sourceProp]
         else {
-          const rRelationshipNode = getRelationshipNode(xGenerated, original[0], passport, propAdjToRes.x.relationships)
-          value = rRelationshipNode?.node?.[propAdjToRes.x.sourceProp]
+          const rRelationshipNode = getRelationshipNode(xGenerated, original[0], passport, propAdjToRes.relationships)
+          value = rRelationshipNode?.node?.[propAdjToRes.sourceProp]
         }
 
         if (typeof value !== 'undefined') {
-          response.now[propAdjToRes.x.adjacentProp] = value
-          response.original[propAdjToRes.x.adjacentProp] = value
+          response.now[propAdjToRes.adjacentProp] = value
+          response.original[propAdjToRes.adjacentProp] = value
         }
       }
     }
