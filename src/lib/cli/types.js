@@ -402,7 +402,6 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQuerySumAsProperty
  * @property { string } computeProp - Add the sum of the \`computeProperty\` of each node in the response
  * @property { string } newProp - Add the sum of the \`computeProperty\` of each node in the response and add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryPropertyAsResponse
  * @property { string } prop - String that is the prop name that you would love to show as the response
@@ -416,17 +415,14 @@ ${ typedefs.query.RelationshipType }
  * @typedef { object } AceQueryAverageAsProperty
  * @property { string } computeProp - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response
  * @property { string } newProp - Add the sum of the \`computeProperty\` of each node in the response and then divide by the count of items in the response and add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMinAmountAsProperty
  * @property { string } computeProp - Find the smallest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProp - Find the smallest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { object } AceQueryMaxAmountAsProperty
  * @property { string } computeProp - Find the largest numerical value of each node's \`computeProperty\` in the response
  * @property { string } newProp - Find the largest numerical value of each node's \`computeProperty\` in the response and then add this value as the \`newProperty\` to each node in the response
- * @property { boolean } [ isResponseHidden ] - Set this to true if you would love this property to be available for $o calculations but not show up in the response
  *
  * @typedef { { [propName: string]: AceQueryDerivedGroup } } AceQueryDerivedProperty
  * @typedef { { add: AceQueryDerivedGroupItem[], subtract?: never, multiply?: never, divide?: never } | { subtract: AceQueryDerivedGroupItem[], add?: never, multiply?: never, divide?: never } | { multiply: AceQueryDerivedGroupItem[], add?: never, subtract?: never, divide?: never } | { divide: AceQueryDerivedGroupItem[], add?: never, subtract?: never, multiply?: never } } AceQueryDerivedGroup

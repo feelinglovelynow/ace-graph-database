@@ -14,11 +14,8 @@ import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, de
  * @param { td.AceFnFetchOptions } options
  * @returns { Promise<td.AceFnResponse> }
  */
-export async function ace({ host, request, privateJWKs, publicJWKs }) {
-  return await aceFetch({
-    url: host + '/ace',
-    body: { request, privateJWKs, publicJWKs }
-  })
+export async function ace ({ host, request, privateJWKs, publicJWKs }) {
+  return await aceFetch({ host, body: { request, privateJWKs, publicJWKs } })
 }
 
 
@@ -69,34 +66,12 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     }
 
 
-    async function preDeligate () {
-      /** @type { { node: string[], relationship: string[] } } - We will convert uids to graph nodes to help with updating */
-      const updateUids = { node: [], relationship: [] }
-
-      if (arrayRequest) {
-        for (let i = 0; i < arrayRequest.length; i++) {
-          if (arrayRequest[i].id === enums.idsAce.UpdateGraphNode) {
-            const mutateRequestItemUpdateGraphNode = /** @type { td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[i])
-            updateUids.node.push(mutateRequestItemUpdateGraphNode.x.uid)
-          }
-
-          if (arrayRequest[i].id === enums.idsAce.UpdateGraphRelationship) {
-            updateUids.relationship.push(/** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[i]).x._uid)
-          }
-        }
-      }
-
-      updateRequestItems.nodes = (!updateUids.node.length) ? [] : await passport.storage.get(updateUids.node)
-      updateRequestItems.relationships = (!updateUids.relationship.length) ? [] : await passport.storage.get(updateUids.relationship)
-    }
-
-
     async function deligate () {
       for (let iRequest = 0; iRequest < arrayRequest.length; iRequest++) {
         switch (arrayRequest[iRequest].id) {
           case enums.idsAce.Empty:
             await empty(/** @type { td.AceMutateRequestItemEmpty } */(arrayRequest[iRequest]))
-            await preDeligate()
+            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -112,7 +87,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
             const ipRes = await _ace(ipOptions)
             if (ipReq.prop) response.now[ipReq.prop] = ipRes
-            await preDeligate()
+            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -120,7 +95,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             const upReq = /** @type { td.AceMutateRequestItemUninstallPlugin } */ (arrayRequest[iRequest])
             const responseUninstall = await _ace({ passport: passport, request: upReq.x.request })
             if (upReq.prop) response.now[upReq.prop] = responseUninstall
-            await preDeligate()
+            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -148,12 +123,13 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
           case enums.idsAce.GetBackup:
-            await backupGet(/** @type { td.AceQueryRequestItemGetBackup } */(arrayRequest[iRequest]))
+            await getBackup(/** @type { td.AceQueryRequestItemGetBackup } */(arrayRequest[iRequest]))
             break
 
 
           case enums.idsAce.LoadBackup:
             await fileToGraph(/** @type { td.AceMutateRequestItemLoadBackup } */(arrayRequest[iRequest]))
+            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -217,7 +193,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
       /** @param { td.AceQueryRequestItemGetBackup } requestItem */
-      async function backupGet (requestItem) {
+      async function getBackup (requestItem) {
         passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
           if (value.action === 'read' && value.node) throw AceAuthError(enums.permissionActions.read, passport, { node: value.node })
@@ -255,6 +231,36 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           }
         })
       }
+    }
+
+
+    async function preDeligate () {
+      /** @type { { node: string[], relationship: string[] } } - We will convert uids to graph nodes to help with updating */
+      const updateUids = { node: [], relationship: [] }
+
+      if (arrayRequest) {
+        for (let i = 0; i < arrayRequest.length; i++) {
+          if (arrayRequest[i].id === enums.idsAce.UpdateGraphNode) {
+            const mutateRequestItemUpdateGraphNode = /** @type { td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[i])
+            updateUids.node.push(mutateRequestItemUpdateGraphNode.x.uid)
+          }
+
+          if (arrayRequest[i].id === enums.idsAce.UpdateGraphRelationship) {
+            updateUids.relationship.push(/** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[i]).x._uid)
+          }
+        }
+      }
+
+      updateRequestItems.nodes = (!updateUids.node.length) ? [] : await passport.storage.get(updateUids.node)
+      updateRequestItems.relationships = (!updateUids.relationship.length) ? [] : await passport.storage.get(updateUids.relationship)
+    }
+
+
+    /**
+     * @param { number } iRequest 
+     */
+    async function preDeligateMiddleware (iRequest) {
+      if (iRequest + 1 !== arrayRequest.length) await preDeligate()
     }
 
 

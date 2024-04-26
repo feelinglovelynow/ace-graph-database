@@ -280,38 +280,10 @@ ace fileToGraph
 1. Query Where:
     * Public JWK
     * PropRes
-1. GitHub Versioning
-    * Signup for GitHub
-    * Create a GitHub Organization
-    * Deploy main 0.0.1 to GitHub
-    * Tag a release
-    * Create a qa branch
-    * Deploy to qa branch over the course of the week
-    * On Thursday's deploy qa to main, update the version in the package.json, commit message is 0.0.x
-    * On Thursday's publish a blog post that lists the new features for the version with commit links
-        * 0.0.x
-            * Version 1 Roadmap Items
-            * Bug Fixes
-            * Quality of Life Impovements
-            * Support
-                * Star us on GitHub
-                * Contribute
-                * Donate
-            * Thanks
-    * On the Last Friday of the month post a blog post that:
-        * Lists the new versions for the month w/ blog links
-        * Mentions goals for next month
-        * Support
-        * Thanks
-1. External: Property to Prop
 1. $o values
     * symbols > words to characters
     * `limit: { count: 9, skip: 9, random: true },`
-    * `resHide: { avgSalary: true },` (deprecate isResponseHidden) (b4 adding to now, check if in resHide set)
-    * `newPops: { bonus: [ [ { prop: 'salary' }, '/', 12 ] '*' 0.7 ] }`
-    * `newPops: { fullName: [ { prop: 'firstName' }, '+', ' ', '+', { prop: 'lastName' } ] }`
-    * `filter: [ { prop: 'salary' }, '>=', { avg: 'salary' } ]`
-1. No uid or _uid as prop name
+    * `resHide: { avgSalary: true },` (b4 adding to now, check if in resHide set)
 1. Schema Enums
 1. `ace()`
     * Function to communicate with the graph
@@ -342,13 +314,41 @@ ace fileToGraph
       * Request:
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
+1. External: Property to Prop
+1. No uid or _uid as prop name
+1. Ace CLI + R2
 1. On Error Flow
-    * Retry: Count, MS Before Trying Again
+    * Retry: Count, MS Before Trying Again, 
     * Log to R2
     * Backup To R2
     * Email Log
     * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
+1. GitHub Versioning
+    * Signup for GitHub
+    * Create GitHub Organization
+    * Deploy main 0.0.1 to GitHub
+    * Tag a release
+    * Create a qa branch
+    * Deploy to qa branch over the course of the week
+    * On Thursday's deploy qa to main, update the version in the package.json, commit message is 0.0.x
+    * On Thursday's publish a blog post that lists the new features for the version with commit links
+        * 0.0.x
+            * Version 1 Roadmap Items
+            * Bug Fixes
+            * Quality of Life Impovements
+            * Support
+                * Star us on GitHub
+                * Contribute
+                * Donate
+            * Thanks
+    * On the Last Friday of the month post a blog post that:
+        * Lists the new versions for the month w/ blog links
+        * Mentions goals for next month
+        * Support
+        * Thanks
+    * Create an NPM Account
+    * Deploy to NPM
 1. How local db schema to prod db schema
     * Update prop column name
     * Based on the schema diff, we know what happened with the migration
@@ -377,7 +377,6 @@ ace fileToGraph
     * 2FA + Authy Support
     * AceUser > email > passwordless
 1. Test relationship props update + guidance
-1. Prep loop called in deligate and _ace
 1. App Worker > Ace Durable Object
 1. Batch requests to storage to stay within storage required Maximum count
 1. Comments (param, returns, description, example usage, why) for all index functions

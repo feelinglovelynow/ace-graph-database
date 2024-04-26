@@ -2,7 +2,7 @@ import { REQUEST_TOKEN_HEADER } from "./variables.js"
 
 
 /**
- * @param { { url: string, token?: string, method?: 'GET', body?: { [k: string]: any } } } options
+ * @param { { host: string, token?: string, method?: 'GET', body?: { [k: string]: any } } } options
  * @returns { Promise<any> }
  */
 export async function aceFetch (options) {
@@ -17,7 +17,7 @@ export async function aceFetch (options) {
     requestInit.method = options?.method ? options.method : 'POST'
     
     if (options?.token) requestInit.headers[REQUEST_TOKEN_HEADER] = options.token
-    response = await (await fetch(options.url, requestInit)).json()
+    response = await (await fetch(options.host + '/ace', requestInit)).json()
     return response
   } catch (error) {
     console.log('error', error)
