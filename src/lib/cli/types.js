@@ -596,7 +596,7 @@ function getSchemaTypedefs (schema) {
 
               queryProps += rSchemaProp.id === 'Prop' ?
                 `\n * @property { AceQueryXPropValue } [ ${ relationshipNodePropName } ] - ${ getQueryPropDescription({ propName: relationshipNodePropName, nodeName: schemaProp.x.node, schemaPropDescription: rSchemaProp.x.description }) }` :
-                `\n * @property { ${ getNodePropXPropName(schemaProp.x.node, relationshipNodePropName)} } [ ${ relationshipNodePropName} ] - ${ getQueryByRelationshipPropDescription(schemaProp.x.node, relationshipNodePropName, rSchemaProp) }`
+                `\n * @property { boolean | ${ getNodePropXPropName(schemaProp.x.node, relationshipNodePropName) } } [ ${ relationshipNodePropName} ] - ${ getQueryByRelationshipPropDescription(schemaProp.x.node, relationshipNodePropName, rSchemaProp) }`
             }
 
             if (schema.relationships?.[schemaProp.x.relationship]?.x?.props) {
@@ -609,7 +609,7 @@ function getSchemaTypedefs (schema) {
 
             const relationshipPropName = getNodePropXPropName(schemaNodeName, schemaNodePropName)
 
-            typedefs.query.NodeProps += `\n * @property { ${ relationshipPropName} } [ ${schemaNodePropName} ] - ${ getQueryByRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+            typedefs.query.NodeProps += `\n * @property { boolean | ${ relationshipPropName } } [ ${ schemaNodePropName } ] - ${ getQueryByRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
 
             if (!typedefs.query.RelationshipPropTypes) typedefs.query.RelationshipPropTypes += '\n\n\n/** Query: Node relationship props (from schema)\n *'
 
@@ -630,7 +630,7 @@ function getSchemaTypedefs (schema) {
  * @property { typeof enums.idsAce.QueryByNode } id
  * @property { '${ schemaNodeName }' } node
  * @property { string } prop
- * @property { ${ schemaNodeName }QueryRequestItemNodeX } x
+ * @property { ${ schemaNodeName }QueryRequestItemNodeX } [ x ]
  * @typedef { object } ${ schemaNodeName }QueryRequestItemNodeX
  * @property { AceQueryXPropValue } [ uid ]
  * @property { AceQueryRequestItemNodeOptions } [ $o ]${ typedefs.query.NodeProps }
@@ -696,7 +696,7 @@ function getSchemaTypedefs (schema) {
 
       if (relationshipMapValue) {
         for (const { schemaNodeName, schemaNodePropName, schemaProp } of relationshipMapValue) {
-          typedefs.query.RelationshipProps += `\n * @property { ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryByRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
+          typedefs.query.RelationshipProps += `\n * @property { boolean | ${ schemaNodeName + DELIMITER + schemaNodePropName + DELIMITER + 'X' } } [ ${ schemaNodePropName } ] - ${ getQueryByRelationshipPropDescription(schemaNodeName, schemaNodePropName, schemaProp) }`
         }
       }
 
@@ -708,7 +708,7 @@ function getSchemaTypedefs (schema) {
  * @property { typeof enums.idsAce.QueryByRelationship } id
  * @property { '${ schemaRelationshipName }' } relationship
  * @property { string } prop
- * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } x
+ * @property { ${ schemaRelationshipName }QueryRequestItemRelationshipX } [ x ]
  * @typedef { object } ${ schemaRelationshipName }QueryRequestItemRelationshipX
  * @property { AceQueryXPropValue } [ _uid ]
  * @property { AceQueryRequestItemRelationshipOptions } [ $o ]${ typedefs.query.RelationshipProps }
@@ -745,7 +745,7 @@ function getSchemaTypedefs (schema) {
  * @property { typeof enums.idsAce.QueryByNode } id
  * @property { string } node
  * @property { string } prop
- * @property { AceQueryRequestItemNodeX } x`
+ * @property { AceQueryRequestItemNodeX } [ x ]`
   })
 
 

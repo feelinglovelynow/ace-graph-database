@@ -23,7 +23,7 @@ export function getXGeneratedById (requestItem, passport) {
     has: enums.has.many,
     xPropName: requestItem.prop,
     resHide: getResHide(updatedX),
-    aliasPropName: updatedX.$o?.alias,
+    aliasPropName: updatedX?.$o?.alias,
     propName: updatedX?.$o?.alias || requestItem.prop,
   }
 
@@ -71,8 +71,8 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
     has: schemaPropValue.x.has,
     resHide: getResHide(updatedX),
     nodeName: schemaPropValue.x.node,
-    aliasPropName: updatedX.$o?.alias,
-    propName: updatedX.$o?.alias || xKey,
+    aliasPropName: updatedX?.$o?.alias,
+    propName: updatedX?.$o?.alias || xKey,
     relationshipName: schemaPropValue.x.relationship,
   }
 }
@@ -81,15 +81,20 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
 /**
  * IF props is empty manually set $o.all to true (if $o.all is set don't overwrite $o.all)
  * @param { Set<string> } props
- * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ x ]
- * @returns { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX }
+ * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX | boolean } [ x ]
+ * @returns { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX | * }
  */
 function maybeManuallySetAll (props, x) {
   let res
 
-  if (props.size && x) res = x
-  else if (!x || !x.$o) res = { $o: { all: true } }
-  else res = { $o: { all: true, ...x.$o } }
+  if (typeof x === 'boolean') {
+    if (x) res = { $o: { all: true } }
+    else res = x
+  } else {
+    if (props.size && x) res = x
+    else if (!x || !x.$o) res = { $o: { all: true } }
+    else res = { $o: { all: true, ...x.$o } }
+  }
 
   return res
 }

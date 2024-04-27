@@ -2,7 +2,7 @@
 
 
 ## 🙏 JavaScipt's BEST Database!
-* Our mission is to create, maintain and enhance the Best database for JavaScript Developers!
+* My mission is to create, maintain and enhance the Best database for JavaScript Developers!
 
 
 ## 🤔 What is Ace?
@@ -86,11 +86,44 @@ const response = await ace({
     { id: 'GetSchema', prop: 'schema' },
 
 
-    // QueryByNode (aka: SELECT * FROM Actor) - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
+    // QueryByNode --- In SQL this would be: SELECT * FROM Actor --- { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
     { id: 'QueryByNode', node: 'Actor', prop: 'actors' },
 
 
-    // QueryByNode - example: { matrix: { uid: 'abc', name: 'The Matrix', actors: [ ... ] } }
+    // QueryByRelationship --- Querying by node or by relationship is possible --- { actsInMovie: [ { _uid: 'abc', _salary: 9001, star: { firstName: 'Keanu' }, actsIn: { name: 'The Matrix', ... } } ] }
+    {
+      id: 'QueryByRelationship',
+      relationship: 'actsInMovie',
+      prop: 'actsInMovie',
+      x: {
+        _uid: true, // actsInMovie relationship prop: _uid will be in the response
+        _salary: true, // actsInMovie relationship prop: _salay will be in the response
+        actors: { // Movie.actors node prop
+          $o: { alias: 'star' }, // rather then actors show star in the response
+          firstName: true, // only show the Actor's firstName
+        },
+        actsIn: { $o: { alias: 'movie' } }, // Actor.actsIn node prop: b/c no props are specified like in the QueryByNode above, all none relationship props for the Movie node (uid, name) will be in the response
+      }
+    },
+
+
+    // QueryByRelationship --- { keanuMatrixRelationship: { _uid: 'abc', _salary: 9001, actor: { firstName: 'Keanu' }, actsIn: { uid: '123' name: 'The Matrix' } } }
+    {
+      id: 'QueryByRelationship',
+      relationship: 'actsInMovie',
+      prop: 'keanuMatrixRelationship',
+      x: {
+        $o: {
+          all: true, // place none relationship actsInMovie props into the response, so _uid and _salary
+          findByPropValue: [ { relationships: ['actors'], prop: 'uid' }, 'equals', '_:Keanu' ] // b/c we are doing a find, the response will be an object rather then an array, only the relationship that has an actor with Keanu's uid will be in the response
+        },
+        actors: true, // all none relationship Actor props will be in the response (uid, firstName, lastName)
+        actsIn: true, // all none relationship Movie props will be in the response (uid, name)
+      }
+    },
+
+
+    // QueryByNode --- { matrix: { uid: 'abc', name: 'The Matrix', actors: [ ... ] } }
     {
       id: 'QueryByNode',
       node: 'Movie',
@@ -125,7 +158,7 @@ const response = await ace({
     },
 
 
-    // QueryByRelationship - example: { actsInMovie: { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }
+    // QueryByRelationship --- { actsInMovie: { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }
     {
       id: 'QueryByRelationship',
       relationship: 'actsInMovie',
@@ -138,7 +171,6 @@ const response = await ace({
             [ { prop: 'name' }, 'doesNotEqual', 'Carrie-Anne Moss' ],
           ]
         },
-        $o: { all: true },
         actors: {
           $o: { alias: 'star', all: true }, // option: response.actsInMovie[i].star rather then response.actsInMovie[i].actors
         },
@@ -273,11 +305,11 @@ ace types
 
 ## 🤓 Version 1 Roadmap
 1. `ace()`
-    * Delete `cascadeProps` array
-    * Sanitize / Validate Input
     * Where _:
     * Update _: (Install plugin, update the value)
     * Upsert, won't throw an error if the item exists
+    * Delete `cascadeProps` array
+    * Sanitize / Validate Input
     * fileToGraph Option: skipDataDelete: boolean
     * Must relationship (storage fallback)
     * id descriptions
@@ -329,7 +361,7 @@ ace types
     * Create a qa branch
     * Deploy to qa branch over the course of the week
     * On Thursday's deploy qa to main, update the version in the package.json, commit message is 0.0.x
-    * On Thursday's publish a blog post that lists the new features for the version with commit links
+    * On Thursday's publish Release Notes that lists the new features for the version with commit links
         * 0.0.x
             * Version 1 Roadmap Items
             * Bug Fixes

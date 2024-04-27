@@ -16,6 +16,20 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
   const response = /** @type { GetRelationshipNodeResponse } */ ({ node: null, xGenerated: null })
   let relationshipNodeName = xGenerated.nodeName, schemaRelationshipProp
 
+  if (!relationshipNodeName && startingNode.a && startingNode.b && xGenerated.relationshipName) { // we're starting w/ a relationship query and not a node query
+    const props = passport.schemaDataStructures?.relationshipPropsMap?.get(xGenerated.relationshipName)
+
+    if (props) {
+      for (const [ key, value ] of props) {
+        if (key !== relationships[0]) {
+          relationshipNodeName = value.x.node
+          break
+        }
+      }
+    }
+  }
+
+
   for (let iRelationships = 0; iRelationships < relationships.length; iRelationships++) {
     const relationshipPropName = relationships[iRelationships]
 
@@ -40,8 +54,8 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
       else break
     }
   }
-
-  if (schemaRelationshipProp?.x?.has === 'many') throw AceError('get-relationship-node__ending-with-many', `The relationships array is invalid because it ends with a property that is a "many" relationship, we must end with a "one" relationship`, { relationships })
+  
+  if (schemaRelationshipProp?.x?.has === 'many' && Array.isArray(response.node) && response.node.length) throw AceError('get-relationship-node__ending-with-many', `The relationships array is invalid because it ends with a property that is a "many" relationship, we must end with a "one" relationship`, { relationships, queryId: xGenerated.id, queryX: xGenerated.x })
 
   return response
 }

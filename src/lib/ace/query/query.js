@@ -217,7 +217,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
   if (!graphItem) {
     response.now[ xGenerated.propName ] = null
     response.original[ xGenerated.propName ] = null
-  } else {
+  } else if (/** @type {*} */(xGenerated.x) !== false) {
     const responseOriginalItem = graphItem.x
     const responseNowItem = /** @type { { [propertyName: string]: any } } */ ({})
 
