@@ -206,27 +206,6 @@ ace dev
 
 
 
-ace types
-  Create types (TS) and typedefs (JSDoc)
-    - IF a host (Cloudflare Worker URL) is provided
-      - Types take into consideration your schema by requesting it via the host
-    - ELSE IF a (schema) file is provided [ Current Directory ]/ace/schemas/
-      - Types take into consideration your schema by loading it locally from
-    - ELSE
-      - Types do not take into consideration your schema
-  Options:
-    -h      |  Host  |  Optional  |  String
-    --host  |  Host  |  Optional  |  String
-    -f      |  File  |  Optional  |  String
-    --file  |  File  |  Optional  |  String
-  Examples:
-    ace types -h=http://localhost:8787
-    ace types --host=http://localhost:8787
-    ace types -f=qa.json
-    ace types --file=2024-03-24T19:44:36.492Z.json
-
-
-
 ace schemaToFile
   Get most recent schema from graph and then save schema to a file locally
   Location File: [ Current Directory ]/ace/schemas/[ File Name ].json
@@ -277,6 +256,27 @@ ace fileToGraph
     ace fileToGraph --file=qa.json --host=http://localhost:8787
     ace fileToGraph -f=backup.json -h=http://localhost:8787 -s=true
     ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --host=http://localhost:8787 --skipDataDelete=true
+
+
+
+ace types
+  Create types (TS) and typedefs (JSDoc)
+    - IF a host (Cloudflare Worker URL) is provided
+      - Types take into consideration your schema by requesting it via the host
+    - ELSE IF a (schema) file is provided [ Current Directory ]/ace/schemas/
+      - Types take into consideration your schema by loading it locally from
+    - ELSE
+      - Types do not take into consideration your schema
+  Options:
+    -h      |  Host  |  Optional  |  String
+    --host  |  Host  |  Optional  |  String
+    -f      |  File  |  Optional  |  String
+    --file  |  File  |  Optional  |  String
+  Examples:
+    ace types -h=http://localhost:8787
+    ace types --host=http://localhost:8787
+    ace types -f=qa.json
+    ace types --file=2024-03-24T19:44:36.492Z.json
 `)
    }
 
