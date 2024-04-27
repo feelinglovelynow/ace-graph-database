@@ -79,14 +79,14 @@ const response = await ace({
     // IF a uid is set (crypto.randomUUID()) THEN Ace won't create a uid before placing the node into storage AND this node can be used in relationships for this ace() call by using the uid in relationships
     { id: 'AddNodeToGraph', node: 'Movie', x: { name: 'Avatar' } },
 
-    // put a backup of the graph @ response.backup
+    // put a backup of the graph @ response.backup (includes data added above)
     { id: 'GetBackup', prop: 'backup' },
 
-    // put the current graph schema @ response.schema
+    // put the current graph schema @ response.schema (includes schema above)
     { id: 'GetSchema', prop: 'schema' },
 
 
-    // QueryByNode - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
+    // QueryByNode (aka: SELECT * FROM Actor) - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
     { id: 'QueryByNode', node: 'Actor', prop: 'actors' },
 
 
