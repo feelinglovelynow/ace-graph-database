@@ -22,7 +22,6 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
     /** @type { Set<string> } If we have completed an option put it in done */
     const doneOptions = new Set()
 
-
     if (xGenerated.x?.$o.flow) { // do in requested flow order
       for (const option of xGenerated.x?.$o.flow) {
         await doOption(option)
@@ -204,7 +203,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
             const derivedValue = getDerivedValue(xGenerated, response.original[xGenerated.propName][i], derivedGroup, passport)
 
             response.original[xGenerated.propName][i][prop] = derivedValue
-            response.now[xGenerated.propName][i][prop] = derivedValue
+            if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[xGenerated.propName][i][prop] = derivedValue
           }
         }
       }
@@ -222,7 +221,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
           response.original[xGenerated.propName][i][sumAsProp.newProp] = sum
-          response.now[xGenerated.propName][i][sumAsProp.newProp] = sum
+          if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[xGenerated.propName][i][sumAsProp.newProp] = sum
         }
       }
     }
@@ -237,8 +236,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
           sum += arrayItem[sumAsRes]
         }
 
-        response.now[xGenerated.propName] = [sum]
         response.original[xGenerated.propName] = [sum]
+        if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[xGenerated.propName] = [ sum ]
       }
     }
 
@@ -258,7 +257,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
         for (let i = 0; i < original.length; i++) {
           original[i][avgAsProp.newProp] = average
-          response.now[xGenerated.propName][i][avgAsProp.newProp] = average
+          if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[xGenerated.propName][i][avgAsProp.newProp] = average
         }
       }
     }
@@ -296,7 +295,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
         for (let i = 0; i < original.length; i++) {
           original[i][minAmtAsProp.newProp] = amount
-          response.now[xGenerated.propName][i][minAmtAsProp.newProp] = amount
+          if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[xGenerated.propName][i][minAmtAsProp.newProp] = amount
         }
       }
     }
@@ -374,7 +373,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
         for (let i = 0; i < original.length; i++) {
           original[i][maxAmtAsProp.newProp] = amount
-          response.now[xGenerated.propName][i][maxAmtAsProp.newProp] = amount
+          if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[xGenerated.propName][i][maxAmtAsProp.newProp] = amount
         }
       }
     }
@@ -399,12 +398,12 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
     function doCountAsProp () {
       if (xGenerated.x?.$o?.countAsProp) {
+        const count = getCount()
         const countAsProp = xGenerated.x?.$o.countAsProp
-        const count = response.original[xGenerated.propName].length
 
-        for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
+        for (let i = 0; i < count; i++) {
           response.now[xGenerated.propName][i][countAsProp] = count
-          response.original[xGenerated.propName][i][countAsProp] = count
+          if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.original[xGenerated.propName][i][countAsProp] = count
         }
       }
     }
@@ -412,14 +411,21 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
     function doCountAsRes () {
       if (xGenerated.x?.$o?.countAsRes) {
-        let length
+        const count = getCount()
 
-        if (Object.keys(xGenerated.x).length === 1) length = uids.length // IF x only has $o then there are no props, which means original is an empty aray, which means counting the uids length is optimal
-        else length = response.original[xGenerated.propName].length
-
-        response.now[xGenerated.propName] = [length]
-        response.original[xGenerated.propName] = [length]
+        response.now[xGenerated.propName] = [count]
+        response.original[xGenerated.propName] = [count]
       }
+    }
+
+    /** @returns { number } */
+    function getCount () {
+      let count
+
+      if (!xGenerated.props.size) count = uids.length // IF x has no props, which means original is an empty aray, which means counting the uids length is optimal
+      else count = response.original[xGenerated.propName].length
+
+      return count
     }
 
 

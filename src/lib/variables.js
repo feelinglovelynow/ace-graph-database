@@ -49,6 +49,7 @@ export const DEFAULT_QUERY_OPTIONS_FLOW = [ // configurable
 ]
 
 export const POST_QUERY_OPTIONS_FLOW = [
+  'resHide',
   'propAsRes',
   'countAsRes',
   'sumAsRes',

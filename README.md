@@ -272,11 +272,11 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. $o values
-    * symbols > words to characters
-    * `limit: { count: 9, skip: 9, random: true },`
-    * `resHide: { avgSalary: true },` (b4 adding to now, check if in resHide set)
+1. $o `resHide: [ 'avgSalary' ]` (b4 adding to now, check if in resHide set)
 1. Schema Enums
+1. No more embedded functions (so I stop creating the same fn multiple times)
+1. Get relationship node, if many just get the first one
+1. returns for each function
 1. `ace()`
     * Function to communicate with the graph
     * fileToGraph Option: skipDataDelete: boolean
@@ -366,6 +366,7 @@ ace types
 1. Response Types
     * Generics
     * Conditional Types
+1. $o random
 1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
 1. Security

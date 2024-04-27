@@ -267,6 +267,8 @@ ${ typedefs.query.RelationshipType }
  * @property { string } [ nodeName ]
  * @property { string } [ relationshipName ]
  * @property { AceQueryRequestItemNodeX } x
+ * @property { Set<string> | null } resHide
+ * @property { Set<string> } props
  *
  * @typedef { { [key: string]: CryptoKey } } AceQueryPublicJWKs
  *
@@ -309,6 +311,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryWherePropProp } [ filterByPropProp ]
  * @property { AceQueryWherePropRes } [ filterByPropRes ]
  * @property { AceQueryLimit } [ limit ]
+ * @property { string[] } [ resHide ] - Array of props you'd love to hide in the response
  * @property { AceQueryPropertyAsResponse } [ propAsRes ]
  * @property { boolean } [ countAsRes ] - Display the count of results as the response
  * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
@@ -348,6 +351,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryWherePropProp } [ filterByPropProp ]
  * @property { AceQueryWherePropRes } [ filterByPropRes ]
  * @property { AceQueryLimit } [ limit ]
+ * @property { string[] } [ resHide ] - Array of props you'd love to hide in the response
  * @property { AceQueryPropertyAsResponse } [ propAsRes ]
  * @property { boolean } [ countAsRes ] - Display the count of results as the response
  * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response

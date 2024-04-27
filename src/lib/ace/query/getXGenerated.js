@@ -12,14 +12,20 @@ export function getXGeneratedById (requestItem, passport) {
   if (requestItem.id === 'QueryByNode' && !passport.schema?.nodes[requestItem.node]) throw AceError('getXGeneratedById__x-section-id-node-invalid', 'This request is failing b/c request.x.nodeName is not a node in your schema', { query: requestItem })
   if (requestItem.id === 'QueryByRelationship' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
 
-  const response = /** @type { td.AceQueryRequestItemGeneratedXSection } */ ({
-    x: appendAllProps(requestItem.x),
+  const props = getProps(requestItem.x)
+  const updatedX = maybeManuallySetAll(props, requestItem.x)
+
+  /** @type { td.AceQueryRequestItemGeneratedXSection } */
+  const response =  {
+    props,
+    x: updatedX,
     id: requestItem.id,
     has: enums.has.many,
     xPropName: requestItem.prop,
-    aliasPropName: requestItem.x?.$o?.alias,
-    propName: requestItem.x?.$o?.alias || requestItem.prop,
-  })
+    resHide: getResHide(updatedX),
+    aliasPropName: updatedX.$o?.alias,
+    propName: updatedX?.$o?.alias || requestItem.prop,
+  }
 
   if (/** @type { td.AceQueryRequestItemNode } */(requestItem).node) response.nodeName = /** @type { td.AceQueryRequestItemNode } */(requestItem).node
   else if (/** @type { td.AceQueryRequestItemRelationship } */(requestItem).relationship) response.relationshipName = /** @type { td.AceQueryRequestItemRelationship } */(requestItem).relationship
@@ -38,6 +44,7 @@ export function getXGeneratedById (requestItem, passport) {
 export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent) {
   let schemaPropValue
 
+
   if (xGeneratedParent.id === 'QueryByRelationship') {
     if (!passport.schemaDataStructures?.relationshipPropsMap) throw AceError('getXGeneratedByParent__falsy-schemaDataStructures-relationshipPropsMap', 'The schema data structure relationshipPropsMap must be truthy, this is set if your schema is defined when you create an AcePassport', { relationshipPropsMap: '' })
 
@@ -54,33 +61,57 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
 
   if (!schemaPropValue) throw AceError('getXGeneratedByParent__falsy-query-x-id', `This request is failing b/c node name "${xGeneratedParent?.nodeName }" with property name "${ xKey }" is not defined in your schema`, { schemaPropName: xKey, nodeName: xGeneratedParent?.id })
 
+  const props = getProps(xValue)
+  const updatedX = maybeManuallySetAll(props, xValue)
+
   return {
-    x: appendAllProps(xValue),
-    nodeName: schemaPropValue.x.node,
-    has: schemaPropValue.x.has,
+    props,
+    x: updatedX,
     xPropName: xKey,
-    aliasPropName: xValue.$o?.alias,
-    propName: xValue.$o?.alias || xKey,
+    has: schemaPropValue.x.has,
+    resHide: getResHide(updatedX),
+    nodeName: schemaPropValue.x.node,
+    aliasPropName: updatedX.$o?.alias,
+    propName: updatedX.$o?.alias || xKey,
     relationshipName: schemaPropValue.x.relationship,
   }
 }
 
 
 /**
- * IF x is empty manually set $o.all to true (if all is set don't overwrite it)
- * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ xValue]  
+ * IF props is empty manually set $o.all to true (if $o.all is set don't overwrite $o.all)
+ * @param { Set<string> } props
+ * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ x ]
+ * @returns { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX }
  */
-function appendAllProps (xValue) {
+function maybeManuallySetAll (props, x) {
   let res
 
-  if (typeof xValue === 'undefined' || Object.keys(xValue).length === 0) res = { $o: { all: true } }
-  else {
-    const keys = Object.keys(xValue)
-
-    if (keys.length === 0) res = { $o: { all: true } }
-    else if (keys.length === 1 && xValue.$o) res = { $o: { all: true, ...xValue.$o } }
-    else res = xValue
-  }
+  if (props.size && x) res = x
+  else if (!x || !x.$o) res = { $o: { all: true } }
+  else res = { $o: { all: true, ...x.$o } }
 
   return res
+}
+
+
+/**
+ * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ x ]  
+ * @returns { Set<string> }
+ */
+function getProps (x) {
+  const set = new Set(Object.keys(x || {}) || [])
+
+  set.delete('$o')
+
+  return set
+}
+
+
+/**
+ * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ x ]
+ * @returns { Set<string> | null }
+ */
+function getResHide (x) {
+  return x?.$o?.resHide ? new Set(x.$o?.resHide) : null
 }
