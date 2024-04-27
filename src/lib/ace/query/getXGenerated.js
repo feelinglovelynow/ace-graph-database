@@ -13,12 +13,12 @@ export function getXGeneratedById (requestItem, passport) {
   if (requestItem.id === 'QueryByRelationship' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
 
   const response = /** @type { td.AceQueryRequestItemGeneratedXSection } */ ({
-    x: requestItem.x,
+    x: appendAllProps(requestItem.x),
     id: requestItem.id,
     has: enums.has.many,
     xPropName: requestItem.prop,
-    aliasPropName: requestItem.x.$o?.alias,
-    propName: requestItem.x.$o?.alias || requestItem.prop,
+    aliasPropName: requestItem.x?.$o?.alias,
+    propName: requestItem.x?.$o?.alias || requestItem.prop,
   })
 
   if (/** @type { td.AceQueryRequestItemNode } */(requestItem).node) response.nodeName = /** @type { td.AceQueryRequestItemNode } */(requestItem).node
@@ -55,7 +55,7 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
   if (!schemaPropValue) throw AceError('getXGeneratedByParent__falsy-query-x-id', `This request is failing b/c node name "${xGeneratedParent?.nodeName }" with property name "${ xKey }" is not defined in your schema`, { schemaPropName: xKey, nodeName: xGeneratedParent?.id })
 
   return {
-    x: xValue,
+    x: appendAllProps(xValue),
     nodeName: schemaPropValue.x.node,
     has: schemaPropValue.x.has,
     xPropName: xKey,
@@ -63,4 +63,24 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
     propName: xValue.$o?.alias || xKey,
     relationshipName: schemaPropValue.x.relationship,
   }
+}
+
+
+/**
+ * IF x is empty manually set $o.all to true (if all is set don't overwrite it)
+ * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ xValue]  
+ */
+function appendAllProps (xValue) {
+  let res
+
+  if (typeof xValue === 'undefined' || Object.keys(xValue).length === 0) res = { $o: { all: true } }
+  else {
+    const keys = Object.keys(xValue)
+
+    if (keys.length === 0) res = { $o: { all: true } }
+    else if (keys.length === 1 && xValue.$o) res = { $o: { all: true, ...xValue.$o } }
+    else res = xValue
+  }
+
+  return res
 }

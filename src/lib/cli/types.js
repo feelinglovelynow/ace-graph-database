@@ -298,6 +298,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQueryFindGroup } [ findByAnd ]
  * @property { AceQueryWherePropValue } [ findByPropValue ]
  * @property { AceQueryWherePropProp } [ findByPropProp ]
+ * @property { AceQueryWherePropRes } [ findByPropRes ]
  * @property { string } [ findByDefined ]
  * @property { string } [ findByUndefined ]
  * @property { AceQueryFilterGroup } [ filterByOr ]
@@ -305,7 +306,8 @@ ${ typedefs.query.RelationshipType }
  * @property { string } [ filterByDefined ]
  * @property { string } [ filterByUndefined ]
  * @property { AceQueryWherePropValue } [ filterByPropValue ]
- * @property { AceQueryWherePropValue } [ filterByPropProp ]
+ * @property { AceQueryWherePropProp } [ filterByPropProp ]
+ * @property { AceQueryWherePropRes } [ filterByPropRes ]
  * @property { AceQueryLimit } [ limit ]
  * @property { AceQueryPropertyAsResponse } [ propAsRes ]
  * @property { boolean } [ countAsRes ] - Display the count of results as the response
@@ -337,12 +339,14 @@ ${ typedefs.query.RelationshipType }
  * @property { string } [ findByUndefined ]
  * @property { AceQueryWherePropValue } [ findByPropValue ]
  * @property { AceQueryWherePropProp } [ findByPropProp ]
+ * @property { AceQueryWherePropRes } [ findByPropRes ]
  * @property { AceQueryFilterGroup } [ filterByOr ]
  * @property { AceQueryFilterGroup } [ filterByAnd ]
  * @property { string } [ filterByDefined ]
  * @property { string } [ filterByUndefined ]
  * @property { AceQueryWherePropValue } [ filterByPropValue ]
- * @property { AceQueryWherePropValue } [ filterByPropProp ]
+ * @property { AceQueryWherePropProp } [ filterByPropProp ]
+ * @property { AceQueryWherePropRes } [ filterByPropRes ]
  * @property { AceQueryLimit } [ limit ]
  * @property { AceQueryPropertyAsResponse } [ propAsRes ]
  * @property { boolean } [ countAsRes ] - Display the count of results as the response
@@ -358,6 +362,8 @@ ${ typedefs.query.RelationshipType }
  * @property { string[] } [ relationships ]
  *
  * @typedef { * } AceQueryWhereItemValue
+ * @typedef { object } AceQueryWhereItemRes - An array from response, so if you'd love to point to response.abc.xyz[10].yay this value would be [ 'abc', 'xyz', 10, 'yay' ]
+ * @property { any[] } res - An array from response, so if you'd love to point to response.abc.xyz[10].yay this value would be [ 'abc', 'xyz', 10, 'yay' ]
  *
  * @typedef { { or: AceQueryFindGroup } } AceQueryWhereOr
  * @typedef { { and: AceQueryFindGroup } } AceQueryWhereAnd
@@ -365,8 +371,9 @@ ${ typedefs.query.RelationshipType }
  * @typedef { { isPropUndefined: string } } AceQueryWhereUndefined
  * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemProp ] } AceQueryWherePropProp
  * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemValue ] } AceQueryWherePropValue
- * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | AceQueryWhereOr | AceQueryWhereAnd)[] } AceQueryFindGroup
- * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWhereDefined | AceQueryWhereUndefined | AceQueryWhereOr | AceQueryWhereAnd)[] } AceQueryFilterGroup
+ * @typedef { [ AceQueryWhereItemProp, enums.queryWhereSymbol, AceQueryWhereItemRes ] } AceQueryWherePropRes
+ * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWherePropRes | AceQueryWhereDefined | AceQueryWhereUndefined | AceQueryWhereOr | AceQueryWhereAnd)[] } AceQueryFindGroup
+ * @typedef { (AceQueryWherePropValue | AceQueryWherePropProp | AceQueryWherePropRes | AceQueryWhereDefined | AceQueryWhereUndefined | AceQueryWhereOr | AceQueryWhereAnd)[] } AceQueryFilterGroup
  *
  * @typedef { object } AceQueryFilterByUniques
  * @property { AceQueryFilterByUniquesXUnique[] } uniques - With this array of unique values, returns an array of valid nodes (valid meaning: found in graph via unique index & $o qualifiying)
@@ -746,7 +753,7 @@ function getSchemaTypedefs (schema) {
  * @property { typeof enums.idsAce.QueryByRelationship } id
  * @property { string } relationship
  * @property { string } prop
- * @property { AceQueryRequestItemRelationshipX } x`
+ * @property { AceQueryRequestItemRelationshipX } [ x ]`
   })
 
 

@@ -15,7 +15,7 @@ import { DEFAULT_QUERY_OPTIONS_FLOW, POST_QUERY_OPTIONS_FLOW } from '../../varia
  * @returns { Promise<void> }
  */
 export async function doQueryOptions (xGenerated, response, isUsingSortIndex, uids, publicJWKs, passport) {
-  if (xGenerated.x.$o) {
+  if (xGenerated.x?.$o) {
     /** @type { boolean } Set to true when ...AsRes is used */
     let hasValueAsResponse = false
 
@@ -23,8 +23,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
     const doneOptions = new Set()
 
 
-    if (xGenerated.x.$o.flow) { // do in requested flow order
-      for (const option of xGenerated.x.$o.flow) {
+    if (xGenerated.x?.$o.flow) { // do in requested flow order
+      for (const option of xGenerated.x?.$o.flow) {
         await doOption(option)
       }
     }
@@ -38,7 +38,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
     }
 
 
-    if (hasValueAsResponse || xGenerated.has === enums.has.one || xGenerated.x.$o?.limit?.count === 1 || xGenerated.x.$o?.findByUid || xGenerated.x.$o?.findBy_Uid || xGenerated.x.$o?.findByUnique || xGenerated.x.$o?.findByOr || xGenerated.x.$o?.findByAnd || xGenerated.x.$o?.findByDefined || xGenerated.x.$o?.findByUndefined || xGenerated.x.$o?.findByPropValue || xGenerated.x.$o?.findByPropProp) {
+    if (hasValueAsResponse || xGenerated.has === enums.has.one || xGenerated.x?.$o?.limit?.count === 1 || xGenerated.x?.$o?.findByUid || xGenerated.x?.$o?.findBy_Uid || xGenerated.x?.$o?.findByUnique || xGenerated.x?.$o?.findByOr || xGenerated.x?.$o?.findByAnd || xGenerated.x?.$o?.findByDefined || xGenerated.x?.$o?.findByUndefined || xGenerated.x?.$o?.findByPropValue || xGenerated.x?.$o?.findByPropProp || xGenerated.x?.$o?.findByPropRes) {
       response.now[xGenerated.propName] = typeof response.now[xGenerated.propName]?.[0] === 'undefined' ? null : response.now[xGenerated.propName][0]
       response.original[xGenerated.propName] = typeof response.original[xGenerated.propName]?.[0] === 'undefined' ? null : response.original[xGenerated.propName][0]
     }
@@ -46,7 +46,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
     /** @param { string } option */
     async function doOption (option) {
-      if (!hasValueAsResponse && !doneOptions.has(option) && xGenerated.x.$o?.[/** @type { keyof td.AceQueryRequestItemNodeOptions } */(option)]) {
+      if (!hasValueAsResponse && !doneOptions.has(option) && xGenerated.x?.$o?.[/** @type { keyof td.AceQueryRequestItemNodeOptions } */(option)]) {
         switch (option) {
           case enums.queryOptions.findByOr:
           case enums.queryOptions.findByAnd:
@@ -54,12 +54,14 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
           case enums.queryOptions.findByUndefined:
           case enums.queryOptions.findByPropValue:
           case enums.queryOptions.findByPropProp:
+          case enums.queryOptions.findByPropRes:
           case enums.queryOptions.filterByOr:
           case enums.queryOptions.filterByAnd:
           case enums.queryOptions.filterByDefined:
           case enums.queryOptions.filterByUndefined:
           case enums.queryOptions.filterByPropValue:
           case enums.queryOptions.filterByPropProp:
+          case enums.queryOptions.filterByPropRes:
             await queryWhere(xGenerated, response, option, publicJWKs, passport)
             break
 
@@ -146,8 +148,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
  
 
     function doLimit () {
-      if (xGenerated.x.$o?.limit) {
-        const limit = xGenerated.x.$o.limit
+      if (xGenerated.x?.$o?.limit) {
+        const limit = xGenerated.x?.$o.limit
 
         if (limit.skip && limit.count) {
           response.now[xGenerated.propName] = response.now[xGenerated.propName].slice(limit.skip, limit.skip + limit.count)
@@ -164,9 +166,9 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doSort () {
-      if (!isUsingSortIndex && xGenerated.x.$o?.sort) { // IF not using a sorted index array => sort items
+      if (!isUsingSortIndex && xGenerated.x?.$o?.sort) { // IF not using a sorted index array => sort items
         const combined = []
-        const sort = xGenerated.x.$o.sort
+        const sort = xGenerated.x?.$o.sort
 
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
           combined.push({
@@ -193,12 +195,12 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doNewProps () {
-      const newPropKeys = Object.keys(xGenerated.x.$o?.newProps || {})
+      const newPropKeys = Object.keys(xGenerated.x?.$o?.newProps || {})
 
       if (newPropKeys.length) {
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) { // looping graph nodes
           for (const prop of newPropKeys) {
-            const derivedGroup = /** @type { td.AceQueryDerivedGroup } */ (xGenerated.x.$o?.newProps?.[prop])
+            const derivedGroup = /** @type { td.AceQueryDerivedGroup } */ (xGenerated.x?.$o?.newProps?.[prop])
             const derivedValue = getDerivedValue(xGenerated, response.original[xGenerated.propName][i], derivedGroup, passport)
 
             response.original[xGenerated.propName][i][prop] = derivedValue
@@ -210,9 +212,9 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doSumAsProp () {
-      if (xGenerated.x.$o?.sumAsProp) {
+      if (xGenerated.x?.$o?.sumAsProp) {
         let sum = 0
-        const sumAsProp = xGenerated.x.$o.sumAsProp
+        const sumAsProp = xGenerated.x?.$o.sumAsProp
 
         for (let arrayItem of response.original[xGenerated.propName]) {
           sum += arrayItem[sumAsProp.computeProp]
@@ -227,9 +229,9 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doSumAsRes () {
-      if (xGenerated.x.$o?.sumAsRes) {
+      if (xGenerated.x?.$o?.sumAsRes) {
         let sum = 0
-        const sumAsRes = xGenerated.x.$o.sumAsRes
+        const sumAsRes = xGenerated.x?.$o.sumAsRes
 
         for (let arrayItem of response.original[xGenerated.propName]) {
           sum += arrayItem[sumAsRes]
@@ -242,10 +244,10 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doAvgAsProp () {
-      if (xGenerated.x.$o?.avgAsProp) {
+      if (xGenerated.x?.$o?.avgAsProp) {
         let sum = 0
 
-        const avgAsProp = xGenerated.x.$o.avgAsProp
+        const avgAsProp = xGenerated.x?.$o.avgAsProp
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
@@ -263,10 +265,10 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doAvgAsRes () {
-      if (xGenerated.x.$o?.avgAsRes) {
+      if (xGenerated.x?.$o?.avgAsRes) {
         let sum = 0
 
-        const avgAsRes = xGenerated.x.$o.avgAsRes
+        const avgAsRes = xGenerated.x?.$o.avgAsRes
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
@@ -282,10 +284,10 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doMinAmtAsProp () {
-      if (xGenerated.x.$o?.minAmtAsProp) {
+      if (xGenerated.x?.$o?.minAmtAsProp) {
         let amount = 0
 
-        const minAmtAsProp = xGenerated.x.$o.minAmtAsProp
+        const minAmtAsProp = xGenerated.x?.$o.minAmtAsProp
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
@@ -301,10 +303,10 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doMinAmtAsRes () {
-      if (xGenerated.x.$o?.minAmtAsRes) {
+      if (xGenerated.x?.$o?.minAmtAsRes) {
         let amount = 0
 
-        const minAmtAsRes = xGenerated.x.$o.minAmtAsRes
+        const minAmtAsRes = xGenerated.x?.$o.minAmtAsRes
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
@@ -318,11 +320,11 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doMinNodeAsRes () {
-      if (xGenerated.x.$o?.minNodeAsRes) {
+      if (xGenerated.x?.$o?.minNodeAsRes) {
         let node = null
         let amount = 0
 
-        const minNodeAsRes = xGenerated.x.$o.minNodeAsRes
+        const minNodeAsRes = xGenerated.x?.$o.minNodeAsRes
         const original = response.original[xGenerated.propName]
 
         for (let i = 0; i < original.length; i++) {
@@ -339,11 +341,11 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doMaxNodeAsRes () {
-      if (xGenerated.x.$o?.maxNodeAsRes) {
+      if (xGenerated.x?.$o?.maxNodeAsRes) {
         let node = null
         let amount = 0
 
-        const maxNodeAsRes = xGenerated.x.$o.maxNodeAsRes
+        const maxNodeAsRes = xGenerated.x?.$o.maxNodeAsRes
         const original = response.original[xGenerated.propName]
 
         for (let i = 0; i < original.length; i++) {
@@ -360,10 +362,10 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doMaxAmtAsProp () {
-      if (xGenerated.x.$o?.maxAmtAsProp) {
+      if (xGenerated.x?.$o?.maxAmtAsProp) {
         let amount = 0
 
-        const maxAmtAsProp = xGenerated.x.$o?.maxAmtAsProp
+        const maxAmtAsProp = xGenerated.x?.$o?.maxAmtAsProp
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
@@ -379,10 +381,10 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doMaxAmtAsRes () {
-      if (xGenerated.x.$o?.maxAmtAsRes) {
+      if (xGenerated.x?.$o?.maxAmtAsRes) {
         let amount = 0
 
-        const maxAmtAsRes = xGenerated.x.$o.maxAmtAsRes
+        const maxAmtAsRes = xGenerated.x?.$o.maxAmtAsRes
         const original = response.original[xGenerated.propName]
 
         for (let arrayItem of original) {
@@ -396,8 +398,8 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doCountAsProp () {
-      if (xGenerated.x.$o?.countAsProp) {
-        const countAsProp = xGenerated.x.$o.countAsProp
+      if (xGenerated.x?.$o?.countAsProp) {
+        const countAsProp = xGenerated.x?.$o.countAsProp
         const count = response.original[xGenerated.propName].length
 
         for (let i = 0; i < response.original[xGenerated.propName].length; i++) {
@@ -409,7 +411,7 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doCountAsRes () {
-      if (xGenerated.x.$o?.countAsRes) {
+      if (xGenerated.x?.$o?.countAsRes) {
         let length
 
         if (Object.keys(xGenerated.x).length === 1) length = uids.length // IF x only has $o then there are no props, which means original is an empty aray, which means counting the uids length is optimal
@@ -422,11 +424,11 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doPropAsRes () {
-      if (xGenerated.x.$o?.propAsRes) {
+      if (xGenerated.x?.$o?.propAsRes) {
         let value
         let original = response.original[xGenerated.propName]
 
-        const propAsRes = xGenerated.x.$o.propAsRes
+        const propAsRes = xGenerated.x?.$o.propAsRes
 
         if (!propAsRes.relationships?.length) value = original?.[0]?.[propAsRes.prop]
         else {
@@ -443,11 +445,11 @@ export async function doQueryOptions (xGenerated, response, isUsingSortIndex, ui
 
 
     function doPropAdjacentToRes () {
-      if (xGenerated.x.$o?.propAdjToRes) {
+      if (xGenerated.x?.$o?.propAdjToRes) {
         let value
         let original = response.original[xGenerated.propName]
 
-        const propAdjToRes = xGenerated.x.$o.propAdjToRes
+        const propAdjToRes = xGenerated.x?.$o.propAdjToRes
 
         if (!propAdjToRes.relationships?.length) value = original?.[0]?.[propAdjToRes.sourceProp]
         else {

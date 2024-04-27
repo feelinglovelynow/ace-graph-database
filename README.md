@@ -86,12 +86,16 @@ const response = await ace({
     { id: 'GetSchema', prop: 'schema' },
 
 
+    // QueryByNode - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' } ... ] }
+    { id: 'QueryByNode', node: 'Actor', prop: 'actors' },
+
+
     // QueryByNode - example: { matrix: { uid: 'abc', name: 'The Matrix', actors: [ ... ] } }
     {
       id: 'QueryByNode',
       node: 'Movie',
       prop: 'matrix',
-      x: { // intellisense below changes based on id and node above
+      x: { // intellisense below changes based on id and node above, if x is not defined, all nodes and all their none relationship props will be in the response
         $o: {
           findByUid: '_:Matrix' // option: response.matrix will only have the matrix object b/c this option is set, without this find, an array of all movies would be in the response
         },
@@ -118,15 +122,6 @@ const response = await ace({
           _salary: { alias: 'salary' }, // put actsInMovie._salary into response @ response.matrix.actors[i].salary
         }
       }
-    },
-
-
-    // QueryByNode - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' } ... ] }
-    {
-      id: 'QueryByNode',
-      node: 'Actor',
-      prop: 'actors',
-      x: { $o: { all: true } } // option: response.actors will have all not relationship props (uid, firstName, lastName)
     },
 
 

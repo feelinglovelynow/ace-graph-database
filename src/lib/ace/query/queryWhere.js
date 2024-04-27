@@ -14,7 +14,7 @@ import { getRelationshipNode } from './getRelationshipNode.js'
 export async function queryWhere (xGenerated, response, option, publicJWKs, passport) {
   if (Array.isArray(response.original[xGenerated.propName])) {
     let iOriginal = 0
-    const $where = xGenerated.x.$o?.[option]
+    const $where = xGenerated.x?.$o?.[option]
     const clone = [...(response.original[xGenerated.propName]) ]
 
     /** @type { Set<string> } If we did not splice that means we found a match. If we found a match for any findOptions we can break the loop */
@@ -25,6 +25,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
       enums.queryOptions.findByUndefined,
       enums.queryOptions.findByPropValue,
       enums.queryOptions.findByPropProp,
+      enums.queryOptions.findByPropRes,
     ])
 
     for (let iClone = 0; iClone < clone.length; iClone++) {
@@ -73,7 +74,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
         let keepArrayItem = false
 
         for (const groupItem of group) {
-          if ((await innerLoopGroupQueries(/** @type { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), getGroupItemOption(lgqOption, group, groupItem))) === false) { // on first splice false => keepArrayItem <- true
+          if ((await innerLoopGroupQueries(/** @type { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWherePropRes | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), getGroupItemOption(lgqOption, group, groupItem))) === false) { // on first splice false => keepArrayItem <- true
             keepArrayItem = true
             break
           }
@@ -91,7 +92,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
         let removeArrayItem = false
 
         for (const groupItem of group) {
-          if ((await innerLoopGroupQueries(/** @type { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), getGroupItemOption(lgqOption, group, groupItem))) === true) { // on first splice true => removeArrayItem <- true
+          if ((await innerLoopGroupQueries(/** @type { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWherePropRes | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } */(groupItem), getGroupItemOption(lgqOption, group, groupItem))) === true) { // on first splice true => removeArrayItem <- true
             removeArrayItem = true
             break
           }
@@ -106,7 +107,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
 
 
     /**
-     * @param { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } groupItem
+     * @param { td.AceQueryWherePropValue | td.AceQueryWherePropProp | td.AceQueryWherePropRes | td.AceQueryWhereDefined | td.AceQueryWhereUndefined | td.AceQueryFindGroup | td.AceQueryFilterGroup } groupItem
      * @param { enums.queryOptions } ilgqOption 
      * @returns { Promise<boolean | undefined> }
      */
@@ -118,10 +119,12 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
         case enums.queryOptions.findByUndefined:
         case enums.queryOptions.findByPropValue:
         case enums.queryOptions.findByPropProp:
+        case enums.queryOptions.findByPropRes:
         case enums.queryOptions.filterByDefined:
         case enums.queryOptions.filterByUndefined:
         case enums.queryOptions.filterByPropValue:
         case enums.queryOptions.filterByPropProp:
+        case enums.queryOptions.filterByPropRes:
           r = await verifySplice(groupItem, ilgqOption, i, response.original[xGenerated.propName][i], false)
           break
         case enums.queryOptions.findByOr:
@@ -169,9 +172,17 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
     } else if (vsOption === enums.queryOptions.findByUndefined || vsOption === enums.queryOptions.filterByUndefined) {
       if (typeof getValue($where?.isPropUndefined ? { prop: $where.isPropUndefined } : { prop: $where }, 'prop', graphNode).value !== 'undefined') bye()
     } else {
-      const qw = /** @type { td.AceQueryWherePropProp | td.AceQueryWherePropValue } */ ($where)
+      const qw = /** @type { td.AceQueryWherePropProp | td.AceQueryWherePropRes | td.AceQueryWherePropValue } */ ($where)
       const left = getValue(qw[0], 'prop', graphNode)
-      const right = getValue(qw[2], vsOption === 'findByPropProp' ? 'prop' : 'value', graphNode)
+
+      /** @type { 'prop' | 'res' | 'value' } */
+      let rightIs
+
+      if (vsOption === 'findByPropProp' || vsOption === 'filterByPropProp') rightIs = 'prop'
+      else if (vsOption === 'findByPropRes' || vsOption === 'filterByPropRes') rightIs = 'res'
+      else rightIs = 'value'
+
+      const right = getValue(qw[2], rightIs, graphNode)
       const isUndefined = typeof left.value === 'undefined' || typeof right.value === 'undefined'
 
       switch (qw[1]) {
@@ -222,44 +233,56 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
 
 
   /**
-   * @param { td.AceQueryWhereItemProp | td.AceQueryWhereItemValue } propertyOrValue 
-   * @param { 'prop' | 'value' } is
+   * @param { td.AceQueryWhereItemProp | td.AceQueryWhereItemValue } item 
+   * @param { 'prop' | 'value' | 'res' } is
    * @param { any } graphNode
    * @returns { GetValueResponse }
    */
-  function getValue (propertyOrValue, is, graphNode) {
-    let response = /** @type { GetValueResponse } */ ({ is, value: null, xGenerated: null })
+  function getValue (item, is, graphNode) {
+    let getValueResponse = /** @type { GetValueResponse } */ ({ is, value: null, xGenerated: null })
 
     switch (is) {
       case 'value':
-        const queryValue = /** @type { td.AceQueryWhereItemValue } */ (propertyOrValue)
+        const itemValue = /** @type { td.AceQueryWhereItemValue } */ (item)
 
-        response.value = queryValue
-        response.xGenerated = xGenerated
+        getValueResponse.value = itemValue
+        getValueResponse.xGenerated = xGenerated
+        break
+      case 'res':
+        let resValue
+        const itemRes = /** @type { td.AceQueryWhereItemRes } */ (item)
+
+        for (let i = 0; i < itemRes.res.length; i++) {
+          if (i === 0 && response.now[itemRes.res[i]]) resValue = response.now[itemRes.res[i]]
+          else if (i > 0 && resValue[itemRes.res[i]]) resValue = resValue?.[itemRes.res[i]]
+        }
+
+        getValueResponse.value = resValue
+        getValueResponse.xGenerated = xGenerated
         break
       case 'prop':
-        const queryProp = /** @type { td.AceQueryWhereItemProp } */ (propertyOrValue)
+        const itemProp = /** @type { td.AceQueryWhereItemProp } */ (item)
 
-        if (!queryProp.relationships?.length) {
-          response.value = graphNode[queryProp.prop]
-          response.xGenerated = xGenerated
+        if (!itemProp.relationships?.length) {
+          getValueResponse.value = graphNode[itemProp.prop]
+          getValueResponse.xGenerated = xGenerated
         } else {
-          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, queryProp.relationships)
+          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, itemProp.relationships)
 
-          if (rRelationshipNode?.node?.[queryProp.prop]) {
-            response.xGenerated = rRelationshipNode.xGenerated
-            response.value = rRelationshipNode.node[queryProp.prop]
+          if (rRelationshipNode?.node?.[itemProp.prop]) {
+            getValueResponse.xGenerated = rRelationshipNode.xGenerated
+            getValueResponse.value = rRelationshipNode.node[itemProp.prop]
           }
         }
         break
     }
 
-    return response
+    return getValueResponse
   }
 
 
   /**
-   * @param { td.AceQueryWherePropProp | td.AceQueryWherePropValue } qw 
+   * @param { td.AceQueryWherePropProp | td.AceQueryWherePropRes | td.AceQueryWherePropValue } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } sideIndex 
@@ -272,17 +295,17 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
 
 
   /**
-   * @param { td.AceQueryWherePropProp | td.AceQueryWherePropValue } qw 
+   * @param { td.AceQueryWherePropProp | td.AceQueryWherePropRes | td.AceQueryWherePropValue } qw 
    * @param { GetValueResponse } left
    * @param { GetValueResponse } right
    * @param { number } sideIndex
    * @returns { Promise<boolean> }
    */
   async function isHashValid (qw, left, right, sideIndex) {
-    const jwkProp = xGenerated.x.$o?.publicJWKs?.[option]
+    const jwkProp = xGenerated.x?.$o?.publicJWKs?.[option]
     const publicJWK = jwkProp ? publicJWKs?.[jwkProp] : null
 
-    if (!jwkProp) throw AceError('query__falsy-hash-public-key', `The request is invalid because $o.publicJWKs.${ option } is falsy`, { $o: xGenerated.x.$o })
+    if (!jwkProp) throw AceError('query__falsy-hash-public-key', `The request is invalid because $o.publicJWKs.${ option } is falsy`, { $o: xGenerated.x?.$o })
     if (!publicJWK) throw AceError('query__invalid-hash-public-key', `The request is invalid because $o.publicJWKs.${ option } does not match request.publicJWKs`, { qw })
 
     return sideIndex ?
@@ -295,7 +318,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
 /**
  * @param { string } option 
  * @param { td.AceQueryFindGroup | td.AceQueryFilterGroup } group 
- * @param { td.AceQueryWhereOr | td.AceQueryWhereAnd | td.AceQueryWherePropProp | td.AceQueryWhereDefined | td.AceQueryWhereUndefined } groupItem 
+ * @param { * } groupItem 
  * @returns { enums.queryOptions }
  */
 function getGroupItemOption (option, group, groupItem) {
@@ -303,10 +326,13 @@ function getGroupItemOption (option, group, groupItem) {
   const type = option.startsWith('find') ? 'find' : 'filter'
   const startsWith = type + 'By'
 
-  if (/** @type {*} */(groupItem).or) groupItemOption = startsWith + 'Or'
-  else if (/** @type {*} */(groupItem).and) groupItemOption = startsWith + 'And'
-  else if (/** @type { td.AceQueryWherePropProp } */(groupItem)?.length === 3 && /** @type { td.AceQueryWherePropProp } */(groupItem)?.[0]?.prop) groupItemOption = (/** @type { td.AceQueryWherePropProp } */(groupItem)[2]?.prop) ? (startsWith + 'PropProp') : (startsWith + 'PropValue')
-  else if (/** @type { td.AceQueryWhereDefined } */(groupItem)?.isPropDefined) groupItemOption = startsWith + 'Defined'
+  if (/** @type { td.AceQueryWhereOr } */(groupItem).or) groupItemOption = startsWith + 'Or'
+  else if (/** @type { td.AceQueryWhereAnd } */(groupItem).and) groupItemOption = startsWith + 'And'
+  else if (/** @type { * } */(groupItem)?.length === 3 && /** @type { * } */(groupItem)?.[0]?.prop) {
+    if (/** @type { td.AceQueryWherePropProp } */(groupItem)[2]?.prop) groupItemOption = startsWith + 'PropProp'
+    else if (/** @type { td.AceQueryWherePropRes } */(groupItem)[2]?.res) groupItemOption = startsWith + 'PropRes'
+    else groupItemOption = startsWith + 'PropValue'
+  } else if (/** @type { td.AceQueryWhereDefined } */(groupItem)?.isPropDefined) groupItemOption = startsWith + 'Defined'
   else if (/** @type { td.AceQueryWhereUndefined } */(groupItem)?.isPropUndefined) groupItemOption = startsWith + 'Undefined'
   else throw AceError('query__invalid-query-search', `This ${ type } is invalid b/c it is not fomatted correctly`, { [type]: group })
   

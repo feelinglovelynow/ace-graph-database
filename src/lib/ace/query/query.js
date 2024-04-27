@@ -48,8 +48,8 @@ async function getInitialUids (requestItem, passport) {
 
   const xGenerated = getXGeneratedById(requestItem, passport)
 
-  if (xGenerated.x.$o?.sort) {
-    const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x.$o?.sort.prop) // IF sorting by an property requested => see if property is a sort index
+  if (xGenerated.x?.$o?.sort) {
+    const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x?.$o?.sort.prop) // IF sorting by an property requested => see if property is a sort index
     if (indexKey) uids = await passport.storage.get(indexKey)
   }
 
@@ -59,17 +59,17 @@ async function getInitialUids (requestItem, passport) {
   else {
     let isValid = true
 
-    if (xGenerated.x.$o?.findByUid) uids = [ xGenerated.x.$o.findByUid ]
-    else if (xGenerated.x.$o?.filterByUids) {
-      uids = xGenerated.x.$o.filterByUids
+    if (xGenerated.x?.$o?.findByUid) uids = [ xGenerated.x?.$o.findByUid ]
+    else if (xGenerated.x?.$o?.filterByUids) {
+      uids = xGenerated.x?.$o.filterByUids
       if (!uids.length) isValid = false
-    } else if (xGenerated.x.$o?.findByUnique) {
-      const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x.$o.findByUnique.prop, xGenerated.x.$o?.findByUnique.value)
+    } else if (xGenerated.x?.$o?.findByUnique) {
+      const key = getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x?.$o.findByUnique.prop, xGenerated.x?.$o?.findByUnique.value)
       const uid = await passport.storage.get(key)
       uids = uid ? [ uid ] : []
       if (!uids.length) isValid = false
-    } else if (xGenerated.x.$o?.filterByUniques) {
-      const keys = xGenerated.x.$o.filterByUniques.uniques.map(unique => {
+    } else if (xGenerated.x?.$o?.filterByUniques) {
+      const keys = xGenerated.x?.$o.filterByUniques.uniques.map(unique => {
         return getUniqueIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', unique.prop, unique.value)
       })
 
@@ -199,7 +199,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
     /** @type { Map<string, td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp> | undefined } */
     const relationshipPropsMap = (item.relationship && passport.schemaDataStructures?.relationshipPropsMap) ? passport.schemaDataStructures.relationshipPropsMap.get(xGenerated.relationshipName || '') : undefined
 
-    if (xGenerated.x.$o?.all) { // show all not relationship props
+    if (xGenerated.x?.$o?.all) { // show all not relationship props
       for (const prop in responseOriginalItem) {
         if ((!item.relationship || (prop !== 'a' && prop !== 'b')) && validateAddProps(item, xGenerated, prop, responseOriginalItem, passport)) { // on relationships, skip the a and b props AND ensure this user may query this data
           responseNowItem[xGenerated.x?.[prop]?.alias || prop] = responseOriginalItem[prop]
@@ -284,11 +284,11 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
 
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { relationship: xGenerated.relationshipName })
 
-  if (xGenerated.x.$o?.findBy_Uid) {
-    if (uids.includes(xGenerated.x.$o.findBy_Uid)) uids = [ xGenerated.x.$o.findBy_Uid ]
+  if (xGenerated.x?.$o?.findBy_Uid) {
+    if (uids.includes(xGenerated.x?.$o.findBy_Uid)) uids = [ xGenerated.x?.$o.findBy_Uid ]
   } else {
-    if (xGenerated.x.$o?.filterBy_Uids?.length) {
-      const set = new Set(xGenerated.x.$o.filterBy_Uids)
+    if (xGenerated.x?.$o?.filterBy_Uids?.length) {
+      const set = new Set(xGenerated.x?.$o.filterBy_Uids)
 
       for (let i = uids.length - 1; i >= 0; i--) {
         if (!set.has(uids[i])) uids.splice(i, 1)
@@ -332,9 +332,9 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
 
     const uniqueKeys = /** @type { string[] } */ ([])
 
-    if (xGenerated.x.$o?.findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', xGenerated.x.$o.findByUnique.prop, xGenerated.x.$o.findByUnique.value))
-    else if (xGenerated.x.$o?.filterByUniques) {
-      for (const unique of xGenerated.x.$o.filterByUniques.uniques) {
+    if (xGenerated.x?.$o?.findByUnique) uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', xGenerated.x?.$o.findByUnique.prop, xGenerated.x?.$o.findByUnique.value))
+    else if (xGenerated.x?.$o?.filterByUniques) {
+      for (const unique of xGenerated.x?.$o.filterByUniques.uniques) {
         uniqueKeys.push(getUniqueIndexKey(relationshipGeneratedQueryXSection.relationshipName || '', unique.prop, unique.value))
       }
     }
@@ -369,18 +369,18 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
 
     let isValid = true
 
-    if (xGenerated.x.$o?.findByUid) {
-      if (findByUidFound) nodeUids = [ xGenerated.x.$o.findByUid ]
+    if (xGenerated.x?.$o?.findByUid) {
+      if (findByUidFound) nodeUids = [ xGenerated.x?.$o.findByUid ]
       else isValid = false
     }
 
-    if (xGenerated.x.$o?.findByUnique) {
+    if (xGenerated.x?.$o?.findByUnique) {
       if (findByUniqueFound) nodeUids = [ uniqueUids[0] ]
       else isValid = false
     }
 
-    if (xGenerated.x.$o?.findBy_Uid) {
-      if (findBy_UidFound) nodeUids = [xGenerated.x.$o.findBy_Uid ]
+    if (xGenerated.x?.$o?.findBy_Uid) {
+      if (findBy_UidFound) nodeUids = [xGenerated.x?.$o.findBy_Uid ]
       else isValid = false
     }
 
