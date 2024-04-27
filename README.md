@@ -86,7 +86,7 @@ const response = await ace({
     { id: 'GetSchema', prop: 'schema' },
 
 
-    // QueryByNode - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' } ... ] }
+    // QueryByNode - example: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
     { id: 'QueryByNode', node: 'Actor', prop: 'actors' },
 
 
@@ -272,23 +272,16 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. $o `resHide: [ 'avgSalary' ]` (b4 adding to now, check if in resHide set)
-1. Schema Enums
-1. No more embedded functions (so I stop creating the same fn multiple times)
-1. Get relationship node, if many just get the first one
-1. returns for each function
 1. `ace()`
-    * Function to communicate with the graph
-    * fileToGraph Option: skipDataDelete: boolean
-    * Sanitize / Validate Input
     * Delete `cascadeProps` array
-    * Must relationship (storage fallback)
+    * Sanitize / Validate Input
     * Where _:
     * Update _: (Install plugin, update the value)
-    * id descriptions
     * Upsert, won't throw an error if the item exists
+    * fileToGraph Option: skipDataDelete: boolean
+    * Must relationship (storage fallback)
+    * id descriptions
     * Multiple Queries - Values from previous query available in current query
-    * Query Prop: `{ alias: 'hi', required: true }`
     * fileToGraph Option: Public JWK: boolean
     * Query can reference overwriten uids map so hoist up to ace()
     * GetBackup Option: Private JWK
@@ -309,7 +302,17 @@ ace types
           * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
           * Request Item can support
 1. External: Property to Prop
+1. Runtime validation
+    * v1
+      * Accepts: a test object + (a schma node / a schema relationship) 
+      * Responds: does the test object obey the schema
+    * v2
+      * Also accepts options to add validations, edit validations or remove validations
 1. No uid or _uid as prop name
+1. Schema Enums
+1. No more embedded functions (so I stop creating the same fn multiple times)
+1. Get relationship node, if many just get the first one
+1. returns for each function
 1. Ace CLI + R2
 1. On Error Flow
     * Retry: Count, MS Before Trying Again, 
