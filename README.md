@@ -21,7 +21,7 @@
 1. Fast: Both node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
 1. Map: To query a `Users > Friends`, Ace will O(1) lookup the index of `Friend uids` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
 1. Goodbye Joins: JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
-    * By [v3](#-version-3-roadmap) we plan on providing Universal Hosting and Ace Cloud Hosting options thanks to a low level language (maybe w/ Zig 1.x) rewrite
+    * By [v3](#-version-3-roadmap) we plan on providing Universal Hosting and Ace Cloud Hosting options thanks to a low level language (maybe w/ [Zig](https://ziglang.org/) 1.x) rewrite
 
 
 ## 🎬 Create a Movie Graph 
@@ -322,7 +322,7 @@ ace types
         * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
         * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
         * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
-1. Universal Hosting
+1. Universal (Self) Hosting
     * Version 3
 1. Ace Cloud Hosting
     * Version 3
