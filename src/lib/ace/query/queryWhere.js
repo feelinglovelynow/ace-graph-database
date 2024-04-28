@@ -243,9 +243,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
 
     switch (is) {
       case 'value':
-        const itemValue = /** @type { td.AceQueryWhereItemValue } */ (item)
-
-        getValueResponse.value = itemValue
+        getValueResponse.value = item
         getValueResponse.xGenerated = xGenerated
         break
       case 'res':

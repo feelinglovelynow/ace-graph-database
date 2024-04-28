@@ -1,5 +1,6 @@
 import { td, enums } from '#ace'
 import { AceError } from '../../objects/AceError.js'
+import { REQUEST_UID_PREFIX } from '../../variables.js'
 
 
 /**
@@ -13,7 +14,7 @@ export function getXGeneratedById (requestItem, passport) {
   if (requestItem.id === 'QueryByRelationship' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
 
   const props = getProps(requestItem.x)
-  const updatedX = maybeManuallySetAll(props, requestItem.x)
+  const updatedX = updateWhereUids(passport, maybeManuallySetAll(props, requestItem.x))
 
   /** @type { td.AceQueryRequestItemGeneratedXSection } */
   const response =  {
@@ -62,7 +63,7 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
   if (!schemaPropValue) throw AceError('getXGeneratedByParent__falsy-query-x-id', `This request is failing b/c node name "${xGeneratedParent?.nodeName }" with property name "${ xKey }" is not defined in your schema`, { schemaPropName: xKey, nodeName: xGeneratedParent?.id })
 
   const props = getProps(xValue)
-  const updatedX = maybeManuallySetAll(props, xValue)
+  const updatedX = updateWhereUids(passport, maybeManuallySetAll(props, xValue))
 
   return {
     props,
@@ -97,6 +98,74 @@ function maybeManuallySetAll (props, x) {
   }
 
   return res
+}
+
+
+/**
+ * @param { td.AcePassport } passport
+ * @param { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX } [ x ]
+ * @returns { td.AceQueryRequestItemNodeX | td.AceQueryRequestItemRelationshipX | * }
+ */
+function updateWhereUids (passport, x) {
+  // find
+  if (x?.$o?.findByUid) x.$o.findByUid = getUid(passport, { uid: x.$o.findByUid })
+  if (x?.$o?.findBy_Uid) x.$o.findBy_Uid = getUid(passport, { uid: x.$o.findBy_Uid })
+  if (x?.$o?.findByPropValue) x.$o.findByPropValue[2] = getUid(passport, { uid: x.$o.findByPropValue[2] })
+
+  // filter
+  if (x?.$o?.filterByUids) x.$o.filterByUids = getUid(passport, { uids: x.$o.filterByUids })
+  if (x?.$o?.filterBy_Uids) x.$o.filterBy_Uids = getUid(passport, { uids: x.$o.filterBy_Uids })
+  if (x?.$o?.filterByPropValue) x.$o.filterByPropValue[2] = getUid(passport, { uid: x.$o.filterByPropValue[2] })
+
+  // groups
+  if (x?.$o?.findByOr) x.$o.findByOr = updateWhereGroupUids(passport, x.$o.findByOr)
+  if (x?.$o?.findByAnd) x.$o.findByAnd = updateWhereGroupUids(passport, x.$o.findByAnd)
+  if (x?.$o?.filterByOr) x.$o.filterByOr = updateWhereGroupUids(passport, x.$o.filterByOr)
+  if (x?.$o?.filterByAnd) x.$o.filterByAnd = updateWhereGroupUids(passport, x.$o.filterByAnd)
+
+  return x
+}
+
+
+/**
+ * @param { td.AcePassport } passport
+ * @param { td.AceQueryFilterGroup } group
+ * @returns { td.AceQueryFilterGroup }
+ */
+function updateWhereGroupUids (passport, group) {
+  for (const groupItem of group) {
+    if (Array.isArray(groupItem) && groupItem.length === 3 && typeof groupItem[2] === 'string') groupItem[2] = getUid(passport, { uid: groupItem[2] })
+    else if (/** @type { td.AceQueryWhereOr } */ (groupItem).or) updateWhereGroupUids(passport, /** @type { td.AceQueryWhereOr } */(groupItem).or)
+    else if (/** @type { td.AceQueryWhereAnd } */ (groupItem).and) updateWhereGroupUids(passport, /** @type { td.AceQueryWhereAnd } */(groupItem).and)
+  }
+
+  return group
+}
+
+
+/**
+ * @param { td.AcePassport } passport 
+ * @param { { uid?: any, uids?: any[] } } options 
+ */
+export function getUid (passport, options) {
+  if (options.uid) return _getUid(passport, options.uid)
+  else if (options.uids) {
+    for (let uid of options.uids) {
+      uid = _getUid(passport, uid)
+    }
+
+    return options.uids
+  }
+}
+
+
+/**
+ * @param { td.AcePassport } passport 
+ * @param { any } uid 
+ * @returns { any }
+ */
+function _getUid (passport, uid) {
+  return (typeof uid === 'string' && uid.startsWith(REQUEST_UID_PREFIX)) ? passport.$aceDataStructures.newUids.get(uid) : uid
 }
 
 

@@ -305,7 +305,6 @@ ace types
 
 ## 🤓 Version 1 Roadmap
 1. `ace()`
-    * Where _:
     * Update _: (Install plugin, update the value)
     * Upsert, won't throw an error if the item exists
     * Delete `cascadeProps` array

@@ -384,35 +384,48 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
     switch (schemaNodeProp.id) {
       case enums.idsSchema.ForwardRelationshipProp:
         graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
-          if (uid === graphRelationship?.x.a) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          if (uid === graphRelationship?.x.a) {
+            const rForward = validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.b, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+            if (rForward.findByUidFound) findByUidFound = true
+            if (rForward.findByUniqueFound) findByUniqueFound = true
+            if (rForward.findBy_UidFound) findBy_UidFound = true
+          }
         })
         break
       case enums.idsSchema.ReverseRelationshipProp:
         graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
-          if (uid === graphRelationship?.x.b) validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          if (uid === graphRelationship?.x.b) {
+            const rReverse = validateAndPushUids(relationshipGeneratedQueryXSection, graphRelationship.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+            if (rReverse.findByUidFound) findByUidFound = true
+            if (rReverse.findByUniqueFound) findByUniqueFound = true
+            if (rReverse.findBy_UidFound) findBy_UidFound = true
+          }
         })
         break
       case enums.idsSchema.BidirectionalRelationshipProp:
         graphRelationshipsMap.forEach((graphRelationship, graphRelationshipKey) => {
-          validateAndPushUids(relationshipGeneratedQueryXSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          const rBi= validateAndPushUids(relationshipGeneratedQueryXSection, uid === graphRelationship?.x.a ? graphRelationship?.x.b : graphRelationship?.x.a, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound)
+          if (rBi.findByUidFound) findByUidFound = true
+          if (rBi.findByUniqueFound) findByUniqueFound = true
+          if (rBi.findBy_UidFound) findBy_UidFound = true
         })
         break
     }
 
     let isValid = true
 
-    if (xGenerated.x?.$o?.findByUid) {
-      if (findByUidFound) nodeUids = [ xGenerated.x?.$o.findByUid ]
+    if (relationshipGeneratedQueryXSection.x?.$o?.findByUid) {
+      if (findByUidFound) nodeUids = [relationshipGeneratedQueryXSection.x?.$o.findByUid ]
       else isValid = false
     }
 
-    if (xGenerated.x?.$o?.findByUnique) {
+    if (relationshipGeneratedQueryXSection.x?.$o?.findByUnique) {
       if (findByUniqueFound) nodeUids = [ uniqueUids[0] ]
       else isValid = false
     }
 
-    if (xGenerated.x?.$o?.findBy_Uid) {
-      if (findBy_UidFound) nodeUids = [xGenerated.x?.$o.findBy_Uid ]
+    if (relationshipGeneratedQueryXSection.x?.$o?.findBy_Uid) {
+      if (findBy_UidFound) nodeUids = [relationshipGeneratedQueryXSection.x?.$o.findBy_Uid ]
       else isValid = false
     }
 
@@ -432,6 +445,7 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
  * @param { boolean } findByUidFound 
  * @param { boolean } findByUniqueFound 
  * @param { boolean } findBy_UidFound 
+ * @returns { { findByUidFound: boolean, findByUniqueFound: boolean, findBy_UidFound: boolean } } 
  */
 function validateAndPushUids (relationshipGeneratedQueryXSection, uid, graphRelationships, graphRelationship, graphRelationshipKey, nodeUids, uniqueUids, findByUidFound, findByUniqueFound, findBy_UidFound) {
   const filterByUids = new Set(relationshipGeneratedQueryXSection.x.$o?.filterByUids)
@@ -454,4 +468,6 @@ function validateAndPushUids (relationshipGeneratedQueryXSection, uid, graphRela
       }
     }
   }
+
+  return { findByUidFound, findByUniqueFound, findBy_UidFound }
 }
