@@ -1,30 +1,40 @@
 <img src="./src/lib/images/logo.png" />
 
 
-## 🙏 JavaScipt's BEST Database!
-* Our mission is to create, maintain and enhance the Best database for JavaScript Developers!
+## 🙏 Our Mission
+* Create, maintain and enhance the Best database for JavaScript Developers!
 
 
-## 🤔 What is Ace?
-1. Secure: Ace structures data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as a graph (nodes, relationships and properties)
+## 🤔 Ace Description
+1. Secure: Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: graph format)
 1. Dynamic: Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Typesafe: Based on the JSON Schema you provide, our cli can create types for TypeScript devs and JSDoc for JavaScript devs
+1. Typesafe: Based on the JSON Schema you provide, our cli can create types for TypeScript devs and JSDoc comments for JavaScript devs
 
 
 ## 🙋‍♀️ Queries, Mutations and Data Management
 1. Simple: The Ace query language is a typesafe function called `ace()`, that enables expressive queries and transactional mutations
 1. Permissions: Read, insert, upsert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
-1. Free Backups: Our cli scipt provides functionality to save zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple, thanks to our cli
+1. Free Backups: Our cli can save zipped and encrypted backups locally for free, apply backups to a graph or save backups to [Cloudflare](https://www.cloudflare.com/developer-platform/r2/)
+
+
+## ⚡️ Performance
+1. Fast: Both node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
+1. Map: To query a `Users > Friends`, Ace will O(1) lookup the index of `Friend uids` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
+1. Goodbye Joins: JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
+    * By [v3](#-version-3-roadmap) we plan on providing Universal Hosting and Ace Cloud Hosting options thanks to a low level language (maybe w/ Zig 1.x) rewrite
 
 
 ## 🎬 Create a Movie Graph 
 ****Step 1: Bash****
 ``` bash
-pnpm add @feelinglovelynow/ace-graph-database # or npm
+pnpm add @ace/db # or npm
 ace dev # start local graph
 ```
 ****Step 2: JavaScript: One transactional function call to `ace()`****
 ```ts
+import { ace } from '@ace/db'
+
+
 const response = await ace({
   host: 'http://localhost:8787',
   request: [
@@ -190,8 +200,8 @@ ace types -h=http://localhost:8787 #generate types that align with the above sch
 ```
 
 
-## ⚡️ CLI
-* Clone this repo or pull `@feelinglovelynow/ace-graph-database` from npm to get access to our cli
+## 🧚‍♀️ CLI
+* Clone this repo or pull `@ace/db` from npm to get access to our cli
 * To show everything our cli can do, asking our cli for help... is helpful 🥁
 * To do this, in bash just enter, `ace`, `ace -h`, `ace --help` or `ace help` and this is what shows up:
 ```bash
@@ -303,6 +313,19 @@ ace types
     ace types -f=qa.json
     ace types --file=2024-03-24T19:44:36.492Z.json
 ```
+
+
+## 📀 Storage Options
+1. Cloudflare Durable Object
+    * Version 1
+    * Their $5 a month pricing tier allows:
+        * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
+        * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
+        * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
+1. Universal Hosting
+    * Version 3
+1. Ace Cloud Hosting
+    * Version 3
 
 
 ## 🤓 Version 1 Roadmap
@@ -420,7 +443,7 @@ ace types
 1. Offline support > Response Allows Resume
 1. Studio
     * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
-1. Lovely Unity v1.0
+1. Create a GDPR Compliant Ecommerce Store w/ Ace
     * Real project (example / benchmarks)
     * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
 1. Docs
@@ -506,9 +529,10 @@ ace types
     * via Ace Graph Database Foundation
     * Clean + Simple + Performant UX
     * Deploy / Monitor / Maintain graphs:
-        * @ Cloudflare
-        * @ Ace Cloud
-        * That are Self hosted
+      * Options:
+          * Cloudflare Storage
+          * Ace Cloud Storage
+          * Universal (Self) Storage
       * Simple hosting provider migration
       * Simple hosting provider cost breakdowns
           * Real time cost comparisons
@@ -532,26 +556,16 @@ ace types
     * Collaboration Tools
 
 
-## 📀 What options do I have to store my data?
-1. Cloudflare Durable Object
-    * Version 1
-    * Their $5 a month pricing tier allows:
-        * [50 GB of Storage](https://developers.cloudflare.com/durable-objects/platform/limits/)
-        * [1 million monthly requests](https://developers.cloudflare.com/durable-objects/platform/pricing/)
-        * [Websocket Connectivity](https://developers.cloudflare.com/durable-objects/api/websockets/)
-        * [Encryption @ Rest](https://developers.cloudflare.com/durable-objects/reference/data-security/)
-1. Self Hosting
-    * Version 3
-1. Ace Cloud
-    * Version 3
-
-
 ## ✅ Version Update Plan
 1. 0.0.x (Prototype) to 0.1.0 (Beta)
     * When all 1.0 road map items are in testing
     * Will not include a migration script
 1. 0.x.0 to 1.0
-    * When all 1.0 road map items pass testing, Lovely Unity v1.0 is achieved and the Ace Database Foundation has been created
+    * When all 1.0 road map items pass testing and we've created:
+        * A GDPR compliant Ecommerce Store w/ Ace
+        * Ace Studio
+        * Docs Site
+        * The Ace Database Foundation
     * Will not include a migration script
 1. 1.x to 2.0
     * When all 2.0 road map items pass testing
@@ -628,35 +642,9 @@ curl --header "Content-Type: application/json" \
   --data '{
     "request": [
       { "id": "AddNodeToGraph", "node": "Movie",  "x": { "name": "Hercules" } },
-
-      {
-        "id": "QueryByNode",
-        "node": "Movie",
-        "prop": "movies",
-        "props": {
-          "uid": true,
-          "name": true
-        }
-      }
+      { "id": "QueryByNode",  "node": "Movie", "prop": "movies" },
+      { "id": "QueryByRelationship",  "relationship": "actsInMovie", "prop": "actsInMovie" },
     ]
   }' \
   http://localhost:8787/ace
 ```
-
-
-## 🎁 All Our Packages
-1. @feelinglovelynow/ace-graph-database: [NPM](https://www.npmjs.com/package/@feelinglovelynow/ace-graph-database) ⋅ [Github](https://github.com/feelinglovelynow/ace-graph-database)
-1. @feelinglovelynow/datetime-local: [NPM](https://www.npmjs.com/package/@feelinglovelynow/datetime-local) ⋅ [Github](https://github.com/feelinglovelynow/datetime-local)
-1. @feelinglovelynow/env-write: [NPM](https://www.npmjs.com/package/@feelinglovelynow/env-write) ⋅ [Github](https://github.com/feelinglovelynow/env-write)
-1. @feelinglovelynow/get-form-entries: [NPM](https://www.npmjs.com/package/@feelinglovelynow/get-form-entries) ⋅ [Github](https://github.com/feelinglovelynow/get-form-entries)
-1. @feelinglovelynow/get-relative-time: [NPM](https://www.npmjs.com/package/@feelinglovelynow/get-relative-time) ⋅ [Github](https://github.com/feelinglovelynow/get-relative-time)
-1. @feelinglovelynow/global-style: [NPM](https://www.npmjs.com/package/@feelinglovelynow/global-style) ⋅ [Github](https://github.com/feelinglovelynow/global-style)
-1. @feelinglovelynow/jwt: [NPM](https://www.npmjs.com/package/@feelinglovelynow/jwt) ⋅ [Github](https://github.com/feelinglovelynow/jwt)
-1. @feelinglovelynow/loop-backwards: [NPM](https://www.npmjs.com/package/@feelinglovelynow/loop-backwards) ⋅ [Github](https://github.com/feelinglovelynow/loop-backwards)
-1. @feelinglovelynow/slug: [NPM](https://www.npmjs.com/package/@feelinglovelynow/slug) ⋅ [Github](https://github.com/feelinglovelynow/slug)
-1. @feelinglovelynow/svelte-catch: [NPM](https://www.npmjs.com/package/@feelinglovelynow/svelte-catch) ⋅ [Github](https://github.com/feelinglovelynow/svelte-catch)
-1. @feelinglovelynow/svelte-kv: [NPM](https://www.npmjs.com/package/@feelinglovelynow/svelte-kv) ⋅ [Github](https://github.com/feelinglovelynow/svelte-kv)
-1. @feelinglovelynow/svelte-loading-anchor: [NPM](https://www.npmjs.com/package/@feelinglovelynow/svelte-loading-anchor) ⋅ [Github](https://github.com/feelinglovelynow/svelte-loading-anchor)
-1. @feelinglovelynow/svelte-modal: [NPM](https://www.npmjs.com/package/@feelinglovelynow/svelte-modal) ⋅ [Github](https://github.com/feelinglovelynow/svelte-modal)
-1. @feelinglovelynow/svelte-turnstile: [NPM](https://www.npmjs.com/package/@feelinglovelynow/svelte-turnstile) ⋅ [Github](https://github.com/feelinglovelynow/svelte-turnstile)
-1. @feelinglovelynow/toast: [NPM](https://www.npmjs.com/package/@feelinglovelynow/toast) ⋅ [Github](https://github.com/feelinglovelynow/toast)
