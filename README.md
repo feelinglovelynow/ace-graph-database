@@ -322,13 +322,6 @@ ace types
         * Id: 'ResponsePropNameValue'
     * throwIfMissingMustProps -> update / delete 
     * Graphs support 
-1. External: Property to Prop
-1. Runtime validation
-    * v1
-      * Accepts: a test object + (a schma node / a schema relationship) 
-      * Responds: does the test object obey the schema
-    * v2
-      * Also accepts options to add validations, edit validations or remove validations
 1. Ace CLI + R2
 1. On Error Flow
     * Retry: Count, MS Before Trying Again, 
@@ -338,8 +331,6 @@ ace types
     * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
 1. GitHub Versioning
-    * Signup for GitHub
-    * Create GitHub Organization
     * Deploy main 0.0.1 to GitHub
     * Tag a release
     * Create a qa branch
@@ -354,7 +345,7 @@ ace types
             * Support
                 * Star us on GitHub
                 * Contribute
-                * Donate
+                * Sponsor
                 * Join our Release Notes Newsletter
             * Thanks
     * On the Last Friday of the month post a blog post that:
@@ -386,6 +377,12 @@ ace types
 1. Response Types
     * Generics
     * Conditional Types
+1. Runtime validation
+    * v1
+      * Accepts: a test object + (a schma node / a schema relationship) 
+      * Responds: does the test object obey the schema
+    * v2
+      * Also accepts options to add validations, edit validations or remove validations
 1. $o random
 1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
@@ -393,6 +390,7 @@ ace types
     * 2FA + Authy Support
     * AceUser > email > passwordless
 1. Test relationship props update + guidance
+1. External: Property to Prop
 1. No uid or _uid as prop name
 1. No more embedded functions (so I stop creating the same fn multiple times)
 1. jsdoc returns for each function
