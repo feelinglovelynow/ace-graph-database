@@ -131,12 +131,14 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
           case enums.idsAce.AddNodeToGraph:
           case enums.idsAce.UpdateGraphNode:
+          case enums.idsAce.UpsertGraphNode:
             await inupNode(/** @type { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[iRequest]), passport, sortIndexMap, cryptoJWKs.private)
             break
 
 
           case enums.idsAce.AddRelationshipToGraph:
           case enums.idsAce.UpdateGraphRelationship:
+          case enums.idsAce.UpsertGraphRelationship:
             await inupRelationship(/** @type { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[iRequest]), passport)
             break
 

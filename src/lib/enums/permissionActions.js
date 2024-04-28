@@ -6,7 +6,7 @@ export const permissionActions = new Set([
   'write',
 
   // nodes / relationships / properties
-  'inup', // may not (insert / update)
+  'inup', // may not (insert / update / upsert)
   'insert',
   'update',
   'delete',

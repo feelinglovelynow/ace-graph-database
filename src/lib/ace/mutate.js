@@ -11,13 +11,13 @@ import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEM
 
 /**
  * Add nodes for insert or update to putEntries
- * @param { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } requestItem 
+ * @param { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode | td.AceMutateRequestItemUpsertGraphNode } requestItem 
  * @param { td.AcePassport } passport 
  * @param { td.AceFnSortIndexMap } sortIndexMap 
  * @param { { [keyName: string]: CryptoKey } } privateJWKs 
  */
 export async function inupNode (requestItem, passport, sortIndexMap, privateJWKs) {
-  const inupNodesArray = /** @type { [ td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode , string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate newUidsMap
+  const inupNodesArray = /** @type { [ td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode, string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate newUidsMap
 
   await populateInupNodesArray()
   implementInupNodesArray()
@@ -27,18 +27,43 @@ export async function inupNode (requestItem, passport, sortIndexMap, privateJWKs
       const startsWithUidPrefix = typeof requestItem.x.uid === 'string' && requestItem.x.uid.startsWith(REQUEST_UID_PREFIX)
       const inupPermission = passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.inup, node: requestItem.node, prop: '*' }))
 
+      let graphNode
+
+      switch (requestItem.id) {
+        case 'AddNodeToGraph':
+          requestItem = /** @type { td.AceMutateRequestItemAddNodeToGraph } */ (requestItem)
+          break
+        case 'UpdateGraphNode':
+          requestItem = /** @type { td.AceMutateRequestItemUpdateGraphNode } */(requestItem)
+          break
+        case 'UpsertGraphNode':
+          requestItem.x.uid = getUid(passport, { uid: requestItem.x.uid })
+          graphNode = await passport.storage.get(requestItem.x.uid)
+          requestItem = /** @type { * } */(requestItem)
+
+          if (graphNode) {
+            requestItem.id = enums.idsAce.UpdateGraphNode 
+            requestItem = /** @type { td.AceMutateRequestItemUpdateGraphNode } */(requestItem)
+          } else {
+            requestItem.id = enums.idsAce.AddNodeToGraph
+            requestItem = /** @type { td.AceMutateRequestItemAddNodeToGraph } */(requestItem)
+          }
+          break
+      }
+
       if (requestItem.id === 'AddNodeToGraph') {
         if (inupPermission) throw AceAuthError(enums.permissionActions.inup, passport, { node: requestItem.node })
         if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.insert, node: requestItem.node, prop: '*' }))) throw AceAuthError(enums.permissionActions.insert, passport, { node: requestItem.node })
       }
 
-      let graphNode
 
       if (requestItem.id === 'UpdateGraphNode') {
-        requestItem.x.uid = getUid(passport, { uid: requestItem.x.uid })
-        graphNode = await passport.storage.get(requestItem.x.uid)
+        if (!graphNode) {
+          requestItem.x.uid = getUid(passport, { uid: requestItem.x.uid })
+          graphNode = await passport.storage.get(requestItem.x.uid)
+        }
 
-        if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${requestItem.x.uid}\` is not defined in your graph`, { requestItem })
+        if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${ requestItem.x.uid }\` is not defined in your graph`, { requestItem })
         if (graphNode.node !== requestItem.node) throw AceError('mutate__invalid-update-nodeName', `Please pass a request item uid that is a uid defined in your graph with a matching graphNode.node: \`${ graphNode.node }\`and requestItem.node: \`${ requestItem.node }\``, { requestItem, graphNodeName: graphNode.node })
 
         validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.inup, graphNode, passport, { node: requestItem.node }, inupPermission)
@@ -166,7 +191,7 @@ export async function inupNode (requestItem, passport, sortIndexMap, privateJWKs
 
 /**
  * Insert / Update Relationships
- * @param { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } requestItem 
+ * @param { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship | td.AceMutateRequestItemUpsertGraphRelationship } requestItem 
  * @param { td.AcePassport } passport 
  */
 export async function inupRelationship (requestItem, passport) {
@@ -177,17 +202,39 @@ export async function inupRelationship (requestItem, passport) {
 
     const inupPermission = passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.inup, relationship: requestItem.relationship, prop: '*' }))
 
+    let graphNode
+
+    switch (requestItem.id) {
+      case 'AddRelationshipToGraph':
+        requestItem = /** @type { td.AceMutateRequestItemAddRelationshipToGraph } */ (requestItem)
+        break
+      case 'UpdateGraphRelationship':
+        requestItem = /** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(requestItem)
+        break
+      case 'UpsertGraphRelationship':
+        requestItem.x._uid = getUid(passport, { uid: requestItem.x._uid })
+        graphNode = await passport.storage.get(requestItem.x._uid)
+        requestItem = /** @type { * } */(requestItem)
+
+        if (graphNode) {
+          requestItem.id = enums.idsAce.UpdateGraphRelationship
+          requestItem = /** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(requestItem)
+        } else {
+          requestItem.id = enums.idsAce.AddRelationshipToGraph
+          requestItem = /** @type { td.AceMutateRequestItemAddRelationshipToGraph } */(requestItem)
+        }
+        break
+    }
+
     if (requestItem.id === 'AddRelationshipToGraph') {
       if (inupPermission) throw AceAuthError(enums.permissionActions.inup, passport, { relationship: requestItem.relationship })
       if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.insert, relationship: requestItem.relationship, prop: '*' }))) throw AceAuthError(enums.permissionActions.insert, passport, { relationship: requestItem.relationship })
     }
 
-    let graphNode
-
     if (requestItem.id === 'UpdateGraphRelationship') {
-      graphNode = await passport.storage.get(requestItem.x._uid)
+      if (!graphNode) graphNode = await passport.storage.get(requestItem.x._uid)
 
-      if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item _uid that is a _uid defined in your graph, the _uid \`${requestItem.x._uid} \` is not defined in your graph`, { requestItem })
+      if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item _uid that is a _uid defined in your graph, the _uid \`${ requestItem.x._uid } \` is not defined in your graph`, { requestItem })
       if (graphNode.relationship !== requestItem.relationship) throw AceError('mutate__invalid-update-relationshipName', `Please pass a request item _uid that is a _uid defined in your graph with a matching graphNode.relationship: \`${graphNode.relationship}\`,  and requestItem.relationship: \`${ requestItem.relationship }\``, { requestItem, graphNodeRelationship: graphNode.relationship })
 
       validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.inup, graphNode, passport, { relationship: requestItem.relationship }, inupPermission)
@@ -196,26 +243,28 @@ export async function inupRelationship (requestItem, passport) {
       const aIsDifferent = graphNode.x.a !== requestItem.x.a
       const bIsDifferent = graphNode.x.b !== requestItem.x.b
 
-      if (aIsDifferent) updatePreviousRelationshipNode(aIsDifferent, graphNode.a)
-      if (bIsDifferent) updatePreviousRelationshipNode(bIsDifferent, graphNode.b)
+      if (aIsDifferent) updatePreviousRelationshipNode(aIsDifferent, graphNode.a, passport, requestItem)
+      if (bIsDifferent) updatePreviousRelationshipNode(bIsDifferent, graphNode.b, passport, requestItem)
 
       requestItem.x = { ...graphNode.x, ...requestItem.x }
     }
 
     await inupRelationshipPut(requestItem, schemaRelationship, passport, graphNode)
   }
+}
 
 
-  /**
-   * @param { boolean } isDifferent 
-   * @param { string } deletedNodeUid 
-   */
-  async function updatePreviousRelationshipNode (isDifferent, deletedNodeUid) {
-    if (isDifferent) {
-      const relationshipNode = await passport.storage.get(deletedNodeUid)
+/**
+ * @param { boolean } isDifferent 
+ * @param { string } deletedNodeUid 
+ * @param { td.AcePassport } passport 
+ * @param { td.AceMutateRequestItemUpdateGraphRelationship } requestItem 
+ */
+async function updatePreviousRelationshipNode (isDifferent, deletedNodeUid, passport, requestItem) {
+  if (isDifferent) {
+    const relationshipNode = await passport.storage.get(deletedNodeUid)
 
-      if (relationshipNode && /** @type { td.AceMutateRequestItemUpdateGraphRelationship } */ (requestItem).x._uid) deleteUidFromRelationshipProp(relationshipNode, getRelationshipProp(requestItem.relationship), /** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(requestItem).x._uid, passport)
-    }
+    if (relationshipNode && requestItem.x._uid) deleteUidFromRelationshipProp(relationshipNode, getRelationshipProp(requestItem.relationship), requestItem.x._uid, passport)
   }
 }
 

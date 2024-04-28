@@ -329,8 +329,8 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
+1. Replace Object.keys() w/ isObjectEmpty
 1. `ace()`
-    * Upsert, won't throw an error if the item exists
     * Delete `cascadeProps` array
     * Sanitize / Validate Input
     * fileToGraph Option: skipDataDelete: boolean

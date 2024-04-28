@@ -111,10 +111,10 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
 
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { node: xGenerated.nodeName })
 
-  const rCache = await passport.storage.get(uids)
+  const graphNodes = await passport.storage.get(uids)
 
   for (let i = 0; i < uids.length; i++) {
-    const node = rCache.get(uids[i])
+    const node = graphNodes.get(uids[i])
     if (isRevokesAllowing(node.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { node }, graphRelationships?.[i] || null, passport, publicJWKs, iRequest) // call desired function on each node
   }
 

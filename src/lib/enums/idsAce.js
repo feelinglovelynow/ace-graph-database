@@ -13,6 +13,9 @@ export const idsAce = new Set([
   'UpdateGraphNode',
   'UpdateGraphRelationship',
 
+  'UpsertGraphNode',
+  'UpsertGraphRelationship',
+
   'QueryByNode',
   'QueryByRelationship',
 
