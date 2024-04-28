@@ -500,24 +500,24 @@ ace types
 1. Community Ideas
 1. GitHub Issues
 1. Foundation Ideas
-1. Self Hosting Ability
+1. Univesal (Self) Hosting Ability
     * Durable Object functionality compiled to binary, built w/ Zig 1.x (of stable Zig)
         * Http Server
         * Store Key Value Data @ Memory
         * Store Key Value Data @ Disk
         * Encryption @ Rest via user provided jwk or Ace will create one
-        * Websocket
         * Build Input / Output Gates
         * Optimize Queries & Sorting
         * Pass all JS Unit Tests
         * Create Zig Unit Tests
     * Call `ace()` Zig code from the following servers + edge environments:
-        * Zig
         * Worker
         * Node
         * Deno
         * Bun
         * Vercel
+        * AWS
+        * Zig
 1. REPL (event, storage, share)
     1. WASM (Zig DB In Browser on users machine)
 1. Vector Data Type
@@ -548,7 +548,7 @@ ace types
           * Email
           * Chat
           * Phone
-1. Studio
+1. Ace Studio
     * (Desktop / Android / Mobile) Applications 
         * Data Alerts (Notifications)
     * Ai chart generation
