@@ -305,18 +305,6 @@ ace types
 ```
 
 
-## 🕰️ Origin Story
-1. Java SQL Strings
-1. PHP SQL Strings
-1. Node SQL Strings
-1. Mongoose
-1. Dgraph
-1. Prisma
-1. Drizzle
-1. Cloudflare Durable Objects
-1. Ace
-
-
 ## 🤓 Version 1 Roadmap
 1. `ace()`
     * Upsert, won't throw an error if the item exists
@@ -465,7 +453,6 @@ ace types
     * Deno Server
     * Deno Edge
     * Vercel Edge
-1. Contribution Documentation
 1. Query Planner
 1. Optimize Queries
 1. KV (request cache) Integration
@@ -574,6 +561,18 @@ ace types
 1. 2.x to 3.0
     * When all 3.0 road map items pass testing and Ace Cloud v1.0 is achieved
     * Will include a 2.x to 3.0 migration script
+
+
+## 🕰️ Origin Story
+1. Java SQL Strings
+1. PHP SQL Strings
+1. Node SQL Strings
+1. Mongoose
+1. Dgraph
+1. Prisma
+1. Drizzle
+1. Cloudflare Durable Objects
+1. Ace
 
 
 ## 💎 Dictionary
