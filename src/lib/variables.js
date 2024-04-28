@@ -1,4 +1,4 @@
-// INTERNAL OR EXTERNAL (So exported @ index.js)
+// INTERNAL OR EXTERNAL (So exported @ index.js / index.ts)
 
 export const ADD_NOW_DATE = 'now'
 export const REQUEST_UID_PREFIX = '_:'
@@ -71,7 +71,7 @@ export function getNow () {
 
 
 
-// INTERNAL ONLY (So not exported @ index.js)
+// INTERNAL ONLY (So not exported @ index.js / index.ts)
 
 export const DELIMITER = '___'
 export const SCHEMA_KEY = '$schema'

@@ -1,4 +1,4 @@
-<img src="logo.png" />
+<img src="./src/lib/images/logo.png" />
 
 
 ## 🙏 JavaScipt's BEST Database!
@@ -8,11 +8,11 @@
 ## 🤔 What is Ace?
 1. Secure: Ace structures data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as a graph (nodes, relationships and properties)
 1. Dynamic: Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Typesafe: Our cli scipt `ace types` creates TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
+1. Typesafe: Based on the JSON Schema you provide, our cli can create types for TypeScript devs and JSDoc for JavaScript devs
 
 
 ## 🙋‍♀️ Queries, Mutations and Data Management
-1. Simple: The Ace query language is a typesafe (JS/TS) function called `ace()`, that provides expressive queries and transactional mutations
+1. Simple: The Ace query language is a typesafe function called `ace()`, that enables expressive queries and transactional mutations
 1. Plugins: Read, insert, upsert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
 1. Free Backups: Our cli scipt provides functionality to save zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple, thanks to our cli
 
@@ -36,12 +36,12 @@ const response = await ace({
       x: { // intellisense within x changes based on above id
         schema: {
           nodes: {
-            Actor: {
+            Actor: { // Actor node props
               firstName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
               lastName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
               actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'Movie', relationship: 'actsInMovie' } },
             },
-            Movie: {
+            Movie: { // Movie node props
               name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
               actors: { id: 'ReverseRelationshipProp', x: { has: 'many', node: 'Actor', relationship: 'actsInMovie' } },
             },
@@ -305,6 +305,18 @@ ace types
 ```
 
 
+## 🕰️ Origin Story
+1. Java SQL Strings
+1. PHP SQL Strings
+1. Node SQL Strings
+1. Mongoose
+1. Dgraph
+1. Prisma
+1. Drizzle
+1. Cloudflare Durable Objects
+1. Ace
+
+
 ## 🤓 Version 1 Roadmap
 1. `ace()`
     * Upsert, won't throw an error if the item exists
@@ -312,10 +324,7 @@ ace types
     * Sanitize / Validate Input
     * fileToGraph Option: skipDataDelete: boolean
     * Must relationship (storage fallback)
-    * id descriptions
-    * Multiple Queries - Values from previous query available in current query
     * fileToGraph Option: Public JWK: boolean
-    * Query can reference overwriten uids map so hoist up to ace()
     * GetBackup Option: Private JWK
     * BackupFile Option: Is Encrypted
     * BackupFile Option: Zip
@@ -324,15 +333,7 @@ ace types
         * Id: 'MutationLoop'
         * Id: 'ResponsePropNameValue'
     * throwIfMissingMustProps -> update / delete 
-    * Properties:
-      * Options:
-          * Graphs
-          * Transaction
-          * Hold Commit
-          * Prefix
-      * Request:
-          * Array of items formatted as `{ id: '', x: {}, graphs: [] }`
-          * Request Item can support
+    * Graphs support 
 1. External: Property to Prop
 1. Runtime validation
     * v1
@@ -340,10 +341,6 @@ ace types
       * Responds: does the test object obey the schema
     * v2
       * Also accepts options to add validations, edit validations or remove validations
-1. No uid or _uid as prop name
-1. Schema Enums
-1. No more embedded functions (so I stop creating the same fn multiple times)
-1. jsdoc returns for each function
 1. Ace CLI + R2
 1. On Error Flow
     * Retry: Count, MS Before Trying Again, 
@@ -370,6 +367,7 @@ ace types
                 * Star us on GitHub
                 * Contribute
                 * Donate
+                * Join our Release Notes Newsletter
             * Thanks
     * On the Last Friday of the month post a blog post that:
         * Lists the new versions for the month w/ blog links
@@ -407,6 +405,10 @@ ace types
     * 2FA + Authy Support
     * AceUser > email > passwordless
 1. Test relationship props update + guidance
+1. No uid or _uid as prop name
+1. No more embedded functions (so I stop creating the same fn multiple times)
+1. jsdoc returns for each function
+1. jsdoc comment for each prop
 1. App Worker > Ace Durable Object
 1. Batch requests to storage to stay within storage required Maximum count
 1. Comments (param, returns, description, example usage, why) for all index functions
@@ -422,6 +424,13 @@ ace types
 1. Independant Security Audit
 1. Independant Code Review
 1. Unit Tests
+    * Fuzz tests
+    * Boundary value tests
+    * Regression tests
+    * Operating system crashes
+    * Power loss
+    * I/O Errors
+    * Out of memory errors
 1. Offline support > Response Allows Resume
 1. Studio
     * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
@@ -433,6 +442,7 @@ ace types
     * Link to see / edit on GitHub
         * Doc Page
         * Functions Doc Page references
+    * Forum
 1. Ace Database Foundation
     * Mission Statement
         * Create, maintain and enhance the Best Database for JavaScript Developers
@@ -608,18 +618,6 @@ ace types
     * To limit round trips, multiple sequential queries may be performed in the array request order
 * Typically ORMs unite your databse with JavaScript, but now 1 function supports this!
 * May also be called via HTTP at `[ host ]/ace`
-
-
-## 🕰️ Origin Story
-1. Java SQL Strings
-1. PHP SQL Strings
-1. Node SQL Strings
-1. Mongoose
-1. Dgraph
-1. Prisma
-1. Drizzle
-1. Durable Objects
-1. Ace
 
 
 
