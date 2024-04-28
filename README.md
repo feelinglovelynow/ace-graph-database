@@ -13,7 +13,7 @@
 
 ## 🙋‍♀️ Queries, Mutations and Data Management
 1. Simple: The Ace query language is a typesafe function called `ace()`, that enables expressive queries and transactional mutations
-1. Plugins: Read, insert, upsert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
+1. Permissions: Read, insert, upsert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
 1. Free Backups: Our cli scipt provides functionality to save zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple, thanks to our cli
 
 
