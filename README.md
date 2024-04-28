@@ -2,19 +2,19 @@
 
 
 ## 🙏 JavaScipt's BEST Database!
-* My mission is to create, maintain and enhance the Best database for JavaScript Developers!
+* Our mission is to create, maintain and enhance the Best database for JavaScript Developers!
 
 
 ## 🤔 What is Ace?
-1. Ace structures data in encrypted key value stores as a graph (nodes, relationships and properties)
-1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Our cli scipt `ace types` creates TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
+1. Secure: Ace structures data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as a graph (nodes, relationships and properties)
+1. Dynamic: Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
+1. Typesafe: Our cli scipt `ace types` creates TypeScript types (TS) and JSDoc comments (JS), based on the JSON Schema you provide
 
 
 ## 🙋‍♀️ Queries, Mutations and Data Management
-1. The Ace query language is a typesafe (JS/TS) function called `ace()`, that provides expressive queries and transactional mutations
-1. Roles and permissions by node, relationship or property, for the actions read, insert, update, upsert, or delete can be easily configured thanks to our `core` plugin
-1. Our cli scipt provides functionality to save zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple with our cli too
+1. Simple: The Ace query language is a typesafe (JS/TS) function called `ace()`, that provides expressive queries and transactional mutations
+1. Plugins: Read, insert, upsert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
+1. Free Backups: Our cli scipt provides functionality to save zipped and encrypted backups locally for free or to Cloudflare R2... and applying backups to a graph is simple, thanks to our cli
 
 
 ## 🎬 Create a Movie Graph 
@@ -342,8 +342,7 @@ ace types
 1. No uid or _uid as prop name
 1. Schema Enums
 1. No more embedded functions (so I stop creating the same fn multiple times)
-1. Get relationship node, if many just get the first one
-1. returns for each function
+1. jsdoc returns for each function
 1. Ace CLI + R2
 1. On Error Flow
     * Retry: Count, MS Before Trying Again, 

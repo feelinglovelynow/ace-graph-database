@@ -8,6 +8,7 @@
     "src/lib/ace/query/query.js",
     "src/lib/ace/query/queryWhere.js",
     "src/lib/ace/ace.js",
+    "src/lib/ace/getUid.js",
     "src/lib/ace/plugins/core.js",
     "src/lib/ace/mutate.js",
     "src/lib/ace/storage.js",

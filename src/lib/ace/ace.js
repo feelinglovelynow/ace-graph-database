@@ -41,7 +41,6 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
     await setPrivateJWKs()
     await setPublicJWKs()
-    await preDeligate()
     await deligate()
     throwIfMissingMustProps()
     await addSortIndicesToGraph()
@@ -71,7 +70,6 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
         switch (arrayRequest[iRequest].id) {
           case enums.idsAce.Empty:
             await empty(/** @type { td.AceMutateRequestItemEmpty } */(arrayRequest[iRequest]))
-            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -79,15 +77,15 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             const ipReq = /** @type { td.AceMutateRequestItemInstallPlugin } */ (arrayRequest[iRequest])
 
             const ipOptions = /** @type { td.AceFnOptions } */ ({
-              passport: passport,
+              passport,
               request: ipReq.x.install.request,
               publicJWKs: ipReq.x.install.publicJWKs,
               privateJWKs: ipReq.x.install.privateJWKs,
             })
 
             const ipRes = await _ace(ipOptions)
+
             if (ipReq.prop) response.now[ipReq.prop] = ipRes
-            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -95,7 +93,6 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             const upReq = /** @type { td.AceMutateRequestItemUninstallPlugin } */ (arrayRequest[iRequest])
             const responseUninstall = await _ace({ passport: passport, request: upReq.x.request })
             if (upReq.prop) response.now[upReq.prop] = responseUninstall
-            await preDeligateMiddleware(iRequest)
             break
 
 
@@ -129,19 +126,18 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
           case enums.idsAce.LoadBackup:
             await fileToGraph(/** @type { td.AceMutateRequestItemLoadBackup } */(arrayRequest[iRequest]))
-            await preDeligateMiddleware(iRequest)
             break
 
 
           case enums.idsAce.AddNodeToGraph:
           case enums.idsAce.UpdateGraphNode:
-            await inupNode(/** @type { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[iRequest]), passport, sortIndexMap, updateRequestItems, cryptoJWKs.private)
+            await inupNode(/** @type { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[iRequest]), passport, sortIndexMap, cryptoJWKs.private)
             break
 
 
           case enums.idsAce.AddRelationshipToGraph:
           case enums.idsAce.UpdateGraphRelationship:
-            await inupRelationship(/** @type { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[iRequest]), passport, updateRequestItems)
+            await inupRelationship(/** @type { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[iRequest]), passport)
             break
 
 
@@ -231,36 +227,6 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           }
         })
       }
-    }
-
-
-    async function preDeligate () {
-      /** @type { { node: string[], relationship: string[] } } - We will convert uids to graph nodes to help with updating */
-      const updateUids = { node: [], relationship: [] }
-
-      if (arrayRequest) {
-        for (let i = 0; i < arrayRequest.length; i++) {
-          if (arrayRequest[i].id === enums.idsAce.UpdateGraphNode) {
-            const mutateRequestItemUpdateGraphNode = /** @type { td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[i])
-            updateUids.node.push(mutateRequestItemUpdateGraphNode.x.uid)
-          }
-
-          if (arrayRequest[i].id === enums.idsAce.UpdateGraphRelationship) {
-            updateUids.relationship.push(/** @type { td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[i]).x._uid)
-          }
-        }
-      }
-
-      updateRequestItems.nodes = (!updateUids.node.length) ? [] : await passport.storage.get(updateUids.node)
-      updateRequestItems.relationships = (!updateUids.relationship.length) ? [] : await passport.storage.get(updateUids.relationship)
-    }
-
-
-    /**
-     * @param { number } iRequest 
-     */
-    async function preDeligateMiddleware (iRequest) {
-      if (iRequest + 1 !== arrayRequest.length) await preDeligate()
     }
 
 

@@ -1,10 +1,11 @@
-import { del, put } from './storage.js'
 import { td, enums } from '#ace'
+import { getUid } from './getUid.js'
+import { del, put } from './storage.js'
 import { sign } from '../security/hash.js'
 import { validateSchema } from './validateSchema.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
 import { setSchemaDataStructures } from '../objects/AcePassport.js'
-import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEMA_KEY, getUniqueIndexKey, getNow, getRevokesKey, getNodeUidsKey, getRelationshipProp, getRelationshipUidsKey, getRelationshipNameFromProp, getNodeNamePlusRelationshipNameToNodePropNameMapKey, ACE_NODE_NAMES } from '../variables.js'
+import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEMA_KEY, ACE_NODE_NAMES, getUniqueIndexKey, getNow, getRevokesKey, getNodeUidsKey, getRelationshipProp, getRelationshipUidsKey, getRelationshipNameFromProp, getNodeNamePlusRelationshipNameToNodePropNameMapKey } from '../variables.js'
 
 
 
@@ -13,10 +14,9 @@ import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEM
  * @param { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } requestItem 
  * @param { td.AcePassport } passport 
  * @param { td.AceFnSortIndexMap } sortIndexMap 
- * @param { td.AceFnUpdateRequestItems } updateRequestItems 
  * @param { { [keyName: string]: CryptoKey } } privateJWKs 
  */
-export async function inupNode (requestItem, passport, sortIndexMap, updateRequestItems, privateJWKs) {
+export async function inupNode (requestItem, passport, sortIndexMap, privateJWKs) {
   const inupNodesArray = /** @type { [ td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode , string ][] } */ ([]) // In this array we keep track of meta data for all the items we want to add to the graph. We need to go though all the uids once first to fully populate newUidsMap
 
   await populateInupNodesArray()
@@ -34,8 +34,9 @@ export async function inupNode (requestItem, passport, sortIndexMap, updateReque
 
       let graphNode
 
-      if (requestItem.id === 'UpdateGraphNode' && updateRequestItems.nodes?.size) {
-        graphNode = /** @type { Map<string, any> } */(updateRequestItems.nodes).get(requestItem.x.uid)
+      if (requestItem.id === 'UpdateGraphNode') {
+        requestItem.x.uid = getUid(passport, { uid: requestItem.x.uid })
+        graphNode = await passport.storage.get(requestItem.x.uid)
 
         if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item uid that is a uid defined in your graph, the uid \`${requestItem.x.uid}\` is not defined in your graph`, { requestItem })
         if (graphNode.node !== requestItem.node) throw AceError('mutate__invalid-update-nodeName', `Please pass a request item uid that is a uid defined in your graph with a matching graphNode.node: \`${ graphNode.node }\`and requestItem.node: \`${ requestItem.node }\``, { requestItem, graphNodeName: graphNode.node })
@@ -167,9 +168,8 @@ export async function inupNode (requestItem, passport, sortIndexMap, updateReque
  * Insert / Update Relationships
  * @param { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } requestItem 
  * @param { td.AcePassport } passport 
- * @param { td.AceFnUpdateRequestItems } updateRequestItems 
  */
-export async function inupRelationship (requestItem, passport, updateRequestItems) {
+export async function inupRelationship (requestItem, passport) {
   if (requestItem && passport.schemaDataStructures?.relationshipNamesSet?.has(requestItem.relationship)) {
     const schemaRelationship = passport.schema?.relationships?.[requestItem.relationship]
 
@@ -184,8 +184,8 @@ export async function inupRelationship (requestItem, passport, updateRequestItem
 
     let graphNode
 
-    if (requestItem.id === 'UpdateGraphRelationship' && updateRequestItems.relationships?.size) {
-      graphNode = /** @type { Map<string, any> } */(updateRequestItems.relationships).get(requestItem.x._uid)
+    if (requestItem.id === 'UpdateGraphRelationship') {
+      graphNode = await passport.storage.get(requestItem.x._uid)
 
       if (!graphNode) throw AceError('mutate__invalid-update-uid', `Please pass a request item _uid that is a _uid defined in your graph, the _uid \`${requestItem.x._uid} \` is not defined in your graph`, { requestItem })
       if (graphNode.relationship !== requestItem.relationship) throw AceError('mutate__invalid-update-relationshipName', `Please pass a request item _uid that is a _uid defined in your graph with a matching graphNode.relationship: \`${graphNode.relationship}\`,  and requestItem.relationship: \`${ requestItem.relationship }\``, { requestItem, graphNodeRelationship: graphNode.relationship })
