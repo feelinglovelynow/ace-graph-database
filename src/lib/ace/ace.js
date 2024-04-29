@@ -6,7 +6,7 @@ import { queryNode, queryRelationship } from './query/query.js'
 import { getAlgorithmOptions } from '../security/getAlgorithmOptions.js'
 import { setSchemaDataStructures, stamp } from '../objects/AcePassport.js'
 import { getSortIndexKey, getRelationshipProp, getRevokesKey } from '../variables.js'
-import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, schemaAndDataDeleteNodes, schemaAndDataDeleteNodeProps } from './mutate.js'
+import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, schemaAndDataDeleteNodes, schemaAndDataDeleteNodeProps, schemaAndDataUpdateNameOfNodes } from './mutate.js'
 
 
 /**
@@ -174,6 +174,11 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
           case enums.idsAce.SchemaAndDataDeleteNodeProps:
             await schemaAndDataDeleteNodeProps(/** @type { td.AceMutateRequestItemSchemaAndDataDeleteNodeProps } */(arrayRequest[iRequest]), passport)
+            break
+
+
+          case enums.idsAce.SchemaAndDataUpdateNameOfNodes:
+            await schemaAndDataUpdateNameOfNodes(/** @type { td.AceMutateRequestItemSchemaAndDataUpdateNameOfNodes } */(arrayRequest[iRequest]), passport)
             break
         }
       }

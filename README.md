@@ -328,7 +328,6 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. SchemaAndDataUpdateNameOfNodes
 1. SchemaAndDataUpdateNameOfNodeProps
 1. SchemaAndDataUpdateNameOfRelationships
 1. SchemaAndDataUpdateNameOfRelationshipProps

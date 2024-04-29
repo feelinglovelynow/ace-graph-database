@@ -110,6 +110,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { Set<string> } [ nodeNamesSet ]
  * @property { Set<string> } [ relationshipNamesSet ]
  * @property { Map<string, Set<string>> } [ cascade ]
+ * @property { Map<string, Set<string>> } [ nodeRelationshipPropsMap ]
  * @property { Map<string, string> } [ nodeNamePlusRelationshipNameToNodePropNameMap ]
  * @property { Map<string, Map<string, AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp>> } [ relationshipPropsMap ]
  * @property { Map<string, Map<string, (AceSchemaProp | AceSchemaRelationshipProp | AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp)>> } [ mustPropsMap ]
@@ -192,7 +193,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps } AceMutateRequestItemSchemaAndData
+ * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
@@ -248,6 +249,12 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { AceMutateRequestItemSchemaAndDataDeleteNodePropsX } x
  * @typedef { object } AceMutateRequestItemSchemaAndDataDeleteNodePropsX
  * @property { ${ typedefs.mutate.SchemaAndDataDeleteNodePropsType || '{ node: string, prop: string }[]' } } props
+ *
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodes
+ * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfNodes } id
+ * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX } x
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX
+ * @property { ${ typedefs.mutate.SchemaAndDataUpdateNameOfNodesType || '{ nowName: string, newName: string }[]' } } nodes
  *
  * @typedef { object } AceMutateRequestItemAddToSchema
  * @property { typeof enums.idsAce.AddToSchema } id
@@ -550,6 +557,7 @@ function getSchemaTypedefs (schema) {
       UpsertGraphRelationshipTypes: '',
       SchemaAndDataDeleteNodesType: '',
       SchemaAndDataDeleteNodePropsType: '',
+      SchemaAndDataUpdateNameOfNodesType: '',
     }
   }
 
@@ -573,7 +581,9 @@ function getSchemaTypedefs (schema) {
 
       typedefs.mutate.UpsertGraphNodePipes += `${ schemaNodeName }MutateRequestItemUpsertGraphNode | `
 
-      typedefs.mutate.SchemaAndDataDeleteNodesType += `'${ schemaNodeName }' | `
+      typedefs.mutate.UpsertGraphNodePipes += `${ schemaNodeName }MutateRequestItemUpsertGraphNode | `
+
+      typedefs.mutate.SchemaAndDataUpdateNameOfNodesType += `{ nowName: '${ schemaNodeName }', newName: string } | `
 
       typedefs.mutate.AddNodeToGraphTypes += `\n *
  * @typedef { object } ${ schemaNodeName }MutateRequestItemAddNodeToGraph
@@ -789,6 +799,7 @@ function getSchemaTypedefs (schema) {
   if (typedefs.mutate.UpsertGraphRelationshipPipes) typedefs.mutate.UpsertGraphRelationshipPipes = typedefs.mutate.UpsertGraphRelationshipPipes.slice(0, -3)
   if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')'
   if (typedefs.mutate.SchemaAndDataDeleteNodePropsType) typedefs.mutate.SchemaAndDataDeleteNodePropsType = '(' + typedefs.mutate.SchemaAndDataDeleteNodePropsType.slice(0, -3) + ')[]'
+  if (typedefs.mutate.SchemaAndDataUpdateNameOfNodesType) typedefs.mutate.SchemaAndDataUpdateNameOfNodesType = '(' + typedefs.mutate.SchemaAndDataUpdateNameOfNodesType.slice(0, -3) + ')[]'
 
 
   typedefs.query.NodeType = plop({

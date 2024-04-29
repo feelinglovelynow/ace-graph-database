@@ -604,6 +604,8 @@ export async function dataDeleteRelationshipProps (requestItem, passport) {
  * @param { td.AcePassport } passport
  */
 export async function schemaAndDataDeleteNodes (requestItem, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
   for (const requestNodeName of requestItem.x.nodes) {
     const nodeUidsKey = getNodeUidsKey(requestNodeName)
     const nodeUids = await passport.storage.get(nodeUidsKey)
@@ -627,6 +629,8 @@ export async function schemaAndDataDeleteNodes (requestItem, passport) {
  */
 
 function schemaDeleteNodes (requestNodeName, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
   if (passport.schema) {
     /** @type { Set<string> } - As we flow through nodes, the relationships that need to be deleted will be added here */
     const deleteRelationshipSet = new Set()
@@ -661,6 +665,8 @@ function schemaDeleteNodes (requestNodeName, passport) {
  * @param { td.AcePassport } passport
  */
 export async function schemaAndDataDeleteNodeProps (requestItem, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
   for (const { node, prop } of requestItem.x.props) {
     if (!passport.schema?.nodes[node]?.[prop]) throw AceError('schemaAndDataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are are not defined in you schema', { node, prop })
 
@@ -680,6 +686,64 @@ export async function schemaAndDataDeleteNodeProps (requestItem, passport) {
     }
 
     delete passport.schema.nodes[node][prop]
+    schemaDeleteConclude(passport)
+  }
+}
+
+
+/** 
+ * @param { td.AceMutateRequestItemSchemaAndDataUpdateNameOfNodes } requestItem
+ * @param { td.AcePassport } passport
+ */
+export async function schemaAndDataUpdateNameOfNodes (requestItem, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
+  for (const { nowName, newName } of requestItem.x.nodes) {
+    if (!passport.schema?.nodes[nowName]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidNowName', 'The node cannot be renamed b/c it is not defined in you schema', { nowName, newName })
+
+    // update node on each graphNode
+    const nodeUidsKey = getNodeUidsKey(nowName)
+    const nodeUids = await passport.storage.get(nodeUidsKey)
+
+    if (nodeUids.length) {
+      const graphNodes = await passport.storage.get(nodeUids)
+
+      for (const [ uid, graphNode ] of graphNodes) {
+        graphNode.node = newName
+        put(uid, graphNode, passport)
+      }
+    }
+
+
+    // update nodeUidsKey
+    const newNodeUidsKey = getNodeUidsKey(newName)
+    put(newNodeUidsKey, nodeUids, passport)
+    del(nodeUidsKey, passport)
+
+
+    // update schema
+    const nodeRelationshipPropsSet = passport.schemaDataStructures?.nodeRelationshipPropsMap?.get(nowName)
+
+    if (nodeRelationshipPropsSet) {
+      for (const pointer of nodeRelationshipPropsSet) {
+        const split = pointer.split(DELIMITER)
+
+        if (split.length !== 2) throw AceError('schemaAndDataUpdateNameOfNodes__invalidSplit', 'Split should have a length of 2, the first index should be a node name and the second should be a relationship prop name', { split })
+
+        /** @type { * } */
+        let x = passport.schema.nodes[split[0]][split[1]].x
+
+        if (x.node !== nowName) throw AceError('schemaAndDataUpdateNameOfNodes__invalidNode', 'The x.node should equal the nowName', { xDotNode: x.node, nowName })
+
+        /** @type { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */
+        x = x
+
+        x.node = newName
+        passport.schema.nodes[newName] = passport.schema.nodes[nowName]
+        delete passport.schema.nodes[nowName]
+      }
+    }
+
     schemaDeleteConclude(passport)
   }
 }
