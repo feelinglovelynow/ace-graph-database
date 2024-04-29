@@ -749,6 +749,41 @@ export async function schemaAndDataUpdateNameOfNodes (requestItem, passport) {
 }
 
 
+/** 
+ * @param { td.AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps } requestItem
+ * @param { td.AcePassport } passport
+ */
+export async function schemaAndDataUpdateNameOfNodeProps (requestItem, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
+  for (const { node, nowName, newName } of requestItem.x.props) {
+    if (!passport.schema?.nodes[node]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidNode', `The prop cannot be renamed b/c the node ${node} it is not defined in you schema`, { node, nowName, newName })
+    if (!passport.schema?.nodes[node]?.[nowName]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidProp', `The prop cannot be renamed b/c the node ${ node } and the prop ${ nowName } is not defined in you schema`, { node, nowName, newName })
+
+    // update prop on each graphNode
+    const nodeUidsKey = getNodeUidsKey(node)
+    const nodeUids = await passport.storage.get(nodeUidsKey)
+
+    if (nodeUids.length) {
+      const graphNodes = await passport.storage.get(nodeUids)
+
+      for (const [ uid, graphNode ] of graphNodes) {
+        if (typeof graphNode.x[nowName] !== 'undefined') {
+          graphNode.x[newName] = graphNode.x[nowName]
+          delete graphNode.x[nowName]
+          put(uid, graphNode, passport)
+        }
+      }
+    }
+
+    // update schema
+    passport.schema.nodes[node][newName] = passport.schema.nodes[node][nowName]
+    delete passport.schema.nodes[node][nowName]
+    schemaDeleteConclude(passport)
+  }
+}
+
+
 /**
  * @param { td.AcePassport } passport
  * @returns { void }

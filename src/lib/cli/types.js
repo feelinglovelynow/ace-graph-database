@@ -193,7 +193,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes } AceMutateRequestItemSchemaAndData
+ * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
@@ -255,6 +255,12 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX } x
  * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX
  * @property { ${ typedefs.mutate.SchemaAndDataUpdateNameOfNodesType || '{ nowName: string, newName: string }[]' } } nodes
+ *
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps
+ * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfNodeProps } id
+ * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX } x
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX
+ * @property { ${ typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType || '{ node: string, nowName: string, newName: string }[]' } } props
  *
  * @typedef { object } AceMutateRequestItemAddToSchema
  * @property { typeof enums.idsAce.AddToSchema } id
@@ -558,6 +564,7 @@ function getSchemaTypedefs (schema) {
       SchemaAndDataDeleteNodesType: '',
       SchemaAndDataDeleteNodePropsType: '',
       SchemaAndDataUpdateNameOfNodesType: '',
+      SchemaAndDataUpdateNameOfNodePropsType: '',
     }
   }
 
@@ -616,6 +623,8 @@ function getSchemaTypedefs (schema) {
         const schemaProp = schema.nodes[schemaNodeName][schemaNodePropName]
 
         typedefs.mutate.SchemaAndDataDeleteNodePropsType += `{ node: '${ schemaNodeName }', prop: '${ schemaNodePropName }' } | `
+
+        typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType += `{ node: '${ schemaNodeName }', nowName: '${ schemaNodePropName }', newName: string } | `
 
         switch (schemaProp.id) {
           case 'Prop':
@@ -800,6 +809,7 @@ function getSchemaTypedefs (schema) {
   if (typedefs.mutate.SchemaAndDataDeleteNodesType) typedefs.mutate.SchemaAndDataDeleteNodesType = '(' + typedefs.mutate.SchemaAndDataDeleteNodesType.slice(0, -3) + ')'
   if (typedefs.mutate.SchemaAndDataDeleteNodePropsType) typedefs.mutate.SchemaAndDataDeleteNodePropsType = '(' + typedefs.mutate.SchemaAndDataDeleteNodePropsType.slice(0, -3) + ')[]'
   if (typedefs.mutate.SchemaAndDataUpdateNameOfNodesType) typedefs.mutate.SchemaAndDataUpdateNameOfNodesType = '(' + typedefs.mutate.SchemaAndDataUpdateNameOfNodesType.slice(0, -3) + ')[]'
+  if (typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType) typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType = '(' + typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType.slice(0, -3) + ')[]'
 
 
   typedefs.query.NodeType = plop({

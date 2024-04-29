@@ -167,7 +167,7 @@ import * as enums from './enums.js';
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes } AceMutateRequestItemSchemaAndData
+ * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
@@ -259,6 +259,12 @@ import * as enums from './enums.js';
  * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX } x
  * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX
  * @property { { nowName: string, newName: string }[] } nodes
+ *
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps
+ * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfNodeProps } id
+ * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX } x
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX
+ * @property { { node: string, nowName: string, newName: string }[] } props
  *
  * @typedef { object } AceMutateRequestItemAddToSchema
  * @property { typeof enums.idsAce.AddToSchema } id
