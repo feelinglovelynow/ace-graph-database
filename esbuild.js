@@ -28,7 +28,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/security/getAlgorithmOptions.js',
     './tsc/src/lib/security/hash.js',
 
-    './tsc/src/lib/isObjectEmpty.js',
+    './tsc/src/lib/isObjPopulated.js',
     './tsc/src/lib/variables.js',
 
     './tsc/src/index.js',

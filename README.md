@@ -331,6 +331,13 @@ ace types
 ## 🤓 Version 1 Roadmap
 1. `ace()`
     * Mutations that alter Schema and Data simultaneously
+        * SchemaAndDataDeleteRelationships
+        * SchemaAndDataDeleteNodeProps
+        * SchemaAndDataDeleteRelationshipProps
+        * SchemaAndDataUpdateNameOfNodes
+        * SchemaAndDataUpdateNameOfRelationships
+        * SchemaAndDataUpdateNameOfNodeProps
+        * SchemaAndDataUpdateNameOfRelationshipProps
     * Sanitize / Validate Input
     * fileToGraph Option: skipDataDelete: boolean
     * Must relationship (storage fallback)

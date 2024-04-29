@@ -5,7 +5,7 @@ import { sign } from '../security/hash.js'
 import { validateSchema } from './validateSchema.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
 import { setSchemaDataStructures } from '../objects/AcePassport.js'
-import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEMA_KEY, ACE_NODE_NAMES, getUniqueIndexKey, getNow, getRevokesKey, getNodeUidsKey, getRelationshipProp, getRelationshipUidsKey, getRelationshipNameFromProp, getNodeNamePlusRelationshipNameToNodePropNameMapKey } from '../variables.js'
+import { REQUEST_UID_PREFIX, ADD_NOW_DATE, DELIMITER, RELATIONSHIP_PREFIX, SCHEMA_KEY, getUniqueIndexKey, getNow, getRevokesKey, getNodeUidsKey, getRelationshipProp, getRelationshipUidsKey, getRelationshipNameFromProp, getNodeNamePlusRelationshipNameToNodePropNameMapKey } from '../variables.js'
 
 
 
@@ -605,10 +605,7 @@ export async function schemaAndDataDeleteNodes (requestItem, passport) {
     const nodeUidsKey = getNodeUidsKey(requestNodeName)
     const nodeUids = await passport.storage.get(nodeUidsKey)
 
-    if (!nodeUids?.length) throw AceError('mutate__delete-nodes__invalid-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName`, { nodeName: requestNodeName, requestItem })
-    if (ACE_NODE_NAMES.has(requestNodeName)) throw AceError('mutate__delete-nodes__ace-node', `Please provide a valid nodeName, \`${ requestNodeName }\` is not a valid nodeName because it is an Ace node name that is required for your graph to function optimally`, { nodeName: requestNodeName, requestItem, ACE_NODE_NAMES: [ ...ACE_NODE_NAMES.keys() ] })
-
-    await deleteNodesByUids(nodeUids, passport)
+    if (nodeUids?.length)  await deleteNodesByUids(nodeUids, passport)
     schemaDeleteNodes()
 
     del(nodeUidsKey, passport)

@@ -26,7 +26,7 @@
     "src/lib/security/getAlgorithmOptions.js",
     "src/lib/security/hash.js",
 
-    "src/lib/isObjectEmpty.js",
+    "src/lib/isObjPopulated.js",
     "src/lib/variables.js",
 
     "src/worker.js",
