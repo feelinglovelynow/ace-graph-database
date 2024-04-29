@@ -5,23 +5,24 @@
 * Create, maintain and enhance the Best database for JavaScript Developers!
 
 
-## 🤔 Ace Description
-1. Secure: Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: graph format)
-1. Dynamic: Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Typesafe: Based on the JSON Schema you provide, our cli creates types for TypeScript devs and JSDoc comments for JavaScript devs
+## 🔐 Security
+1. Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: graph format)
+1. Read, insert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
 
+## 🥹 Dynamic
+1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
+1. Our cli can save zipped and encrypted backups locally for free, apply backups to a graph or save backups to [Cloudflare](https://www.cloudflare.com/developer-platform/r2/)
 
-## 🙋‍♀️ Queries, Mutations and Data Management
-1. Simple: The Ace query language is a typesafe function called `ace()`, that enables expressive queries and transactional mutations
-1. Permissions: Read, insert, upsert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
-1. Free Backups: Our cli can save zipped and encrypted backups locally for free, apply backups to a graph or save backups to [Cloudflare](https://www.cloudflare.com/developer-platform/r2/)
+## 🙌 Types
+1. Based on the JSON Schema you provide, our cli creates types for TypeScript devs and JSDoc comments for JavaScript devs
+1. The Ace query language is a typesafe function called `ace()`, that enables expressive queries and transactional mutations
 
 
 ## ⚡️ Performance
-1. Fast: Both node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
-1. Map: To query a `Users > Friends`, Ace will O(1) lookup the index of `Friend uids` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
-1. Goodbye Joins: JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
-    * By [v3](#-version-3-roadmap) we plan on providing Universal Hosting and Ace Cloud Hosting options thanks to a low level language (maybe w/ [Zig](https://ziglang.org/) 1.x) rewrite
+* Node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
+    * To query a `Users > Friends`, Ace will O(1) lookup the index of `Friend uids` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
+    * JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
+    * By [v3](#-version-3-roadmap) we plan on providing Universal (Self) Hosting and Ace Cloud Hosting options thanks to a low level language (maybe w/ [Zig](https://ziglang.org/) 1.x) rewrite that'll compile to a binary and can be hosted anywhere! 🤙
 
 
 ## 🎬 Create a Movie Graph 
