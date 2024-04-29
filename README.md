@@ -8,7 +8,7 @@
 ## 🤔 Ace Description
 1. Secure: Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: graph format)
 1. Dynamic: Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Typesafe: Based on the JSON Schema you provide, our cli can create types for TypeScript devs and JSDoc comments for JavaScript devs
+1. Typesafe: Based on the JSON Schema you provide, our cli creates types for TypeScript devs and JSDoc comments for JavaScript devs
 
 
 ## 🙋‍♀️ Queries, Mutations and Data Management
@@ -327,30 +327,23 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
+1. SchemaAndDataUpdateNameOfNodes
+1. SchemaAndDataUpdateNameOfNodeProps
+1. SchemaAndDataUpdateNameOfRelationships
+1. SchemaAndDataUpdateNameOfRelationshipProps
+1. Encrypt / Zip Backup (Read / Write)
+1. Sanitize / Validate Input
+1. R2 Backups (`ace()` / cli) (Read / Write)
+1. cli fileToGraph Option: skipDataDelete: boolean
 1. `ace()`
-    * Mutations that alter Schema and Data simultaneously
-        * SchemaAndDataUpdateNameOfNodes
-        * SchemaAndDataUpdateNameOfNodeProps
-        * SchemaAndDataDeleteRelationships
-        * SchemaAndDataDeleteRelationshipProps
-        * SchemaAndDataUpdateNameOfRelationships
-        * SchemaAndDataUpdateNameOfRelationshipProps
-    * Sanitize / Validate Input
-    * fileToGraph Option: skipDataDelete: boolean
+    * SchemaAndDataDeleteRelationships
+    * SchemaAndDataDeleteRelationshipProps
     * Must relationship (storage fallback)
-    * fileToGraph Option: Public JWK: boolean
-    * GetBackup Option: Private JWK
-    * BackupFile Option: Is Encrypted
-    * BackupFile Option: Zip
-    * To handle accessing values from a previous mutation
-        * Id: 'MutationLoop'
-        * Id: 'ResponsePropNameValue'
-    * throwIfMissingMustProps -> update / delete 
+    * Access values from a previous query that are many and use them in a mutation
     * Graphs support 
-1. Ace CLI + R2
 1. On Error Flow
     * Retry: Count, MS Before Trying Again, 
-    * Log to R2
+    * Log to KV
     * Backup To R2
     * Email Log
     * Email Backup
@@ -427,7 +420,6 @@ ace types
 1. Proofread all comments
 1. loopOptions > switch 
 1. Cli Loop schema once
-1. Move schema loops into schema data structures 
 1. Simulator
     * Speed up time to test things that take time
     * Replay
