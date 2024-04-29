@@ -70,6 +70,7 @@ export function setSchemaDataStructures (passport) {
 
   if (passport.schema?.nodes) {
     for (const nodeName in passport.schema.nodes) {
+      if (!passport.schemaDataStructures?.cascade) passport.schemaDataStructures.cascade = new Map()
       if (!passport.schemaDataStructures?.nodeNamesSet) passport.schemaDataStructures.nodeNamesSet = new Set()
       if (!passport.schemaDataStructures?.mustPropsMap) passport.schemaDataStructures.mustPropsMap = new Map()
       if (!passport.schemaDataStructures?.relationshipPropsMap) passport.schemaDataStructures.relationshipPropsMap = new Map()
@@ -87,6 +88,13 @@ export function setSchemaDataStructures (passport) {
           const mapValue = passport.schemaDataStructures.relationshipPropsMap.get(propValue.x.relationship) || new Map()
           mapValue.set(propName, propValue)
           passport.schemaDataStructures.relationshipPropsMap.set(propValue.x.relationship, mapValue)
+
+          // cascade
+          if (propValue.x.cascade) {
+            const set = passport.schemaDataStructures.cascade.get(nodeName) || new Set()
+            set.add(propName)
+            passport.schemaDataStructures.cascade.set(nodeName, set)
+          }
         }
 
         if (propValue?.x?.mustBeDefined) {
@@ -109,6 +117,7 @@ export function setSchemaDataStructures (passport) {
 
       if (props) {
         for (const propName in props) {
+          // mustBeDefined
           if (props[propName].x?.mustBeDefined) {
             const map = passport.schemaDataStructures.mustPropsMap.get(relationshipName) || new Map()
             map.set(propName, props[propName])

@@ -108,6 +108,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { object } AcePassportSchemaDataStructures
  * @property { Set<string> } [ nodeNamesSet ]
  * @property { Set<string> } [ relationshipNamesSet ]
+ * @property { Map<string, Set<string>> } [ cascade ]
  * @property { Map<string, string> } [ nodeNamePlusRelationshipNameToNodePropNameMap ]
  * @property { Map<string, Map<string, AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp>> } [ relationshipPropsMap ]
  * @property { Map<string, Map<string, (AceSchemaProp | AceSchemaRelationshipProp | AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp)>> } [ mustPropsMap ]
@@ -177,6 +178,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { string } relationship - Each node prop that is a relationship must also align with a relationship name. This way the relationship can have its own props.
  * @property { boolean } [ mustBeDefined ] - Must each node in the graph, that aligns with this relationship, have this relationship defined
  * @property { string } [ description ] - Custom description that Ace will add to other types, example: query / mutation types
+ * @property { boolean } [ cascade ] - When this schema.node is deleted, also delete the node that this prop points to
  *
  * @typedef { object } AceSchemaRelationshipValueX
  * @property { { [propName: string]: AceSchemaRelationshipProp } } props - Props for this relationship
@@ -217,7 +219,9 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * 
  * @typedef { object } AceMutateRequestItemDataDeleteNodes
  * @property { typeof enums.idsAce.DataDeleteNodes } id
- * @property { { uids: string[] } } x
+ * @property { AceMutateRequestItemDataDeleteNodesX } x
+ * @typedef { object } AceMutateRequestItemDataDeleteNodesX
+ * @property { string[] } uids - The uids you'd love deleted. To cascade delete, add cascade to your schema
  *
  * @typedef { object } AceMutateRequestItemDataDeleteRelationships
  * @property { typeof enums.idsAce.DataDeleteRelationships } id

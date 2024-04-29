@@ -433,7 +433,7 @@ export async function deleteNodesByUids (uids, passport) {
 
     const relationshipUidsArray = []
 
-    /** @type { Map<string, { propName: string, relationshipName: string }> } <relationshipUid, { propName, relationshipName }> */
+    /** @type { Map<string, { propName: string, relationshipName: string, cascade: boolean }> } <relationshipUid, { propName, relationshipName }> */
     const relationshipUidsMap = new Map()
 
     for (const propName in graphNode) {
@@ -443,14 +443,30 @@ export async function deleteNodesByUids (uids, passport) {
 
         if (schemaPropName) validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop: schemaPropName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop: schemaPropName })))
 
+        const cascade = schemaPropName ? (passport.schemaDataStructures?.cascade?.get(graphNode.node)?.has(schemaPropName) || false) : false
+
         for (const relationshipUid of graphNode[propName]) {
           relationshipUidsArray.push(relationshipUid)
-          relationshipUidsMap.set(relationshipUid, { propName, relationshipName })
+          relationshipUidsMap.set(relationshipUid, { propName, relationshipName, cascade })
         }
       } else if (propName !== 'uid') {
         validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop: propName })))
       }
     }
+
+    const nodeUidsKey = getNodeUidsKey(graphNode.node)
+    const nodeUids = await passport.storage.get(nodeUidsKey)
+
+    if (Array.isArray(nodeUids)) {
+      for (let i = nodeUids.length - 1; i >= 0; i--) {
+        if (nodeUids[i] === graphNode.x.uid) {
+          nodeUids.splice(i, 1)
+          break
+        }
+      }
+    }
+    
+    put(nodeUidsKey, nodeUids, passport) // delete uid from $index___nodes___
 
     /** @type { Map<string, string> } <relationshipNodeUid, relationshipId> */
     const relationshipNodeUids = new Map()
@@ -461,6 +477,7 @@ export async function deleteNodesByUids (uids, passport) {
       if (graphRelationship.x.b === graphNode.x.uid) relationshipNodeUids.set(graphRelationship.x.a, graphRelationship.x._uid)
     }
 
+    const cascadeUids = []
     const graphRelationshipNodesMap = await passport.storage.get([...relationshipNodeUids.keys()])
 
     for (const graphRelationshipNode of graphRelationshipNodesMap.values()) {
@@ -468,17 +485,23 @@ export async function deleteNodesByUids (uids, passport) {
 
       if (_uid) {
         const v = relationshipUidsMap.get(_uid)
-        if (v?.propName) deleteUidFromRelationshipProp(graphRelationshipNode, v.propName, _uid, passport)
+
+        if (v) {
+          if (v.cascade) cascadeUids.push(graphRelationshipNode.x.uid)
+          else if (v.propName) deleteUidFromRelationshipProp(graphRelationshipNode, v.propName, _uid, passport)
+        }
       }
     }
 
     del(graphNode.x.uid, passport)
 
-    for (const _uid of relationshipUidsArray) { // we need data from these relationships above so add to deleteSet last
+    for (const _uid of relationshipUidsArray) {
       del(_uid, passport)
       const v = relationshipUidsMap.get(_uid)
       if (v?.relationshipName) await delete_UidFromRelationshipIndex(v.relationshipName, _uid, passport)
     }
+
+    if (cascadeUids.length) await deleteNodesByUids(cascadeUids, passport) // delete uids that are cascade
   }
 }
 

@@ -331,7 +331,7 @@ ace types
 ## 🤓 Version 1 Roadmap
 1. Replace Object.keys() w/ isObjectEmpty
 1. `ace()`
-    * Delete `cascadeProps` array
+    * Mutations that alter Schema and Data simultaneously
     * Sanitize / Validate Input
     * fileToGraph Option: skipDataDelete: boolean
     * Must relationship (storage fallback)
@@ -339,7 +339,6 @@ ace types
     * GetBackup Option: Private JWK
     * BackupFile Option: Is Encrypted
     * BackupFile Option: Zip
-    * Mutations that alter Schema and Data simultaneously (idsMutate)
     * To handle accessing values from a previous mutation
         * Id: 'MutationLoop'
         * Id: 'ResponsePropNameValue'

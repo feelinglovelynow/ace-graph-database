@@ -21,7 +21,7 @@ export function core () {
                 AceUser: {
                   username: { id: 'Prop', x: { dataType: 'string' } },
                   password: { id: 'Prop', x: { dataType: 'hash' } },
-                  tokens: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'AceToken', relationship: 'aceHasTheToken' } },
+                  tokens: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'AceToken', relationship: 'aceHasTheToken', cascade: true } },
                   role: { id: 'ForwardRelationshipProp', x: { has: 'one', node: 'AceRole', relationship: 'aceIsTheRole' } },
                 },
                 AceToken: {

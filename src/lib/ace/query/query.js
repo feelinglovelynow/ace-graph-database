@@ -16,7 +16,12 @@ import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey,
 export async function queryNode (requestItem, passport, response, publicJWKs, iRequest) {
   if (passport.schemaDataStructures?.nodeNamesSet?.has(requestItem.node)) {
     const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
-    await addNodesToResponse(xGenerated, response, uids, null, isUsingSortIndex, passport, publicJWKs, iRequest)
+    
+    if (uids.length) await addNodesToResponse(xGenerated, response, uids, null, isUsingSortIndex, passport, publicJWKs, iRequest)
+    else {
+      response.now[xGenerated.propName] = null
+      response.original[xGenerated.propName] = null
+    }
   }
 }
 
@@ -33,7 +38,11 @@ export async function queryRelationship (requestItem, passport, response, public
   if (passport.schemaDataStructures?.relationshipNamesSet?.has(requestItem.relationship)) {
     const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
 
-    await addRelationshipsToResponse(xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest)
+    if (uids.length) await addRelationshipsToResponse(xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest)
+    else {
+      response.now[xGenerated.propName] = null
+      response.original[xGenerated.propName] = null
+    }
   }
 }
 
