@@ -15,6 +15,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/ace/query/query.js',
     './tsc/src/lib/ace/query/queryWhere.js',
     './tsc/src/lib/ace/ace.js',
+    './tsc/src/lib/ace/aceFetch.js',
     "./tsc/src/lib/ace/getUid.js",
     './tsc/src/lib/ace/mutate.js',
     './tsc/src/lib/ace/storage.js',
@@ -27,7 +28,7 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/security/getAlgorithmOptions.js',
     './tsc/src/lib/security/hash.js',
 
-    './tsc/src/lib/aceFetch.js',
+    './tsc/src/lib/isObjectEmpty.js',
     './tsc/src/lib/variables.js',
 
     './tsc/src/index.js',

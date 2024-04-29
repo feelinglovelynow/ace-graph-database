@@ -1,3 +1,4 @@
+import { isObjectEmpty } from '../isObjectEmpty.js'
 import { ACE_NODE_NAMES, DELIMITER } from '../variables.js'
 
 
@@ -543,7 +544,7 @@ function getSchemaTypedefs (schema) {
   }
 
 
-  if (Object.keys(schema?.nodes || {}).length) {
+  if (isObjectEmpty(schema?.nodes)) {
     typedefs.Nodes += '/** Nodes: (from schema)'
     typedefs.mutate.AddNodeToGraphTypes += '\n\n\n/** Mutate: Insert node (from schema)'
     typedefs.mutate.UpdateGraphNodeTypes += '\n\n\n/** Mutate: Update node (from schema)'
@@ -665,7 +666,7 @@ function getSchemaTypedefs (schema) {
   }
 
 
-  if (Object.keys(schema?.relationships || {}).length) {
+  if (isObjectEmpty(schema?.relationships)) {
     typedefs.Relationships += '/** Relationships: (from schema)'
     typedefs.mutate.AddRelationshipToGraphTypes += '\n\n\n/** Mutate: Insert Relationships (from schema):'
     typedefs.mutate.UpdateGraphRelationshipTypes += '\n\n\n/** Mutate: Update Relationships (from schema):'

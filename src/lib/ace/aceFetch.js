@@ -1,4 +1,4 @@
-import { REQUEST_TOKEN_HEADER } from "./variables.js"
+import { REQUEST_TOKEN_HEADER } from "../variables.js"
 
 
 /**

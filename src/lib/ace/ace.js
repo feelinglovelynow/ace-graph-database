@@ -1,6 +1,6 @@
 import { td, enums } from '#ace'
 import { put } from './storage.js'
-import { aceFetch } from '../aceFetch.js'
+import { aceFetch } from './aceFetch.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
 import { queryNode, queryRelationship } from './query/query.js'
 import { getAlgorithmOptions } from '../security/getAlgorithmOptions.js'

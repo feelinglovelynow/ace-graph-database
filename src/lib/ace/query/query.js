@@ -1,5 +1,6 @@
 import { td, enums } from '#ace'
 import { doQueryOptions } from './doQueryOptions.js'
+import { isObjectEmpty } from '../../isObjectEmpty.js'
 import { AceAuthError } from '../../objects/AceError.js'
 import { getXGeneratedByParent, getXGeneratedById } from './getXGenerated.js'
 import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey, getNodeUidsKey, getRelationshipUidsKey } from '../../variables.js'
@@ -139,25 +140,11 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
 function removeEmptyObjects (xGenerated, response) {
   if (Array.isArray(response.now[xGenerated.propName])) {
     for (let i = response.now[xGenerated.propName].length - 1; i >= 0; i--) {
-      if (isEmptyObject(response.now[xGenerated.propName][i])) response.now[xGenerated.propName].splice(i, 1)
+      if (isObjectEmpty(response.now[xGenerated.propName][i])) response.now[xGenerated.propName].splice(i, 1)
     }
 
     if (!response.now[xGenerated.propName].length) response.now[xGenerated.propName] = null
   }
-}
-
-
-/**
- * 
- * @param {*} obj 
- * @returns { boolean }
- */
-function isEmptyObject (obj) {
-  for (const prop in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, prop)) return false
-  }
-
-  return true
 }
 
 

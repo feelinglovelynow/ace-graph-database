@@ -8,6 +8,7 @@
     "src/lib/ace/query/query.js",
     "src/lib/ace/query/queryWhere.js",
     "src/lib/ace/ace.js",
+    "src/lib/ace/aceFetch.js",
     "src/lib/ace/getUid.js",
     "src/lib/ace/mutate.js",
     "src/lib/ace/storage.js",
@@ -20,7 +21,7 @@
     "src/lib/security/getAlgorithmOptions.js",
     "src/lib/security/hash.js",
 
-    "src/lib/aceFetch.js",
+    "src/lib/isObjectEmpty.js",
     "src/lib/variables.js",
 
     "src/index.js"
