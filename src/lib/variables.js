@@ -81,14 +81,6 @@ export const INDEX_SORT_PREFIX = '$index' + DELIMITER + 'sort' + DELIMITER
 export const INDEX_UNIQUE_PREFIX = '$index' + DELIMITER + 'unique' + DELIMITER
 export const RELATIONSHIP_UIDS_PREFIX = '$index' + DELIMITER + 'relationships' + DELIMITER
 
-export const ACE_NODE_NAMES = new Set([
-  'AceSetting',
-  'AceUser',
-  'AceToken',
-  'AceRole',
-  'AcePermission',
-])
-
 
 /**
  * @param { string } relationshipName

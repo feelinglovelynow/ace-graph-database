@@ -84,11 +84,11 @@ export function validateSchema (schema) {
     if (relationship?.id !== enums.idsSchema.OneToOne && relationship?.id !== enums.idsSchema.ManyToMany && relationship?.id !== enums.idsSchema.OneToMany) throw AceError('schema__invalid-relationship-id', `The relationship name \`${ relationshipName }\` is invalid b/c relationship?.id is invalid, please ensure relationships have a valid relationship id of OneToOne, OneToMany or ManyToMany`, _errorData)
     if (relationshipName.includes(DELIMITER)) throw AceError('schema__relationship-delimeter', `The relationship name ${relationshipName} includes ${DELIMITER} which Ace does not allow b/c ${DELIMITER} is used as a delimeter within our query language`, { relationshipName, schema: JSON.stringify(schema) })
 
-    if (relationship.x?.props) {
-      if (typeof relationship.x.props !== 'object' || Array.isArray(relationship.x.props)) throw AceError('schema__invalid-relationship-props', `The relationship name ${ relationshipName } has invalid props, if you'd love to include props please ensure relationship.props type, is an object`, _errorData)
+    if (relationship.props) {
+      if (typeof relationship.props !== 'object' || Array.isArray(relationship.props)) throw AceError('schema__invalid-relationship-props', `The relationship name ${ relationshipName } has invalid props, if you'd love to include props please ensure relationship.props type, is an object`, _errorData)
 
-      for (const propName in relationship.x.props) {
-        validateSchemaProp(propName, relationship.x.props[propName], true)
+      for (const propName in relationship.props) {
+        validateSchemaProp(propName, relationship.props[propName], true)
 
         const mapValue = uniqueRelationshipPropsMap.get(relationshipName)
 
@@ -162,15 +162,21 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
 
 /**
  * Validate Schema Property Key
- * @param { string } propertyKey
+ * @param { string } prop
  * @param { boolean } isRelationshipProp
  */
-function validatePropertyKey (propertyKey, isRelationshipProp) {
-  if (typeof propertyKey !== 'string') throw AceError('validatePropertyKey___invalid-typeof', `The property key ${ propertyKey } is invalid because it is not a type of string, please ensure each property key has a type of string`, { propertyKey })
-  if (!propertyKey.match(/^[A-Za-z\_]+$/)) throw AceError('validatePropertyKey___invalid-characters', `The property key ${ propertyKey } is invalid because it includes invalid characters, please ensure each property key has characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { propertyKey })
-  if (isRelationshipProp && propertyKey === '_uid') throw AceError('validatePropertyKey___relationship-uid', 'The property key _uid is invalid because _uid is a reserved relationship prop', { propertyKey })
-  if (isRelationshipProp && !propertyKey.startsWith('_')) throw AceError('validatePropertyKey___add-underscore', `The property key ${ propertyKey } is invalid because this is a relationship prop that does not start with an underscore, please start relationship props with an underscore, this helps know what props in a query are relationship props`, { propertyKey })
-  if (!isRelationshipProp && propertyKey === 'uid') throw AceError('validatePropertyKey___node-uid', 'The property uid is invalid because uid is a reserved node prop', { propertyKey })
-  if (!isRelationshipProp && propertyKey.startsWith('_')) throw AceError('validatePropertyKey___remove-underscore', `The property key ${ propertyKey } is invalid because it is not a relationship prop but it starts with an underscore, please do not start node props with an underscore, relationship props start with an underscore, this helps know what props in a query are relationship props`, { propertyKey })
-  if (propertyKey.includes(DELIMITER)) throw AceError('validatePropertyKey__delimeter', `The property key ${ propertyKey } includes ${ DELIMITER } which Ace does not allow b/c ${ DELIMITER } is used as a delimeter within our query language`, { propertyKey })
+function validatePropertyKey (prop, isRelationshipProp) {
+  if (typeof prop !== 'string') throw AceError('validatePropertyKey___notString', `The prop ${ prop } is invalid because it is not a type of string, please ensure each prop has a type of string`, { prop })
+ 
+  if (isRelationshipProp) {
+    if (prop === '_uid') throw AceError('validatePropertyKey___relationshipUid', 'The prop _uid is invalid because _uid is a reserved relationship prop', { prop })
+    if (prop === 'a') throw AceError('validatePropertyKey___relationshipA', 'The prop a is invalid because a is a reserved relationship prop', { prop })
+    if (prop === 'b') throw AceError('validatePropertyKey___relationshipB', 'The prop b is invalid because b is a reserved relationship prop', { prop })
+    if (!prop.startsWith('_')) throw AceError('validatePropertyKey___addUnderscore', `The prop ${ prop } is invalid because relationship props must start with an underscore. This helps know what props in a query are relationship props`, { prop })
+  } else {
+    if (prop === 'uid') throw AceError('validatePropertyKey___nodeUid', 'The prop uid is invalid because uid is a reserved node prop', { prop })
+    if (prop.startsWith('_')) throw AceError('validatePropertyKey___removeUnderscore', `The prop ${ prop } is invalid because none relationship props may not start with an underscore. This helps know what props in a query are relationship props`, { prop })
+  }
+
+  if (prop.includes(DELIMITER)) throw AceError('validatePropertyKey__delimeter', `The prop ${ prop } includes ${ DELIMITER } which Ace does not allow b/c ${ DELIMITER } is used as a delimeter within our query language`, { prop })
 }

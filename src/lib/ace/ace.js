@@ -6,7 +6,7 @@ import { queryNode, queryRelationship } from './query/query.js'
 import { getAlgorithmOptions } from '../security/getAlgorithmOptions.js'
 import { setSchemaDataStructures, stamp } from '../objects/AcePassport.js'
 import { getSortIndexKey, getRelationshipProp, getRevokesKey } from '../variables.js'
-import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, schemaAndDataDeleteNodes } from './mutate.js'
+import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, schemaAndDataDeleteNodes, schemaAndDataDeleteNodeProps } from './mutate.js'
 
 
 /**
@@ -170,6 +170,11 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           case enums.idsAce.SchemaAndDataDeleteNodes:
             await schemaAndDataDeleteNodes(/** @type { td.AceMutateRequestItemSchemaAndDataDeleteNodes } */(arrayRequest[iRequest]), passport)
             break
+
+
+          case enums.idsAce.SchemaAndDataDeleteNodeProps:
+            await schemaAndDataDeleteNodeProps(/** @type { td.AceMutateRequestItemSchemaAndDataDeleteNodeProps } */(arrayRequest[iRequest]), passport)
+            break
         }
       }
 
@@ -255,9 +260,10 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
     function throwIfMissingMustProps () {
       if (passport.$aceDataStructures.putMap.size) {
-        for (const requestItem of passport.$aceDataStructures.putMap.values()) {
+        for (const [ uid, requestItem ] of passport.$aceDataStructures.putMap) {
           const x = /** @type { td.AceMutateRequestItemAddRelationshipToGraphX } */ (/** @type {*} */ (requestItem.x))
-          const mustProps = requestItem.subId ? passport.schemaDataStructures?.mustPropsMap?.get(requestItem.subId) : null // the must props for a specific node or relationship
+          const lowerName = requestItem.node ? 'node' : 'relationship'
+          const mustProps = passport.schemaDataStructures?.mustPropsMap?.get(requestItem[lowerName]) // the must props for a specific node or relationship
 
           if (mustProps) {
             mustProps.forEach((/** @type { td.AceSchemaProp | td.AceSchemaRelationshipProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ prop, /** @type { string } */propName) => {
@@ -266,7 +272,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
                 case enums.idsSchema.Prop:
                 case enums.idsSchema.RelationshipProp:
                   const schemaProp = /** @type { td.AceSchemaProp } */ (prop)
-                  const letEmKnow = () => AceError('mutate__invalid-property-value', `Please ensure all required props are included and align with the data type in the schema, an example of where this is not happening yet is: Node: "${ requestItem.nodeName }", Prop: "${ propName }", Data Type: "${ schemaProp.x.dataType }"`, { nodeName: requestItem.nodeName, requestItem, propName, dataType: schemaProp.x.dataType })
+                  const letEmKnow = () => AceError('mutate__invalidPropertyValue', `Please ensure your requestItem has all required props and each prop aligns with the data type in the schema, an example of where this is not happening yet is: ${ lowerName }: "${ requestItem[lowerName] }", prop: "${ propName }", data type: "${ schemaProp.x.dataType }"`, { [lowerName]: requestItem[lowerName], requestItem, propName, dataType: schemaProp.x.dataType })
 
                   switch (schemaProp.x.dataType) {
                     case 'isoString':

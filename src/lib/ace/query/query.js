@@ -245,7 +245,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
 
         if (!item.relationship) {
           parentNodeOptions.schemaNodeProp = passport.schema?.nodes[xGenerated.nodeName || '']?.[xKey]
-          parentNodeOptions.schemaRelationshipProp = (xGenerated.relationshipName) ? passport.schema?.relationships?.[xGenerated.relationshipName]?.x?.props?.[xKey] : undefined
+          parentNodeOptions.schemaRelationshipProp = (xGenerated.relationshipName) ? passport.schema?.relationships?.[xGenerated.relationshipName]?.props?.[xKey] : undefined
         }
 
         if (!xGenerated.resHide || !xGenerated.resHide?.has(xKey)) {

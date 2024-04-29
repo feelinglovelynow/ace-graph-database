@@ -50,7 +50,6 @@ export function core () {
                 aceIsTheRole: { id: 'OneToMany' },
                 aceRevokesPermission: { id: 'ManyToMany' },
               }
-
             }
           }
         },

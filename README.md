@@ -46,23 +46,21 @@ const response = await ace({
       x: { // intellisense within x changes based on above id
         schema: {
           nodes: {
-            Actor: { // Actor node props
+            Actor: { // Node: Actor
               firstName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
               lastName: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
               actsIn: { id: 'ForwardRelationshipProp', x: { has: 'many', node: 'Movie', relationship: 'actsInMovie' } },
             },
-            Movie: { // Movie node props
+            Movie: { // Node: Movie
               name: { id: 'Prop', x: { dataType: 'string', mustBeDefined: true } },
               actors: { id: 'ReverseRelationshipProp', x: { has: 'many', node: 'Actor', relationship: 'actsInMovie' } },
             },
           },
           relationships: {
-            actsInMovie: {
+            actsInMovie: { // Relationship: actsInMovie
               id: 'ManyToMany',
-              x: {
-                props: {
-                  _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with QueryByNode or QueryByRelationship, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (do not start with underscore) and which props are relationship props (start with underscore)
-                }
+              props: {
+                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with QueryByNode or QueryByRelationship, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (do not start with underscore) and which props are relationship props (start with underscore)
               }
             }
           }
@@ -110,11 +108,11 @@ const response = await ace({
       x: {
         _uid: true, // actsInMovie relationship prop: _uid will be in the response
         _salary: true, // actsInMovie relationship prop: _salary will be in the response
+        actsIn: true, // Actor.actsIn node prop: b/c no props are specified like in the QueryByNode above, all none relationship props for the Movie node (uid, name) will be in the response
         actors: { // Movie.actors node prop
-          $o: { alias: 'star' }, // rather then actors show star in the response
+          $o: { alias: 'star' }, // rather then actors, show star in the response
           firstName: true, // only show the Actor's firstName
         },
-        actsIn: { $o: { alias: 'movie' } }, // Actor.actsIn node prop: b/c no props are specified like in the QueryByNode above, all none relationship props for the Movie node (uid, name) will be in the response
       }
     },
 
@@ -331,12 +329,11 @@ ace types
 ## 🤓 Version 1 Roadmap
 1. `ace()`
     * Mutations that alter Schema and Data simultaneously
-        * SchemaAndDataDeleteRelationships
-        * SchemaAndDataDeleteNodeProps
-        * SchemaAndDataDeleteRelationshipProps
         * SchemaAndDataUpdateNameOfNodes
-        * SchemaAndDataUpdateNameOfRelationships
         * SchemaAndDataUpdateNameOfNodeProps
+        * SchemaAndDataDeleteRelationships
+        * SchemaAndDataDeleteRelationshipProps
+        * SchemaAndDataUpdateNameOfRelationships
         * SchemaAndDataUpdateNameOfRelationshipProps
     * Sanitize / Validate Input
     * fileToGraph Option: skipDataDelete: boolean
@@ -414,6 +411,8 @@ ace types
 1. $o random
 1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
+1. Camelcase errors
+1. mutate to addUp and delete file
 1. Security
     * 2FA + Authy Support
     * AceUser > email > passwordless

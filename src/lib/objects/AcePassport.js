@@ -113,7 +113,7 @@ export function setSchemaDataStructures (passport) {
 
       passport.schemaDataStructures.relationshipNamesSet.add(relationshipName)
 
-      const props = passport.schema.relationships[relationshipName]?.x?.props
+      const props = passport.schema.relationships[relationshipName]?.props
 
       if (props) {
         for (const propName in props) {

@@ -323,7 +323,7 @@ async function inupRelationshipPut (requestItem, schemaRelationship, passport, g
 
     const relationshipPropValue = x[relationshipPropName]
 
-    if (relationshipPropValue === ADD_NOW_DATE && schemaRelationship.x?.props?.[relationshipPropName]?.x?.dataType === enums.dataTypes.isoString) x[relationshipPropName] = getNow() // populate now timestamp
+    if (relationshipPropValue === ADD_NOW_DATE && schemaRelationship.props?.[relationshipPropName]?.x?.dataType === enums.dataTypes.isoString) x[relationshipPropName] = getNow() // populate now timestamp
     else if (typeof relationshipPropValue === 'string' && relationshipPropValue.startsWith(REQUEST_UID_PREFIX)) {
       overwriteUids(requestItem.x, relationshipPropName, passport)
     }
@@ -559,14 +559,16 @@ async function delete_UidFromRelationshipIndex (relationshipName, _uid, passport
  */
 export async function dataDeleteNodeProps (requestItem, passport) {
   if (requestItem.x?.uids?.length && requestItem.x?.props?.length) {
-    const relationshipNodes = await passport.storage.get(requestItem.x.uids)
+    const graphNodes = await passport.storage.get(requestItem.x.uids)
 
-    for (const relationshipNode of relationshipNodes.values()) {
+    for (const [ uid, graphNode ] of graphNodes) {
       for (const propName of requestItem.x.props) {
-        if (propName !== 'uid' && !propName.startsWith(RELATIONSHIP_PREFIX) && typeof relationshipNode.x[propName] !== 'undefined') {
-          validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { node: relationshipNode.node, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: relationshipNode.node, prop: propName })))
-          delete relationshipNode.x[propName]
-          put(relationshipNode.x.uid, relationshipNode, passport)
+        if (typeof graphNode.x[propName] !== 'undefined') {
+          if (!passport.schema?.nodes[graphNode.node]?.[propName]) throw AceError('dataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are not defined in you schema', { node: graphNode.node, prop: propName })
+
+          validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop: propName })))
+          delete graphNode.x[propName]
+          put(uid, graphNode, passport)
         }
       }
     }
@@ -580,12 +582,13 @@ export async function dataDeleteNodeProps (requestItem, passport) {
  */
 export async function dataDeleteRelationshipProps (requestItem, passport) {
   if (requestItem.x?._uids?.length && requestItem.x?.props?.length) {
-    const notAllowedDeleteProps = new Set([ '_uid', 'a', 'b' ])
     const relationshipNodes = await passport.storage.get(requestItem.x._uids)
 
     for (const relationshipNode of relationshipNodes.values()) {
       for (const propName of requestItem.x.props) {
-        if (!notAllowedDeleteProps.has(propName) && typeof relationshipNode.x[propName] !== 'undefined') {
+        if (typeof relationshipNode.x[propName] !== 'undefined') {
+          if (!passport.schema?.relationships[relationshipNode.x.relationship]?.props?.[propName]) throw AceError('dataDeleteRelationshipProps__invalidRelationshipPropCombo', 'The relationship and the prop cannot be deleted b/c they are not defined in you schema', { relationship: relationshipNode.x.relationship, prop: propName })
+
           validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { relationship: relationshipNode.relationshipName, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, relationship: relationshipNode.relationshipName, prop: propName })))
           delete relationshipNode.x[propName]
           put(relationshipNode.x._uid, relationshipNode, passport)
@@ -605,44 +608,91 @@ export async function schemaAndDataDeleteNodes (requestItem, passport) {
     const nodeUidsKey = getNodeUidsKey(requestNodeName)
     const nodeUids = await passport.storage.get(nodeUidsKey)
 
-    if (nodeUids?.length)  await deleteNodesByUids(nodeUids, passport)
-    schemaDeleteNodes()
+    if (nodeUids?.length) {
+      await deleteNodesByUids(nodeUids, passport)
+      del(nodeUidsKey, passport)
+    }
 
-    del(nodeUidsKey, passport)
+    schemaDeleteNodes(requestNodeName, passport)
     delete passport.schema?.nodes[requestNodeName]
-    put(SCHEMA_KEY, passport.schema, passport)
-    setSchemaDataStructures(passport)
+  }
 
-    function schemaDeleteNodes () {
-      if (passport.schema) {
-        /** @type { Set<string> } - As we flow through nodes, the relationships that need to be deleted will be added here */
-        const deleteRelationshipSet = new Set()
+  schemaDeleteConclude(passport)
+}
 
-        /** @type { Map<string, { schemaNodeName: string, propName: string }> } - <schemaNodeName___propName, { schemaNodeName, propName }> */
-        const deletePropsMap = new Map()
 
-        for (const schemaNodeName in passport.schema.nodes) {
-          for (const propName in passport.schema.nodes[schemaNodeName]) {
-            const schemaPropX = /** @type { td.AceSchemaNodeRelationshipX } */ (passport.schema.nodes[schemaNodeName][propName].x)
+/** 
+ * @param { td.AceMutateRequestItemSchemaAndDataDeleteNodesNode } requestNodeName
+ * @param { td.AcePassport } passport
+ */
 
-            if (schemaPropX?.node === requestNodeName) {
-              deleteRelationshipSet.add(schemaPropX.relationship)
-              deletePropsMap.set(schemaNodeName + DELIMITER + propName, { schemaNodeName, propName })
-            }
-          }
-        }
+function schemaDeleteNodes (requestNodeName, passport) {
+  if (passport.schema) {
+    /** @type { Set<string> } - As we flow through nodes, the relationships that need to be deleted will be added here */
+    const deleteRelationshipSet = new Set()
 
-        for (const relationshipName of deleteRelationshipSet) {
-          delete passport.schema.relationships[relationshipName]
-        }
+    /** @type { Map<string, { schemaNodeName: string, propName: string }> } - <schemaNodeName___propName, { schemaNodeName, propName }> */
+    const deletePropsMap = new Map()
 
-        for (const { schemaNodeName, propName } of deletePropsMap.values()) {
-          delete passport.schema.nodes[schemaNodeName][propName]
+    for (const schemaNodeName in passport.schema.nodes) {
+      for (const propName in passport.schema.nodes[schemaNodeName]) {
+        const schemaPropX = /** @type { td.AceSchemaNodeRelationshipX } */ (passport.schema.nodes[schemaNodeName][propName].x)
+
+        if (schemaPropX?.node === requestNodeName) {
+          deleteRelationshipSet.add(schemaPropX.relationship)
+          deletePropsMap.set(schemaNodeName + DELIMITER + propName, { schemaNodeName, propName })
         }
       }
     }
-  }
 
-  put(SCHEMA_KEY, passport.schema, passport)
-  setSchemaDataStructures(passport)
+    for (const relationshipName of deleteRelationshipSet) {
+      delete passport.schema.relationships[relationshipName]
+    }
+
+    for (const { schemaNodeName, propName } of deletePropsMap.values()) {
+      delete passport.schema.nodes[schemaNodeName][propName]
+    }
+  }
+}
+
+
+/** 
+ * @param { td.AceMutateRequestItemSchemaAndDataDeleteNodeProps } requestItem
+ * @param { td.AcePassport } passport
+ */
+export async function schemaAndDataDeleteNodeProps (requestItem, passport) {
+  for (const { node, prop } of requestItem.x.props) {
+    if (!passport.schema?.nodes[node]?.[prop]) throw AceError('schemaAndDataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are are not defined in you schema', { node, prop })
+
+    const nodeUidsKey = getNodeUidsKey(node)
+    const nodeUids = await passport.storage.get(nodeUidsKey)
+
+    if (nodeUids.length) {
+      const graphNodes = await passport.storage.get(nodeUids)
+
+      for (const [ uid, graphNode ] of graphNodes) {
+        if (typeof graphNode.x[prop] !== 'undefined') {
+          validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop })))
+          delete graphNode.x[prop]
+          put(uid, graphNode, passport)
+        }
+      }
+    }
+
+    delete passport.schema.nodes[node][prop]
+    schemaDeleteConclude(passport)
+  }
+}
+
+
+/**
+ * @param { td.AcePassport } passport
+ * @returns { void }
+ */
+function schemaDeleteConclude (passport) {
+  if (passport.schema) {
+    validateSchema(passport.schema)
+    put(SCHEMA_KEY, passport.schema, passport)
+    setSchemaDataStructures(passport)
+  }
 }
