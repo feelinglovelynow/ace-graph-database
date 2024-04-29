@@ -7,7 +7,7 @@
 
 ## 🔐 Security
 1. Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: graph format)
-1. Read, insert, update and delete permissions can be configured for nodes, relationships or properties thanks to our `core` plugin
+1. Read, insert, update and delete permissions can be configured for nodes, relationships or props thanks to our `core` plugin
 
 ## 🥹 Dynamic
 1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many

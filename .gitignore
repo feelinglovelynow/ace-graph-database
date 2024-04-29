@@ -2,5 +2,8 @@
 /node_modules
 /tsc
 /.wrangler
-/.ace
 /apps.toml
+/.ace/tsc/enums.d.ts
+/.ace/tsc/enums.js.map
+/.ace/tsc/typedefs.d.ts
+/.ace/tsc/typedefs.js.map
