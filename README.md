@@ -329,7 +329,6 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Replace Object.keys() w/ isObjectEmpty
 1. `ace()`
     * Mutations that alter Schema and Data simultaneously
     * Sanitize / Validate Input
@@ -413,7 +412,6 @@ ace types
     * AceUser > email > passwordless
 1. Test relationship props update + guidance
 1. External: Property to Prop
-1. No uid or _uid as prop name
 1. No more embedded functions (so I stop creating the same fn multiple times)
 1. jsdoc returns for each function
 1. jsdoc comment for each prop
