@@ -102,7 +102,7 @@ import * as enums from './enums.js'
  * @property { Map<string, Set<string>> } [ cascade ]
  * @property { Map<string, Set<string>> } [ nodeRelationshipPropsMap ]
  * @property { Map<string, string> } [ nodeNamePlusRelationshipNameToNodePropNameMap ]
- * @property { Map<string, Map<string, AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp>> } [ relationshipPropsMap ]
+ * @property { Map<string, Map<string, { propNode: string, propValue: AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp }>> } [ relationshipPropsMap ]
  * @property { Map<string, Map<string, (AceSchemaProp | AceSchemaRelationshipProp | AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp)>> } [ mustPropsMap ]
  *
  * @typedef { object } AcePassportOptions
@@ -183,7 +183,7 @@ import * as enums from './enums.js'
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps } AceMutateRequestItemSchemaAndData
+ * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
@@ -281,6 +281,12 @@ import * as enums from './enums.js'
  * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX } x
  * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX
  * @property { { node: string, nowName: string, newName: string }[] } props
+ *
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships
+ * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfRelationships } id
+ * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX } x
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX
+ * @property { { nowName: string, newName: string }[] } relationships
  *
  * @typedef { object } AceMutateRequestItemAddToSchema
  * @property { typeof enums.idsAce.AddToSchema } id

@@ -20,9 +20,9 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
     const props = passport.schemaDataStructures?.relationshipPropsMap?.get(xGenerated.relationshipName)
 
     if (props) {
-      for (const [ key, value ] of props) {
+      for (const [ key, { propValue } ] of props) {
         if (key !== relationships[0]) {
-          relationshipNodeName = value.x.node
+          relationshipNodeName = propValue.x.node
           break
         }
       }

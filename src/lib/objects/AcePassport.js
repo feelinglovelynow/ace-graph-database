@@ -87,7 +87,7 @@ export function setSchemaDataStructures (passport) {
 
           // relationshipPropsMap
           const mapValue = passport.schemaDataStructures.relationshipPropsMap.get(propValue.x.relationship) || new Map()
-          mapValue.set(propName, propValue)
+          mapValue.set(propName, { propNode: nodeName, propValue })
           passport.schemaDataStructures.relationshipPropsMap.set(propValue.x.relationship, mapValue)
 
           // cascade

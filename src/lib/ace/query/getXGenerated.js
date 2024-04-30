@@ -53,7 +53,8 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
 
     if (!relationshipPropsMap) throw AceError('getXGeneratedByParent__falsy-relationshipPropsMap', `The schema data structure relationshipPropsMap must be truthy, it is not because the relationship \`${ xGeneratedParent.relationshipName }\` does not align with any relationships in the map`, { relationshipName: xGeneratedParent.relationshipName })
 
-    schemaPropValue = relationshipPropsMap.get(xKey)
+    const r = relationshipPropsMap.get(xKey)
+    schemaPropValue = r?.propValue
 
     if (!schemaPropValue) throw AceError('getXGeneratedByParent__falsy-schemaPropValue', `This error is thrown b/c schemaPropValue must be truthy, it is not because the relationship \`${ xGeneratedParent.relationshipName }\` and the xKey \`${ xKey }\` does not align with your schema`, { relationshipName: xGeneratedParent.relationshipName, xKey })
   } else if (xGeneratedParent.nodeName) {

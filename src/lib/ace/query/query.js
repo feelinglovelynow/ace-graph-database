@@ -223,7 +223,7 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
       }
     }
 
-    /** @type { Map<string, td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp> | undefined } */
+    /** @type { Map<string, { propNode: string, propValue: td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp }> | undefined } */
     const relationshipPropsMap = (item.relationship && passport.schemaDataStructures?.relationshipPropsMap) ? passport.schemaDataStructures.relationshipPropsMap.get(xGenerated.relationshipName || '') : undefined
 
     if (xGenerated.x?.$o?.all) { // show all not relationship props
@@ -259,7 +259,8 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
             const relationshipUids = graphItem[getRelationshipProp(parentNodeOptions.schemaNodeProp.x.relationship)]
             await addRelationshipPropsToResponse(uid, relationshipUids, parentNodeOptions.schemaNodeProp, xKey, xValue, xGenerated, responseNowItem, responseOriginalItem, passport, publicJWKs, iRequest)
           } else if (item.relationship && xKey !== '$o' && relationshipPropsMap) {
-            const schemaNodeProp = relationshipPropsMap.get(xKey)
+            const r = relationshipPropsMap.get(xKey)
+            const schemaNodeProp = r?.propValue
             const relationshipGeneratedQueryXSection = getXGeneratedByParent(xValue, xKey, passport, xGenerated)  
 
             if (schemaNodeProp?.id === 'BidirectionalRelationshipProp') {

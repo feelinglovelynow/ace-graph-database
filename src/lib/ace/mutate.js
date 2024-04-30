@@ -784,6 +784,70 @@ export async function schemaAndDataUpdateNameOfNodeProps (requestItem, passport)
 }
 
 
+/** 
+ * @param { td.AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships } requestItem
+ * @param { td.AcePassport } passport
+ */
+export async function schemaAndDataUpdateNameOfRelationships (requestItem, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
+  for (const { nowName, newName } of requestItem.x.relationships) {
+    if (!passport.schema?.relationships[nowName]) throw AceError('schemaAndDataUpdateNameOfRelationships__invalidNowName', 'The relationship cannot be renamed b/c it is not defined in you schema', { nowName, newName })
+
+    // update relationship on each graphRelationship
+    const relationshipUidsKey = getRelationshipUidsKey(nowName)
+    const relationshipUids = await passport.storage.get(relationshipUidsKey)
+
+    if (relationshipUids.length) {
+      const graphNodeUids = [] // put a and b node uids here
+      const graphRelationships = await passport.storage.get(relationshipUids)
+
+      // update graphRelationship.relationship
+      for (const [ uid, graphRelationship ] of graphRelationships) {
+        graphRelationship.relationship = newName
+        put(uid, graphRelationship, passport)
+        graphNodeUids.push(graphRelationship.x.a)
+        graphNodeUids.push(graphRelationship.x.b)
+      }
+
+      const graphNodes = await passport.storage.get(graphNodeUids)
+      const nowRelationshipProp = getRelationshipProp(nowName)
+      const newRelationshipProp = getRelationshipProp(newName)
+
+      // update graphNode.$r__[ nowName ]
+      for (const [ uid, graphNode ] of graphNodes) {
+        if (graphNode[nowRelationshipProp]) {
+          graphNode[newRelationshipProp] = graphNode[nowRelationshipProp]
+          delete graphNode[nowRelationshipProp]
+          put(uid, graphNode, passport)
+        }
+      }
+    }
+
+    // update relationshipUidsKey
+    const newRelationshipUidsKey = getRelationshipUidsKey(newName)
+    put(newRelationshipUidsKey, relationshipUids, passport)
+    del(relationshipUidsKey, passport)
+
+    // update schema relationship
+    passport.schema.relationships[newName] = passport.schema.relationships[nowName]
+    delete passport.schema.relationships[nowName]
+
+    // update schema node props
+    const relationshipNodeProps = passport.schemaDataStructures?.relationshipPropsMap?.get(nowName)
+
+    if (relationshipNodeProps) {
+      for (const [ propName, { propNode, propValue } ] of relationshipNodeProps) {
+        propValue.x.relationship = newName
+        passport.schema.nodes[propNode][propName] = propValue
+      }
+    }
+
+    schemaDeleteConclude(passport)
+  }
+}
+
+
 /**
  * @param { td.AcePassport } passport
  * @returns { void }

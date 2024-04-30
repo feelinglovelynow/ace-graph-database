@@ -112,7 +112,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { Map<string, Set<string>> } [ cascade ]
  * @property { Map<string, Set<string>> } [ nodeRelationshipPropsMap ]
  * @property { Map<string, string> } [ nodeNamePlusRelationshipNameToNodePropNameMap ]
- * @property { Map<string, Map<string, AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp>> } [ relationshipPropsMap ]
+ * @property { Map<string, Map<string, { propNode: string, propValue: AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp }>> } [ relationshipPropsMap ]
  * @property { Map<string, Map<string, (AceSchemaProp | AceSchemaRelationshipProp | AceSchemaForwardRelationshipProp | AceSchemaReverseRelationshipProp | AceSchemaBidirectionalRelationshipProp)>> } [ mustPropsMap ]
  *
  * @typedef { object } AcePassportOptions
@@ -193,7 +193,7 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps } AceMutateRequestItemSchemaAndData
+ * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
@@ -261,6 +261,12 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX } x
  * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX
  * @property { ${ typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType || '{ node: string, nowName: string, newName: string }[]' } } props
+ *
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships
+ * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfRelationships } id
+ * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX } x
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX
+ * @property { ${ typedefs.mutate.SchemaAndDataUpdateNameOfRelationshipsType || '{ nowName: string, newName: string }[]' } } relationships
  *
  * @typedef { object } AceMutateRequestItemAddToSchema
  * @property { typeof enums.idsAce.AddToSchema } id
@@ -565,6 +571,7 @@ function getSchemaTypedefs (schema) {
       SchemaAndDataDeleteNodePropsType: '',
       SchemaAndDataUpdateNameOfNodesType: '',
       SchemaAndDataUpdateNameOfNodePropsType: '',
+      SchemaAndDataUpdateNameOfRelationshipsType: '',
     }
   }
 
@@ -716,6 +723,8 @@ function getSchemaTypedefs (schema) {
 
       typedefs.mutate.UpsertGraphRelationshipPipes += `${ schemaRelationshipName }MutateRequestItemUpsertGraphRelationship | `
 
+      typedefs.mutate.SchemaAndDataUpdateNameOfRelationshipsType += `{ nowName: '${ schemaRelationshipName }', newName: string } | `
+
       const abDescription = `\`a\` and \`b\` are node uids, so for examle if \`a\` is \`_:node1\` and \`b\` is \`_:node2\` then, \`_:node1\` => \`${ schemaRelationshipName }\` => \`_:node2\``
 
       typedefs.mutate.AddRelationshipToGraphTypes += `\n *
@@ -810,6 +819,7 @@ function getSchemaTypedefs (schema) {
   if (typedefs.mutate.SchemaAndDataDeleteNodePropsType) typedefs.mutate.SchemaAndDataDeleteNodePropsType = '(' + typedefs.mutate.SchemaAndDataDeleteNodePropsType.slice(0, -3) + ')[]'
   if (typedefs.mutate.SchemaAndDataUpdateNameOfNodesType) typedefs.mutate.SchemaAndDataUpdateNameOfNodesType = '(' + typedefs.mutate.SchemaAndDataUpdateNameOfNodesType.slice(0, -3) + ')[]'
   if (typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType) typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType = '(' + typedefs.mutate.SchemaAndDataUpdateNameOfNodePropsType.slice(0, -3) + ')[]'
+  if (typedefs.mutate.SchemaAndDataUpdateNameOfRelationshipsType) typedefs.mutate.SchemaAndDataUpdateNameOfRelationshipsType = '(' + typedefs.mutate.SchemaAndDataUpdateNameOfRelationshipsType.slice(0, -3) + ')[]'
 
 
   typedefs.query.NodeType = plop({
