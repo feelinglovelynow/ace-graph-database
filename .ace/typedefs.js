@@ -183,7 +183,7 @@ import * as enums from './enums.js'
  * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
  * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
  * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships } AceMutateRequestItemSchemaAndData
+ * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps } AceMutateRequestItemSchemaAndData
  * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
@@ -287,6 +287,12 @@ import * as enums from './enums.js'
  * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX } x
  * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX
  * @property { { nowName: string, newName: string }[] } relationships
+ *
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps
+ * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfRelationshipProps } id
+ * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipPropsX } x
+ * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipPropsX
+ * @property { { relationship: string, nowName: string, newName: string }[] } props
  *
  * @typedef { object } AceMutateRequestItemAddToSchema
  * @property { typeof enums.idsAce.AddToSchema } id

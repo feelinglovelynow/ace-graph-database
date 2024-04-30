@@ -564,7 +564,7 @@ export async function dataDeleteNodeProps (requestItem, passport) {
     for (const [ uid, graphNode ] of graphNodes) {
       for (const propName of requestItem.x.props) {
         if (typeof graphNode.x[propName] !== 'undefined') {
-          if (!passport.schema?.nodes[graphNode.node]?.[propName]) throw AceError('dataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are not defined in you schema', { node: graphNode.node, prop: propName })
+          if (!passport.schema?.nodes[graphNode.node]?.[propName]) throw AceError('dataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are not defined in your schema', { node: graphNode.node, prop: propName })
 
           validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, graphNode, passport, { node: graphNode.node, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, node: graphNode.node, prop: propName })))
           delete graphNode.x[propName]
@@ -587,7 +587,7 @@ export async function dataDeleteRelationshipProps (requestItem, passport) {
     for (const relationshipNode of relationshipNodes.values()) {
       for (const propName of requestItem.x.props) {
         if (typeof relationshipNode.x[propName] !== 'undefined') {
-          if (!passport.schema?.relationships[relationshipNode.x.relationship]?.props?.[propName]) throw AceError('dataDeleteRelationshipProps__invalidRelationshipPropCombo', 'The relationship and the prop cannot be deleted b/c they are not defined in you schema', { relationship: relationshipNode.x.relationship, prop: propName })
+          if (!passport.schema?.relationships[relationshipNode.x.relationship]?.props?.[propName]) throw AceError('dataDeleteRelationshipProps__invalidRelationshipPropCombo', 'The relationship and the prop cannot be deleted b/c they are not defined in your schema', { relationship: relationshipNode.x.relationship, prop: propName })
 
           validateUpdateOrDeleteBasedOnPermissions(enums.permissionActions.delete, relationshipNode, passport, { relationship: relationshipNode.relationshipName, prop: propName }, passport.revokesAcePermissions?.get(getRevokesKey({ action: enums.permissionActions.delete, relationship: relationshipNode.relationshipName, prop: propName })))
           delete relationshipNode.x[propName]
@@ -668,7 +668,7 @@ export async function schemaAndDataDeleteNodeProps (requestItem, passport) {
   if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
 
   for (const { node, prop } of requestItem.x.props) {
-    if (!passport.schema?.nodes[node]?.[prop]) throw AceError('schemaAndDataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are are not defined in you schema', { node, prop })
+    if (!passport.schema?.nodes[node]?.[prop]) throw AceError('schemaAndDataDeleteNodeProps__invalidNodePropCombo', 'The node and the prop cannot be deleted b/c they are are not defined in your schema', { node, prop })
 
     const nodeUidsKey = getNodeUidsKey(node)
     const nodeUids = await passport.storage.get(nodeUidsKey)
@@ -699,7 +699,7 @@ export async function schemaAndDataUpdateNameOfNodes (requestItem, passport) {
   if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
 
   for (const { nowName, newName } of requestItem.x.nodes) {
-    if (!passport.schema?.nodes[nowName]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidNowName', 'The node cannot be renamed b/c it is not defined in you schema', { nowName, newName })
+    if (!passport.schema?.nodes[nowName]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidNowName', 'The node cannot be renamed b/c it is not defined in your schema', { nowName, newName })
 
     // update node on each graphNode
     const nodeUidsKey = getNodeUidsKey(nowName)
@@ -757,12 +757,11 @@ export async function schemaAndDataUpdateNameOfNodeProps (requestItem, passport)
   if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
 
   for (const { node, nowName, newName } of requestItem.x.props) {
-    if (!passport.schema?.nodes[node]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidNode', `The prop cannot be renamed b/c the node ${node} it is not defined in you schema`, { node, nowName, newName })
-    if (!passport.schema?.nodes[node]?.[nowName]) throw AceError('schemaAndDataUpdateNameOfNodes__invalidProp', `The prop cannot be renamed b/c the node ${ node } and the prop ${ nowName } is not defined in you schema`, { node, nowName, newName })
+    if (!passport.schema?.nodes[node]) throw AceError('schemaAndDataUpdateNameOfNodeProps__invalidNode', `The prop cannot be renamed b/c the node ${ node } it is not defined in your schema`, { node, nowName, newName })
+    if (!passport.schema?.nodes[node]?.[nowName]) throw AceError('schemaAndDataUpdateNameOfNodeProps__invalidProp', `The prop cannot be renamed b/c the node ${ node } and the prop ${ nowName } is not defined in your schema`, { node, nowName, newName })
 
     // update prop on each graphNode
-    const nodeUidsKey = getNodeUidsKey(node)
-    const nodeUids = await passport.storage.get(nodeUidsKey)
+    const nodeUids = await passport.storage.get(getNodeUidsKey(node))
 
     if (nodeUids.length) {
       const graphNodes = await passport.storage.get(nodeUids)
@@ -792,7 +791,7 @@ export async function schemaAndDataUpdateNameOfRelationships (requestItem, passp
   if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
 
   for (const { nowName, newName } of requestItem.x.relationships) {
-    if (!passport.schema?.relationships[nowName]) throw AceError('schemaAndDataUpdateNameOfRelationships__invalidNowName', 'The relationship cannot be renamed b/c it is not defined in you schema', { nowName, newName })
+    if (!passport.schema?.relationships[nowName]) throw AceError('schemaAndDataUpdateNameOfRelationships__invalidNowName', 'The relationship cannot be renamed b/c it is not defined in your schema', { nowName, newName })
 
     // update relationship on each graphRelationship
     const relationshipUidsKey = getRelationshipUidsKey(nowName)
@@ -844,6 +843,44 @@ export async function schemaAndDataUpdateNameOfRelationships (requestItem, passp
     }
 
     schemaDeleteConclude(passport)
+  }
+}
+
+
+/** 
+ * @param { td.AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps } requestItem
+ * @param { td.AcePassport } passport
+ */
+export async function schemaAndDataUpdateNameOfRelationshipProps (requestItem, passport) {
+  if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
+
+  for (const { relationship, nowName, newName } of requestItem.x.props) {
+    if (!passport.schema?.relationships[relationship]) throw AceError('schemaAndDataUpdateNameOfRelationshipProps__invalidRelationship', `The prop cannot be renamed b/c the relationship ${ relationship } it is not defined in your schema`, { relationship, nowName, newName })
+    if (!passport.schema?.relationships[relationship]?.props?.[nowName]) throw AceError('schemaAndDataUpdateNameOfRelationshipProps__invalidProp', `The prop cannot be renamed b/c the relationship ${ relationship } and the prop ${ nowName } is not defined in your schema`, { relationship, nowName, newName })
+
+    // update prop on each graphRelationship
+    const relationshipUids = await passport.storage.get(getRelationshipUidsKey(relationship))
+
+    if (relationshipUids.length) {
+      const graphRelationships = await passport.storage.get(relationshipUids)
+
+      for (const [ uid, graphRelationship ] of graphRelationships) {
+        if (typeof graphRelationship.x[nowName] !== 'undefined') {
+          graphRelationship.x[newName] = graphRelationship.x[nowName]
+          delete graphRelationship.x[nowName]
+          put(uid, graphRelationship, passport)
+        }
+      }
+    }
+
+    // update schema
+    const props = passport.schema.relationships[relationship].props
+
+    if (props) {
+      props[newName] = props[nowName]
+      delete props[nowName]
+      schemaDeleteConclude(passport)
+    }
   }
 }
 
