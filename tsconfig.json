@@ -23,8 +23,9 @@
     "src/lib/objects/AcePassport.js",
 
     "src/lib/security/createJWKs.js",
-    "src/lib/security/getAlgorithmOptions.js",
+    "src/lib/security/crypt.js",
     "src/lib/security/hash.js",
+    "src/lib/security/util.js",
 
     "src/lib/isObjPopulated.js",
     "src/lib/variables.js",

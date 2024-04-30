@@ -1,9 +1,9 @@
 import { td, enums } from '#ace'
 import { put } from './storage.js'
 import { aceFetch } from './aceFetch.js'
+import { importGenerateAlgorithm } from '../security/util.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
 import { queryNode, queryRelationship } from './query/query.js'
-import { getAlgorithmOptions } from '../security/getAlgorithmOptions.js'
 import { setSchemaDataStructures, stamp } from '../objects/AcePassport.js'
 import { getSortIndexKey, getRelationshipProp, getRevokesKey } from '../variables.js'
 import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, schemaAndDataDeleteNodes, schemaAndDataDeleteNodeProps, schemaAndDataUpdateNameOfNodes, schemaAndDataUpdateNameOfNodeProps, schemaAndDataUpdateNameOfRelationships, schemaAndDataUpdateNameOfRelationshipProps } from './mutate.js'
@@ -50,7 +50,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     async function setPrivateJWKs () {
       if (privateJWKs) {
         for (const name in privateJWKs) {
-          cryptoJWKs.private[name] = await crypto.subtle.importKey('jwk', JSON.parse(privateJWKs[name]), getAlgorithmOptions('import'), true, ['sign'])
+          cryptoJWKs.private[name] = await crypto.subtle.importKey('jwk', JSON.parse(privateJWKs[name]), importGenerateAlgorithm, true, ['sign'])
         }
       }
     }
@@ -59,7 +59,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     async function setPublicJWKs () {
       if (publicJWKs) {
         for (const name in publicJWKs) {
-          cryptoJWKs.public[name] = await crypto.subtle.importKey('jwk', JSON.parse(publicJWKs[name]), getAlgorithmOptions('import'), true, ['verify'])
+          cryptoJWKs.public[name] = await crypto.subtle.importKey('jwk', JSON.parse(publicJWKs[name]), importGenerateAlgorithm, true, ['verify'])
         }
       }
     }

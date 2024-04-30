@@ -1,30 +1,23 @@
-import { getAlgorithmOptions } from './getAlgorithmOptions.js'
+import { signVerifyAlgorithm, stringToUint8, arrayBufferToBase64, base64ToUint8 } from './util.js'
 
 
 /**
+ * @param { string } original
  * @param { CryptoKey } privateKey
- * @param { string } hashOriginal
  * @returns { Promise<string> }
  */
-export async function sign (privateKey, hashOriginal) {
-  const hashUint8 = new TextEncoder().encode(hashOriginal)
-  const hashArrayBuffer = await crypto.subtle.sign(getAlgorithmOptions('sign'), privateKey, hashUint8)
-  const hashBase64 = btoa(String.fromCharCode(...new Uint8Array(hashArrayBuffer)))
-
-  return hashBase64
+export async function sign (original, privateKey) {
+  const hashArrayBuffer = await crypto.subtle.sign(signVerifyAlgorithm, privateKey, stringToUint8(original))
+  return arrayBufferToBase64(hashArrayBuffer)
 }
 
 
 /**
- * @param { CryptoKey } publicKey
- * @param { string } hashOriginal
+ * @param { string } original
  * @param { string } hashBase64
+ * @param { CryptoKey } publicKey
  * @returns { Promise<boolean> }
  */
-export async function verify (publicKey, hashOriginal, hashBase64) {
-  const hashUint8 = new TextEncoder().encode(hashOriginal)
-  const hashArrayBuffer = Uint8Array.from(atob(hashBase64), c => c.charCodeAt(0))
-  const isValid = await crypto.subtle.verify(getAlgorithmOptions('verify'), publicKey, hashArrayBuffer, hashUint8)
-
-  return isValid
+export async function verify (original, hashBase64, publicKey) {
+  return await crypto.subtle.verify(signVerifyAlgorithm, publicKey, base64ToUint8(hashBase64), stringToUint8(original))
 }

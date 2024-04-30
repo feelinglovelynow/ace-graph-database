@@ -13,6 +13,7 @@ import { execSync, exec } from 'node:child_process'
 import { createJWKs } from '../security/createJWKs.js'
 import { CLIFalsyError } from '../objects/AceError.js'
 import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
+import { decrypt, encrypt } from '../security/crypt.js'
 
 
 (async function cli () {
@@ -60,18 +61,17 @@ import { tsConfig, typedefs, jsIndex, tsIndex } from './types.js'
       // ace jwks
       case 'jwks':
         const jwks = await createJWKs()
-        console.log(`Public and Private JWKs
-  1. Store the public and private jwks below, in your .env file, as a string
-  2. Send jwks to ace() as a string whenever you'd love to do cryptography
-  3. Ace will JSON.parse() the string, convert the parsed string (JWK) to a CryptoKey and then use the key to do cryptography
+        console.log(`Creates JWKs
+  1. A jwk is like a password and helps Ace do cryptography
+  2. Use \`ACE_PRIVATE_JWK\` to create a hash, use \`ACE_PUBLIC_JWK\` to verify a hash and use \`ACE_CRYPT_JWK\` to encrypt and decrypt data.
+  3. Ace recommends storing JWKs in your .env file as a string
 
 
-Public JWK:
-'${ jwks.publicJWK }'
+ACE_PRIVATE_JWK='${ jwks.privateJWK }'
 
+ACE_PUBLIC_JWK='${ jwks.publicJWK }'
 
-Private JWK:
-'${ jwks.privateJWK }'`)
+ACE_CRYPT_JWK='${ jwks.cryptJWK }'`)
         break
 
 
@@ -117,18 +117,20 @@ Private JWK:
       
       
       case 'graphToFile':
-        const gtfName = options.get('-n') || options.get('--name') || (new Date()).toISOString()
-
         const gtfHost = options.get('-h') || options.get('--host')
         if (!gtfHost) throw CLIFalsyError('host', '-h', '--host')
 
+        const gtfJWK = options.get('-j') || options.get('--jwk')
+        const gtfName = options.get('-n') || options.get('--name') || (new Date()).toISOString()
         const { backupFromSchema } = await aceFetch({ host: gtfHost, body: { request: { id: 'GetBackup', prop: 'backupFromSchema' } } })
 
         if (!fs.existsSync(files.cwd)) await fsPromises.mkdir(files.cwd)
         if (!fs.existsSync(files.backups)) await fsPromises.mkdir(files.backups)
 
         const gtfStrLocation = resolve(process.cwd(), `./ace/backups/${ gtfName }.json`)
-        await fsPromises.writeFile(gtfStrLocation, JSON.stringify(backupFromSchema, null, 2)) // write 
+        const gtfResponse = gtfJWK ? await encrypt(JSON.stringify(backupFromSchema), gtfJWK) : backupFromSchema
+
+        await fsPromises.writeFile(gtfStrLocation, JSON.stringify(gtfResponse, null, 2)) // write 
         console.log(`✨ backup saved to ${ gtfStrLocation }`)
         break
 
@@ -136,12 +138,22 @@ Private JWK:
       case 'fileToGraph':
         const file = options.get('-f') || options.get('--file')
         const ftgHost = options.get('-h') || options.get('--host')
+        const ftgJWK = options.get('-j') || options.get('--jwk')
 
         if (!file) throw CLIFalsyError('file', '-f', '--file')
         if (!ftgHost) throw CLIFalsyError('host', '-h', '--host')
 
-        const backupFromFile = await fsPromises.readFile(resolve(process.cwd(), `./ace/backups/${ file }`), { encoding: 'utf-8' })
-        await aceFetch({ host: ftgHost, body: { request: { id: 'LoadBackup', x: { backup: backupFromFile } } } })
+        const ftgFileText = await fsPromises.readFile(resolve(process.cwd(), `./ace/backups/${ file }`), { encoding: 'utf-8' })
+
+        let ftgBackup
+
+        if (!ftgJWK) ftgBackup = ftgFileText
+        else {
+          const json = JSON.parse(ftgFileText)
+          ftgBackup = await decrypt(json.encrypted, json.iv, ftgJWK)
+        }
+
+        await aceFetch({ host: ftgHost, body: { request: { id: 'LoadBackup', x: { backup: ftgBackup } } } })
         console.log('✨ backup applied!')
         break
 
@@ -227,33 +239,42 @@ ace graphToFile
   Generate backup and then save backup to a file locally
   Location File: [ Current Directory ]/ace/backups/[ File Name ].json
   File Name Default: Now Iso Datetime
+  Crypt JWK: If a \`Crypt JWK\` is provided, the backup will be encrypted
   Options:
     -h      |  Host       |  Required  |  String
     --host  |  Host       |  Required  |  String
     -n      |  File Name  |  Optional  |  String
     --name  |  File Name  |  Optional  |  String
+    -j      |  Crypt JWK  |  Optional  |  String
+    --jwk   |  Crypt JWK  |  Optional  |  String
   Examples:
     ace graphToFile -h=http://localhost:8787
     ace graphToFile --host=http://localhost:8787
     ace graphToFile -h=http://localhost:8787 -n=qa
     ace graphToFile --host=http://localhost:8787 --name=qa
-
+    ace graphToFile -h=http://localhost:8787 -j='{ ... }'
+    ace graphToFile --host=http://localhost:8787 --jwk='{ ... }'
 
 
 ace fileToGraph
   Read backup from file and then save backup to graph
   File Location: [ Current Directory ]/ace/backups/[ File ]
+  Crypt JWK: If a \`Crypt JWK\` is provided, the backup will be decrypted
   Skip Data Delete: When a backup is applied with "ace fileToGraph" an entire graph delete is done first, to avoid the delete and just apply the backup use this option
   Options:
     -f                |  File              |  Required  |  String
     -file             |  File              |  Required  |  String
     -h                |  Host              |  Required  |  String
     --host            |  Host              |  Required  |  String
+    -j                |  Crypt JWK         |  Optional  |  String
+    --jwk             |  Crypt JWK         |  Optional  |  String
     -s                |  Skip Data Delete  |  Optional  |  Boolean
     --skipDataDelete  |  Skip Data Delete  |  Optional  |  Boolean
   Examples:
     ace fileToGraph -f=qa.json -h=http://localhost:8787
     ace fileToGraph --file=qa.json --host=http://localhost:8787
+    ace fileToGraph -f=qa.json -h=http://localhost:8787 -j='{ ... }'
+    ace fileToGraph --file=qa.json --host=http://localhost:8787 --jwk='{ ... }'
     ace fileToGraph -f=backup.json -h=http://localhost:8787 -s=true
     ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --host=http://localhost:8787 --skipDataDelete=true
 

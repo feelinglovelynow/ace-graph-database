@@ -307,8 +307,8 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
     if (!publicJWK) throw AceError('query__invalid-hash-public-key', `The request is invalid because $o.publicJWKs.${ option } does not match request.publicJWKs`, { qw })
 
     return sideIndex ?
-      await verify(publicJWK, left.value, right.value) :
-      await verify(publicJWK, right.value, left.value)
+      await verify(left.value, right.value, publicJWK) :
+      await verify(right.value, left.value, publicJWK)
   }
 }
 

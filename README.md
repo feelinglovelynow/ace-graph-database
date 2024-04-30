@@ -177,7 +177,7 @@ const response = await ace({
       x: {
         $o: {
           all: true, // response.actsInMovie will have all not relationship props (_uid, _salary)
-          findByAnd: [ // return the first actor that fulfils both criteria
+          findByAnd: [ // return the first actor that fulfills all criteria
             [ { prop: '_salary' }, 'greaterThan', 90 ],
             [ { prop: 'name' }, 'doesNotEqual', 'Carrie-Anne Moss' ],
           ]
@@ -328,7 +328,6 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Encrypt / Zip Backup (Read / Write)
 1. Sanitize / Validate Input
 1. R2 Backups (`ace()` / cli) (Read / Write)
 1. cli fileToGraph Option: skipDataDelete: boolean
@@ -394,7 +393,7 @@ ace types
     * Conditional Types
 1. Runtime validation
     * v1
-      * Accepts: a test object + (a schma node / a schema relationship) 
+      * Accepts: a test object + (a schema node / a schema relationship) 
       * Responds: does the test object obey the schema
     * v2
       * Also accepts options to add validations, edit validations or remove validations

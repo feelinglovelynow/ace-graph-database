@@ -25,8 +25,9 @@ esbuild.build({ // // https://esbuild.github.io/api/
     './tsc/src/lib/objects/AcePassport.js',
 
     './tsc/src/lib/security/createJWKs.js',
-    './tsc/src/lib/security/getAlgorithmOptions.js',
+    "./tsc/src/lib/security/crypt.js",
     './tsc/src/lib/security/hash.js',
+    './tsc/src/lib/security/util.js',
 
     './tsc/src/lib/isObjPopulated.js',
     './tsc/src/lib/variables.js',
