@@ -328,7 +328,6 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. SchemaAndDataUpdateNameOfRelationshipProps
 1. Encrypt / Zip Backup (Read / Write)
 1. Sanitize / Validate Input
 1. R2 Backups (`ace()` / cli) (Read / Write)
