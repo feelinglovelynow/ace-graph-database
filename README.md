@@ -373,7 +373,17 @@ ace types
     * v2
       * Also accepts options to add validations, edit validations or remove validations
 1. Relationship prop indexes
-1. Full Text Index, Mutation and Query
+    * Sort Index
+    * Unique Index
+1. Full Text Index
+    * Node Prop
+    * Relationship Prop
+1. Batch requests to storage to stay within storage required Maximum count
+1. $o: random
+1. Logs
+    * Why?
+    * What?
+    * Where?
 1. On Error Flow (error categories?)
     * Retry: Count, MS Before Trying Again
     * Log to KV
@@ -382,11 +392,9 @@ ace types
     * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
         * Offline support > Response Allows Resume
-1. $o random
-1. Batch requests to storage to stay within storage required Maximum count
 1. Quality of Life
-    * Camelcase errors
-    * inup to addUp, isert to add and organize mutation functions / files
+    * Camelcase error id's
+    * inup to addUp, insert to add and organize mutation functions / files
     * External: Property to Prop
     * No more embedded functions (so I stop creating the same fn multiple times)
     * Comments (param, returns, description, example usage, why, proofread) for all index functions
