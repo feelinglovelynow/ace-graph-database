@@ -328,7 +328,7 @@ ${ typedefs.query.RelationshipType }
  * @property { string[] } [ filterByUids ]
  * @property { string[] } [ filterBy_Uids ]
  * @property { AceQueryFilterByUniques } [ filterByUniques ]
- * @property { { [jwkName: string]: string } } [ publicJWKs ]
+ * @property { AceQueryRequestItemPublicJWKOption } [ publicJWKs ]
  * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this \`prop\` to each node in the response
  * @property { AceQuerySumAsProperty } [ sumAsProp ]
  * @property { AceQueryAverageAsProperty } [ avgAsProp ]
@@ -368,7 +368,7 @@ ${ typedefs.query.RelationshipType }
  * @property { AceQuerySort } [ sort ]
  * @property { string } [ findBy_Uid ]
  * @property { string[] } [ filterBy_Uids ]
- * @property { { [jwkName: string]: string } } [ publicJWKs ]
+ * @property { AceQueryRequestItemPublicJWKOption } [ publicJWKs ]
  * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this \`prop\` to each node in the response
  * @property { AceQuerySumAsProperty } [ sumAsProp ]
  * @property { AceQueryAverageAsProperty } [ avgAsProp ]
@@ -400,6 +400,16 @@ ${ typedefs.query.RelationshipType }
  * @property { string } [ maxAmtAsRes ] - Loop the items in the response, find the max amount of this property, amongst all response items and set it as the response
  * @property { string } [ minNodeAsRes ] - Find the smallest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
  * @property { string } [ maxNodeAsRes ] - Find the largest numerical value of each node's \`property\` in the response and then set the node that has that value as the response
+ *
+ * @typedef { object } AceQueryRequestItemPublicJWKOption
+ * @property { string } [ findByOr ]
+ * @property { string } [ findByAnd ]
+ * @property { string } [ findByPropValue ]
+ * @property { string } [ findByPropRes ]
+ * @property { string } [ filterByOr ]
+ * @property { string } [ filterByAnd ]
+ * @property { string } [ filterByPropValue ]
+ * @property { string } [ filterByPropRes ]
  *
  * @typedef { object } AceQueryWhereItemProp
  * @property { string } prop

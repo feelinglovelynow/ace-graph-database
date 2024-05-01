@@ -122,7 +122,7 @@ export async function inupNode (requestItem, passport, sortIndexMap, privateJWKs
           if (schemaProp.x.dataType === enums.dataTypes.hash) {
             const jwkName = requestItem.x.$o?.privateJWK
 
-            if (!jwkName) throw AceError('mutate__falsy-options-private-jwk', `The node name ${ requestItem.node } with the prop name ${ nodePropName } is invalid because requestItem.x.$o does not have a PrivateJWK. Example: requestItem.$o: [ { id: 'PrivateJWK', x: { name: 'password' } } ]`, _errorData)
+            if (!jwkName) throw AceError('mutate__falsy-options-private-jwk', `The node name ${ requestItem.node } with the prop name ${ nodePropName } is invalid because requestItem.x.$o does not have a PrivateJWK. Example: requestItem.$o: { privateJWK: 'password' }`, _errorData)
             if (!privateJWKs?.[jwkName]) throw AceError('mutate__falsy-request-item-private-jwk', `The node name ${ requestItem.node } with the prop name ${ nodePropName } is invalid because requestItem.x.$o[PrivateJWK].name does not align with any request.privateJWKs. Names must align.`, _errorData)
 
             requestItemX[nodePropName] = await sign(nodePropValue, privateJWKs[jwkName])
@@ -154,10 +154,19 @@ export async function inupNode (requestItem, passport, sortIndexMap, privateJWKs
       }
 
       /** @type { { [k:string]: any } } - The request item that will be added to the graph - No id prop */
-      let graphRequestItem = {}
+      const graphRequestItem = {}
 
       for (const key in requestItem) {
-        if (key !== 'id') graphRequestItem[key] = /** @type { td.AceMutateRequestItemNodeWithRelationships } */(requestItem)[key]
+        if (key !== 'id' && key !== 'x') graphRequestItem[key] = /** @type { td.AceMutateRequestItemNodeWithRelationships } */(requestItem)[key]
+      }
+
+      if (!requestItem.x.$o) graphRequestItem.x = requestItem.x
+      else {
+        graphRequestItem.x = {}
+
+        for (const prop in requestItem.x) {
+          if (prop !== '$o') graphRequestItem.x[prop] = requestItem.x[/** @type { 'uid' } */(prop)]
+        }
       }
 
       put(graphUid, graphRequestItem, passport) // The entries we will put
