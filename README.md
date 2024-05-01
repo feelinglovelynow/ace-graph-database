@@ -339,6 +339,14 @@ ace types
 1. Ace
 
 
+## 🙋‍♀️ Why Create Ace?
+1. A graph is a natural way to store data
+    * For example: Nodes = Neurons AND Relationships = Synapses
+    * In other words, when we are remembering something (eg: My Mom's, Yoga Studio) we are not joining tables in our brain (eg: All Users, All Yoga Studio's), we are just walking the graph, from one node to the next
+1. Other graph databasse require JavaScript template strings and do not provide lovely intellisense like Prisma or Drizzle
+1. So Ace is the union of a graph database with JavaScript intellisense
+
+
 ## 📀 Storage Options
 1. Cloudflare Durable Object
     * Version 1
