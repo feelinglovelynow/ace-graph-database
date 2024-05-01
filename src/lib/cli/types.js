@@ -198,7 +198,10 @@ ${ typedefs.Nodes }${ typedefs.Relationships }/** AceGraph
  *
  * @typedef { object } AceMutateRequestItemLoadBackup
  * @property { typeof enums.idsAce.LoadBackup } id
- * @property { { backup: string } } x
+ * @property { AceMutateRequestItemLoadBackupX } x
+ * @typedef { object } AceMutateRequestItemLoadBackupX
+ * @property { string } backup
+ * @property { boolean } [ skipDataDelete ]
  *
  * @typedef { object } AceMutateRequestItemEmpty
  * @property { typeof enums.idsAce.Empty } id - Delete all data and schema from graph

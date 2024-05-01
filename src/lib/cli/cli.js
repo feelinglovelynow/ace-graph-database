@@ -138,11 +138,12 @@ ACE_CRYPT_JWK='${ jwks.cryptJWK }'`)
       case 'fileToGraph':
         const file = options.get('-f') || options.get('--file')
         const ftgHost = options.get('-h') || options.get('--host')
-        const ftgJWK = options.get('-j') || options.get('--jwk')
 
         if (!file) throw CLIFalsyError('file', '-f', '--file')
         if (!ftgHost) throw CLIFalsyError('host', '-h', '--host')
 
+        const ftgJWK = options.get('-j') || options.get('--jwk')
+        const ftgSkipDataDelete = Boolean(options.get('-s') || options.get('--skipDataDelete'))
         const ftgFileText = await fsPromises.readFile(resolve(process.cwd(), `./ace/backups/${ file }`), { encoding: 'utf-8' })
 
         let ftgBackup
@@ -153,7 +154,7 @@ ACE_CRYPT_JWK='${ jwks.cryptJWK }'`)
           ftgBackup = await decrypt(json.encrypted, json.iv, ftgJWK)
         }
 
-        await aceFetch({ host: ftgHost, body: { request: { id: 'LoadBackup', x: { backup: ftgBackup } } } })
+        await aceFetch({ host: ftgHost, body: { request: { id: 'LoadBackup', x: { backup: ftgBackup, skipDataDelete: ftgSkipDataDelete } } } })
         console.log('✨ backup applied!')
         break
 
@@ -283,11 +284,11 @@ ace fileToGraph
 ace types
   Create types (TS) and typedefs (JSDoc)
     - IF a host (Cloudflare Worker URL) is provided
-      - Types take into consideration your schema by requesting it via the host
+      - Types take into consideration this hosted schema
     - ELSE IF a (schema) file is provided [ Current Directory ]/ace/schemas/
-      - Types take into consideration your schema by loading it locally from
+      - Types take into consideration this file schema
     - ELSE
-      - Types do not take into consideration your schema
+      - Types do not take into consideration any schema
   Options:
     -h      |  Host  |  Optional  |  String
     --host  |  Host  |  Optional  |  String

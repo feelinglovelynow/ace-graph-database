@@ -1,7 +1,7 @@
 {
-  "name": "@feelinglovelynow/ace-graph-database",
+  "name": "@ace/db",
   "version": "0.0.1",
-  "author": "https://github.com/feelinglovelynow?tab=repositories",
+  "author": "https://github.com/acedatabasefoundation",
   "description": "Our mission is to create, maintain and enhance the Best database for JavaScript Developers!",
   "license": "MIT",
   "type": "module",
@@ -17,26 +17,24 @@
     "src"
   ],
   "keywords": [
-    "ace graph database",
     "ace",
     "graph",
     "database",
     "db",
-    "graph database",
     "node",
     "edge",
-    "cloudflare durable objects",
-    "cloudflare"
+    "cloudflare",
+    "durable objects"
   ],
   "imports": {
     "#ace": "./.ace/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/feelinglovelynow/ace-graph-database.git"
+    "url": "git+https://github.com/acedatabasefoundation/ace.git"
   },
   "bugs": {
-    "url": "https://github.com/feelinglovelynow/ace-graph-database/issues"
+    "url": "https://github.com/acedatabasefoundation/ace/issues"
   },
   "scripts": {
     "watch": "pnpm tsc -w",
@@ -54,6 +52,6 @@
     "esbuild": "^0.20.2",
     "jest": "^29.7.0",
     "typescript": "^5.4.5",
-    "wrangler": "^3.51.2"
+    "wrangler": "^3.53.0"
   }
 }

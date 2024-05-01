@@ -11,7 +11,7 @@
 
 ## 🥹 Dynamic
 1. Nodes may have props, relationships may have props, and relationships may be one to one, one to many or many to many
-1. Our cli can save zipped and encrypted backups locally for free, apply backups to a graph or save backups to [Cloudflare](https://www.cloudflare.com/developer-platform/r2/)
+1. Our cli can save unencrypted backups locally, save encrypted backups locally and apply any of these backups to your graph for free
 
 ## 🙌 Types
 1. Based on the JSON Schema you provide, our cli creates types for TypeScript devs and JSDoc comments for JavaScript devs
@@ -19,10 +19,13 @@
 
 
 ## ⚡️ Performance
-* Node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
-    * To query a `Users > Friends`, Ace will O(1) lookup the index of `Friend uids` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
+* Goodbye joins and greetings `maps`, aka node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
+    * For example, If a users uid is `abc` and you'd love to get all that users friends, Ace will:
+        1. `O(1)` lookup the users node `map.get('abc')`
+        1. Find the the index of friend uids in the value for that node, `[ 'xyz', '123' ]`
+        1. `O(1)` lookup each friend `map.get([ 'xyz', '123' ])` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
     * JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
-    * By [v3](#-version-3-roadmap) we plan on providing Universal (Self) Hosting and Ace Cloud Hosting options thanks to a low level language (maybe w/ [Zig](https://ziglang.org/) 1.x) rewrite that'll compile to a binary and can be hosted anywhere! 🤙
+    * By [v3](#-version-3-roadmap) we plan on providing Universal (Self) Hosting and Ace Cloud Hosting options thanks to a low level language rewrite (maybe w/ [Zig](https://ziglang.org/) 1.x) that'll compile to a binary and can be hosted anywhere! 😀
 
 
 ## 🎬 Create a Movie Graph 
@@ -261,33 +264,43 @@ ace graphToFile
   Generate backup and then save backup to a file locally
   Location File: [ Current Directory ]/ace/backups/[ File Name ].json
   File Name Default: Now Iso Datetime
+  Crypt JWK: If a \`Crypt JWK\` is provided, the backup will be encrypted
   Options:
     -h      |  Host       |  Required  |  String
     --host  |  Host       |  Required  |  String
     -n      |  File Name  |  Optional  |  String
     --name  |  File Name  |  Optional  |  String
+    -j      |  Crypt JWK  |  Optional  |  String
+    --jwk   |  Crypt JWK  |  Optional  |  String
   Examples:
     ace graphToFile -h=http://localhost:8787
     ace graphToFile --host=http://localhost:8787
     ace graphToFile -h=http://localhost:8787 -n=qa
-    ace graphToFile --host=http://localhost:8787 --name=dev
+    ace graphToFile --host=http://localhost:8787 --name=qa
+    ace graphToFile -h=http://localhost:8787 -j='{ ... }'
+    ace graphToFile --host=http://localhost:8787 --jwk='{ ... }'
 
 
 
 ace fileToGraph
   Read backup from file and then save backup to graph
   File Location: [ Current Directory ]/ace/backups/[ File ]
+  Crypt JWK: If a \`Crypt JWK\` is provided, the backup will be decrypted
   Skip Data Delete: When a backup is applied with "ace fileToGraph" an entire graph delete is done first, to avoid the delete and just apply the backup use this option
   Options:
     -f                |  File              |  Required  |  String
     -file             |  File              |  Required  |  String
     -h                |  Host              |  Required  |  String
     --host            |  Host              |  Required  |  String
+    -j                |  Crypt JWK         |  Optional  |  String
+    --jwk             |  Crypt JWK         |  Optional  |  String
     -s                |  Skip Data Delete  |  Optional  |  Boolean
     --skipDataDelete  |  Skip Data Delete  |  Optional  |  Boolean
   Examples:
     ace fileToGraph -f=qa.json -h=http://localhost:8787
-    ace fileToGraph --file=dev.json --host=http://localhost:8787
+    ace fileToGraph --file=qa.json --host=http://localhost:8787
+    ace fileToGraph -f=qa.json -h=http://localhost:8787 -j='{ ... }'
+    ace fileToGraph --file=qa.json --host=http://localhost:8787 --jwk='{ ... }'
     ace fileToGraph -f=backup.json -h=http://localhost:8787 -s=true
     ace fileToGraph --file=2024-03-24T19:44:36.492Z.json --host=http://localhost:8787 --skipDataDelete=true
 
@@ -296,11 +309,11 @@ ace fileToGraph
 ace types
   Create types (TS) and typedefs (JSDoc)
     - IF a host (Cloudflare Worker URL) is provided
-      - Types take into consideration your schema by requesting it via the host
+      - Types take into consideration this hosted schema
     - ELSE IF a (schema) file is provided [ Current Directory ]/ace/schemas/
-      - Types take into consideration your schema by loading it locally from
+      - Types take into consideration this file schema
     - ELSE
-      - Types do not take into consideration your schema
+      - Types do not take into consideration any schema
   Options:
     -h      |  Host  |  Optional  |  String
     --host  |  Host  |  Optional  |  String
@@ -312,6 +325,18 @@ ace types
     ace types -f=qa.json
     ace types --file=2024-03-24T19:44:36.492Z.json
 ```
+
+
+## 🕰️ Origin Story
+1. Java SQL Strings
+1. PHP SQL Strings
+1. Node SQL Strings
+1. Mongoose
+1. Dgraph
+1. Prisma
+1. Drizzle
+1. Cloudflare Durable Objects
+1. Ace
 
 
 ## 📀 Storage Options
@@ -328,94 +353,51 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Sanitize / Validate Input
-1. R2 Backups (`ace()` / cli) (Read / Write)
-1. cli fileToGraph Option: skipDataDelete: boolean
+1. Consistent idAce names (noun first)
 1. `ace()`
+    * Response Types
+    * Sanitize / Validate Input 
+    * Graphs support 
     * SchemaAndDataDeleteRelationships
     * SchemaAndDataDeleteRelationshipProps
-    * Must relationship (storage fallback)
-    * Access values from a previous query that are many and use them in a mutation
-    * Graphs support 
-1. On Error Flow
-    * Retry: Count, MS Before Trying Again, 
-    * Log to KV
-    * Backup To R2
-    * Email Log
-    * Email Backup
-    * Provide `ace()`, `request`  for how to get graph back to how it was before this error
-1. GitHub Versioning
-    * Deploy main 0.0.1 to GitHub
-    * Tag a release
-    * Create a qa branch
-    * Deploy to qa branch over the course of the week
-    * On Thursday's deploy qa to main, update the version in the package.json, commit message is 0.0.x
-    * On Thursday's publish Release Notes that lists the new features for the version with commit links
-        * 0.0.x
-            * Version 1 Roadmap Items
-            * Bug Fixes
-            * Quality of Life Impovements
-            * Breaking Changes
-            * Support
-                * Star us on GitHub
-                * Contribute
-                * Sponsor
-                * Join our Release Notes Newsletter
-            * Thanks
-    * On the Last Friday of the month post a blog post that:
-        * Lists the new versions for the month w/ blog links
-        * Mentions goals for next month
-        * Support
-        * Thanks
-    * Create an NPM Account
-    * Deploy to NPM
-1. How local db schema to prod db schema
-    * Update prop column name
-    * Based on the schema diff, we know what happened with the migration
-        * Original Schema, Now Schema
-            * Any (new/less) nodes
-            * Any (new/less) relationships
-            * Any (new/less) (node/relationship) props
-            * Any props have different values
-            * How do we know the difference between a rename and a removal and an addition
-                * B/c on a rename we want to keep the previous data
-                * first_name to firstName
-                * Add firstName column is the first migration
-                * CopyColumnData is the 2nd step
-                * Remove first_name column is the last migration
-                * https://planetscale.com/docs/learn/how-to-make-different-types-of-schema-changes
-                * https://planetscale.com/blog/backward-compatible-databases-changes
-        * Once we know the answer to the above questions we can craft the proper `ace()`1. Logs
-    * Put [ Key, Original, Now, Request Item, API Token ]
-    * Delete [ Key, API Token ]
-1. Response Types
-    * Generics
-    * Conditional Types
+    * SchemaAndDataAlterPropDataType
+    * SchemaAndDataAlterPropMustBeDefined
+    * SchemaAndDataAlterPropCascade
+    * SchemaAndDataAlterPropUniqueIndex
+    * SchemaAndDataAlterPropSortIndex
+    * SchemaAndDataAlterPropHas
 1. Runtime validation
     * v1
       * Accepts: a test object + (a schema node / a schema relationship) 
       * Responds: does the test object obey the schema
     * v2
       * Also accepts options to add validations, edit validations or remove validations
-1. $o random
-1. Full Text Index, Mutation and Query
 1. Relationship prop indexes
-1. Camelcase errors
-1. mutate to addUp and delete file
-1. Security
-    * 2FA + Authy Support
-    * AceUser > email > passwordless
-1. Test relationship props update + guidance
-1. External: Property to Prop
-1. No more embedded functions (so I stop creating the same fn multiple times)
-1. jsdoc returns for each function
-1. jsdoc comment for each prop
-1. App Worker > Ace Durable Object
+1. Full Text Index, Mutation and Query
+1. On Error Flow (error categories?)
+    * Retry: Count, MS Before Trying Again
+    * Log to KV
+    * Backup to KV
+    * Email Log
+    * Email Backup
+    * Provide `ace()`, `request`  for how to get graph back to how it was before this error
+        * Offline support > Response Allows Resume
+1. $o random
 1. Batch requests to storage to stay within storage required Maximum count
-1. Comments (param, returns, description, example usage, why) for all index functions
-1. Proofread all comments
-1. loopOptions > switch 
-1. Cli Loop schema once
+1. Quality of Life
+    * Camelcase errors
+    * inup to addUp, isert to add and organize mutation functions / files
+    * External: Property to Prop
+    * No more embedded functions (so I stop creating the same fn multiple times)
+    * Comments (param, returns, description, example usage, why, proofread) for all index functions
+    * loopOptions > switch 
+1. App Worker > Ace Durable Object
+1. Studio
+    * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
+1. Create a GDPR Compliant Ecommerce Store w/ Ace
+    * Real project (example / benchmarks)
+    * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
+1. 2FA + Authy Support
 1. Simulator
     * Speed up time to test things that take time
     * Replay
@@ -431,21 +413,13 @@ ace types
     * Power loss
     * I/O Errors
     * Out of memory errors
-1. Offline support > Response Allows Resume
-1. Studio
-    * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
-1. Create a GDPR Compliant Ecommerce Store w/ Ace
-    * Real project (example / benchmarks)
-    * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
 1. Docs
     * Search
     * Link to see / edit on GitHub
-        * Doc Page
-        * Functions Doc Page references
     * Forum
 1. Ace Database Foundation
     * Mission Statement
-        * Create, maintain and enhance the Best Database for JavaScript Developers
+        * Create, maintain and enhance the Best Database for JavaScript Developers!
     * Principles
         * Open Governance
         * Community Driven
@@ -453,14 +427,14 @@ ace types
     * Council will be those that:
         * Align with the majority of our roadmap
         * Have ideas for how to improve our roadmap
-        * Hope to be in the adventure together
+        * Hope to be in this adventure together
 
 
 ## 🌟 Version 2 Roadmap 
 1. Community Ideas
 1. GitHub Issues
 1. Foundation Ideas
-1. X > AceFn > Cloudflare Worker > Cloudflare Durable Object
+1. X > `ace()` > Cloudflare Worker > Cloudflare Durable Object
     * Bun Server
     * Deno Server
     * Deno Edge
@@ -510,7 +484,7 @@ ace types
         * AWS
         * Zig
 1. REPL (event, storage, share)
-    1. WASM (Zig DB In Browser on users machine)
+    1. WASM (Zig DB In Browser)
 1. Vector Data Type
 1. VMWare Private Ai
     * Teach Ai w/ data from graph(s)
@@ -556,6 +530,7 @@ ace types
         * A GDPR compliant Ecommerce Store w/ Ace
         * Ace Studio
         * Docs Site
+        * Forum
         * The Ace Database Foundation
     * Will not include a migration script
 1. 1.x to 2.0
@@ -564,18 +539,6 @@ ace types
 1. 2.x to 3.0
     * When all 3.0 road map items pass testing and Ace Cloud v1.0 is achieved
     * Will include a 2.x to 3.0 migration script
-
-
-## 🕰️ Origin Story
-1. Java SQL Strings
-1. PHP SQL Strings
-1. Node SQL Strings
-1. Mongoose
-1. Dgraph
-1. Prisma
-1. Drizzle
-1. Cloudflare Durable Objects
-1. Ace
 
 
 ## 💎 Dictionary

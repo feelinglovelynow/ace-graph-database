@@ -1,6 +1,6 @@
 import { td, enums } from '#ace'
-import { put } from './storage.js'
 import { aceFetch } from './aceFetch.js'
+import { put, delAll } from './storage.js'
 import { importGenerateAlgorithm } from '../security/util.js'
 import { AceAuthError, AceError } from '../objects/AceError.js'
 import { queryNode, queryRelationship } from './query/query.js'
@@ -193,7 +193,6 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
           case enums.idsAce.SchemaAndDataUpdateNameOfRelationshipProps:
-            console.log('hmm')
             await schemaAndDataUpdateNameOfRelationshipProps(/** @type { td.AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps } */(arrayRequest[iRequest]), passport)
             break
         }
@@ -206,12 +205,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
        */
       async function empty (requestItem) {
         throwIfAnyGenericRevokes()
-        passport.storage.deleteAll() // empty storage
-
-        // empty passport schema
-        passport.schema = undefined
-        passport.schemaDataStructures = {}
-        
+        delAll(passport)
         if (requestItem.prop) response.now[requestItem.prop] = { success: true }
       }
 
@@ -241,8 +235,15 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
         if (typeof requestItem?.x?.backup !== 'string') throw AceError('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
 
         throwIfAnyGenericRevokes()
-        passport.storage.deleteAll()
-        passport.storage.put(JSON.parse(requestItem.x.backup))
+        if (!requestItem.x.skipDataDelete) delAll(passport)
+
+        const backup = JSON.parse(requestItem.x.backup)
+
+        if (backup) {
+          for (const key in backup) {
+            put(key, backup[key], passport)
+          }
+        }
       }
 
 

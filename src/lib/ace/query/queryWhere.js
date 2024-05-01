@@ -300,7 +300,7 @@ export async function queryWhere (xGenerated, response, option, publicJWKs, pass
    * @returns { Promise<boolean> }
    */
   async function isHashValid (qw, left, right, sideIndex) {
-    const jwkProp = xGenerated.x?.$o?.publicJWKs?.[option]
+    const jwkProp = xGenerated.x?.$o?.publicJWKs?.[/** @type {'findByOr'} */ (option)]
     const publicJWK = jwkProp ? publicJWKs?.[jwkProp] : null
 
     if (!jwkProp) throw AceError('query__falsy-hash-public-key', `The request is invalid because $o.publicJWKs.${ option } is falsy`, { $o: xGenerated.x?.$o })
