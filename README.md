@@ -6,7 +6,7 @@
 
 
 ## 🔐 Security
-1. Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: graph format)
+1. Ace formats data in [Cloudflare's](https://developers.cloudflare.com/durable-objects/) encrypted key value store as nodes, relationships and props (aka: a graph format)
 1. Read, insert, update and delete permissions can be configured for nodes, relationships or props thanks to our `core` plugin
 
 ## 🥹 Dynamic
@@ -342,9 +342,9 @@ ace types
 ## 🙋‍♀️ Why Create Ace?
 1. A graph is a natural way to store data
     * For example: Nodes = Neurons AND Relationships = Synapses
-    * In other words, when we are remembering something (eg: My Mom's, Yoga Studio) we are not joining tables in our brain (eg: All Users, All Yoga Studio's), we are just walking the graph, from one node to the next
+    * In other words, when we are remembering something (eg: Mom's, Yoga Studio) we are not joining tables in our brain (eg: All Users, All Yoga Studio's), we are just walking the graph, from one node to the next
 1. Other graph databasse require JavaScript template strings and do not provide lovely intellisense like Prisma or Drizzle
-1. So Ace is the union of a graph database with JavaScript intellisense
+1. So Ace is the union of a graph database with JavaScript intellisense!
 
 
 ## 📀 Storage Options
@@ -555,50 +555,6 @@ ace types
 1. 2.x to 3.0
     * When all 3.0 road map items pass testing and Ace Cloud v1.0 is achieved
     * Will include a 2.x to 3.0 migration script
-
-
-## 💎 Dictionary
-### Ace
-* Ace is a Graph Database
-### Graph Database
-* A database with nodes, relationships and properties
-### Node
-* A noun stored in a graph, has a name like `Movie`
-* If storing a node it must align with a node name in your schema, defined in schema @ `const schema = { nodes }`
-* Nodes may have properties
-### Relationship
-* Explains how two nodes unite, has a name like `actsInMovie`
-* If storing a relationship it must align with a relationship name in your schema, defined in schema @ `const schema = { relationships }`
-* Each relationship also comes with Node Properties that shows the relationship in both directions
-    * One `ForwardRelationshipProp` may be combined with one `ReverseRelationshipProp` or one `BidirectionalRelationshipProp` may be used
-* Relationships may have properties
-### Properties
-* Information about one node (eg: `Movie` node, `name` prop) or one relationship (`actsInMovie` relationship, `_salary` prop)
-* Relationship properties start with an underscore to help differentiate node props and relationship props during `ace()` queries
-### Property Data Types
-* string
-* number
-* boolean
-* hash
-    1. Get public and private jwks from Ace by calling `ace()`, calling `createJWKs()` or with our cli `ace jwks`
-    1. On a property that is the `hash` data type, do an `ace()` insert, and also send to `ace()` a private jwk
-    1. Ace will hash the string and store the hash value in your graph
-    1. When performing `ace()` queries, provide a public jwk to `Find` a node only if it matches a stored hash
-* isoString
-    * `(new Date()).toISOString()`
-    * When doing a node or relationship mutation, provide a value of `'now'` to tell Ace to add the `isoString` now date as the value, example:
-        * `{ id: 'AddNodeToGraph', node: 'Movie', props: { name: 'The Matrix', createdAt: 'now' } }`
-### Schema
-* Defines how your graph is structured, by defining the nodes, relationships and properties
-* Is stored in your graph, at the key `$schema` to ease migrations
-* Thanks to `ace schemaToFile`, your schema may also be easilly stored in a file in a JSON file, in your backend source control, like `Prisma`
-### `ace()`
-* Takes 1 parameter, an options object and this options object is the `Ace Query Language` or the `Ace Options`
-* Supports / Default:
-    * Responds with requested nodes, relationships and properties, similair to GraphQL but rather then string template queries and mutations, Typesafe intellisense via JSDoc Typedefs (comments) (not in build) and TypeScript types (not in build) (but super helpful during development)
-    * To limit round trips, multiple sequential queries may be performed in the array request order
-* Typically ORMs unite your databse with JavaScript, but now 1 function supports this!
-* May also be called via HTTP at `[ host ]/ace`
 
 
 
