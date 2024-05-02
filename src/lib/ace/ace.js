@@ -6,7 +6,7 @@ import { AceAuthError, AceError } from '../objects/AceError.js'
 import { queryNode, queryRelationship } from './query/query.js'
 import { setSchemaDataStructures, stamp } from '../objects/AcePassport.js'
 import { getSortIndexKey, getRelationshipProp, getRevokesKey } from '../variables.js'
-import { dataDeleteNodeProps, dataDeleteRelationshipProps, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, schemaAndDataDeleteNodes, schemaAndDataDeleteNodeProps, schemaAndDataUpdateNameOfNodes, schemaAndDataUpdateNameOfNodeProps, schemaAndDataUpdateNameOfRelationships, schemaAndDataUpdateNameOfRelationshipProps } from './mutate.js'
+import { nodePropDeleteData, relationshipPropDeleteData, deleteNodesByUids, deleteRelationshipsBy_Uids, inupNode, inupRelationship, addToSchema, nodeDeleteDataAndDeleteFromSchema, nodePropDeleteDataAndDeleteFromSchema, schemaUpdateNodeName, schemaUpdateNodePropName, schemaUpdateRelationshipName, schemaUpdateRelationshipPropName } from './mutate.js'
 
 
 /**
@@ -30,7 +30,6 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
     const sortIndexMap = /** @type { td.AceFnSortIndexMap } */ (new Map())
     const $ace = /** @type { td.AceFn$ } */ ({ newUids: {}, deletedKeys: [] })
-    const updateRequestItems = /** @type { td.AceFnUpdateRequestItems } */ ({ nodes: null, relationships: null })
     const cryptoJWKs = /** @type { { public: td.AceFnCryptoJWKs, private: td.AceFnCryptoJWKs } } */ ({ private: {}, public: {} })
 
     /** @type { (td.AceQueryRequestItem | td.AceMutateRequestItem)[] } Request as an array */
@@ -73,127 +72,127 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
             break
 
 
-          case enums.idsAce.InstallPlugin:
-            const ipReq = /** @type { td.AceMutateRequestItemInstallPlugin } */ (arrayRequest[iRequest])
+          case enums.idsAce.PluginInstall:
+            const piReq = /** @type { td.AceMutateRequestItemPluginInstall } */ (arrayRequest[iRequest])
 
             const ipOptions = /** @type { td.AceFnOptions } */ ({
               passport,
-              request: ipReq.x.install.request,
-              publicJWKs: ipReq.x.install.publicJWKs,
-              privateJWKs: ipReq.x.install.privateJWKs,
+              request: piReq.x.install.request,
+              publicJWKs: piReq.x.install.publicJWKs,
+              privateJWKs: piReq.x.install.privateJWKs,
             })
 
             const ipRes = await _ace(ipOptions)
 
-            if (ipReq.prop) response.now[ipReq.prop] = ipRes
+            if (piReq.prop) response.now[piReq.prop] = ipRes
             break
 
 
-          case enums.idsAce.UninstallPlugin:
-            const upReq = /** @type { td.AceMutateRequestItemUninstallPlugin } */ (arrayRequest[iRequest])
-            const responseUninstall = await _ace({ passport: passport, request: upReq.x.request })
-            if (upReq.prop) response.now[upReq.prop] = responseUninstall
+          case enums.idsAce.PluginUninstall:
+            const puReq = /** @type { td.AceMutateRequestItemPluginUninstall } */ (arrayRequest[iRequest])
+            const puRes = await _ace({ passport: passport, request: puReq.x.request })
+            if (puReq.prop) response.now[puReq.prop] = puRes
             break
 
 
-          case enums.idsAce.QueryByNode:
+          case enums.idsAce.NodeQuery:
             await queryNode(/** @type { td.AceQueryRequestItemNode } */(arrayRequest[iRequest]), passport, response, cryptoJWKs.public, iRequest)
             break
 
 
-          case enums.idsAce.QueryByRelationship:
+          case enums.idsAce.RelationshipQuery:
             await queryRelationship(/** @type { td.AceQueryRequestItemRelationship } */(arrayRequest[iRequest]), passport, response, cryptoJWKs.public, iRequest)
             break
 
 
-          case enums.idsAce.GetSchema:
-            await schemaGet(/** @type { td.AceQueryRequestItemGetSchema } */(arrayRequest[iRequest]))
+          case enums.idsAce.SchemaGet:
+            await schemaGet(/** @type { td.AceQueryRequestItemSchemaGet } */(arrayRequest[iRequest]))
             break
 
 
-          case enums.idsAce.AddToSchema:
-            const atsReq = /** @type { td.AceMutateRequestItemAddToSchema } */ (arrayRequest[iRequest])
-            const atsRes = addToSchema(passport, atsReq.x.schema)
-            if (atsReq.prop) response.now[atsReq.prop] = atsRes
+          case enums.idsAce.SchemaAdd:
+            const saReq = /** @type { td.AceMutateRequestItemSchemaAdd } */ (arrayRequest[iRequest])
+            const saRes = addToSchema(passport, saReq.x.schema)
+            if (saReq.prop) response.now[saReq.prop] = saRes
             setSchemaDataStructures(passport)
             break
 
 
-          case enums.idsAce.GetBackup:
-            await getBackup(/** @type { td.AceQueryRequestItemGetBackup } */(arrayRequest[iRequest]))
+          case enums.idsAce.BackupGet:
+            await getBackup(/** @type { td.AceQueryRequestItemBackupGet } */(arrayRequest[iRequest]))
             break
 
 
-          case enums.idsAce.LoadBackup:
-            await fileToGraph(/** @type { td.AceMutateRequestItemLoadBackup } */(arrayRequest[iRequest]))
+          case enums.idsAce.BackupLoad:
+            await fileToGraph(/** @type { td.AceMutateRequestItemBackupLoad } */(arrayRequest[iRequest]))
             break
 
 
-          case enums.idsAce.AddNodeToGraph:
-          case enums.idsAce.UpdateGraphNode:
-          case enums.idsAce.UpsertGraphNode:
-            await inupNode(/** @type { td.AceMutateRequestItemAddNodeToGraph | td.AceMutateRequestItemUpdateGraphNode } */(arrayRequest[iRequest]), passport, sortIndexMap, cryptoJWKs.private)
+          case enums.idsAce.NodeInsert:
+          case enums.idsAce.NodeUpdate:
+          case enums.idsAce.NodeUpsert:
+            await inupNode(/** @type { td.AceMutateRequestItemNodeInsert | td.AceMutateRequestItemNodeUpdate } */(arrayRequest[iRequest]), passport, sortIndexMap, cryptoJWKs.private)
             break
 
 
-          case enums.idsAce.AddRelationshipToGraph:
-          case enums.idsAce.UpdateGraphRelationship:
-          case enums.idsAce.UpsertGraphRelationship:
-            await inupRelationship(/** @type { td.AceMutateRequestItemAddRelationshipToGraph | td.AceMutateRequestItemUpdateGraphRelationship } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.RelationshipInsert:
+          case enums.idsAce.RelationshipUpdate:
+          case enums.idsAce.RelationshipUpsert:
+            await inupRelationship(/** @type { td.AceMutateRequestItemRelationshipInsert | td.AceMutateRequestItemRelationshipUpdate } */(arrayRequest[iRequest]), passport)
             break
 
 
-          case enums.idsAce.DataDeleteNodes:
-            const ddnReq = /** @type { td.AceMutateRequestItemDataDeleteNodes } */ (arrayRequest[iRequest])
-            if (ddnReq.x?.uids?.length) await deleteNodesByUids(ddnReq.x.uids, passport)
+          case enums.idsAce.NodeDeleteData:
+            const nddReq = /** @type { td.AceMutateRequestItemNodeDeleteData } */ (arrayRequest[iRequest])
+            if (nddReq.x?.uids?.length) await deleteNodesByUids(nddReq.x.uids, passport)
             break
 
 
-          case enums.idsAce.DataDeleteRelationships:
-            const ddrReq = /** @type { td.AceMutateRequestItemDataDeleteRelationships } */ (arrayRequest[iRequest])
-            if (ddrReq.x?._uids?.length) await deleteRelationshipsBy_Uids(ddrReq.x._uids, passport)
+          case enums.idsAce.RelationshipDeleteData:
+            const rddReq = /** @type { td.AceMutateRequestItemRelationshipDeleteData } */ (arrayRequest[iRequest])
+            if (rddReq.x?._uids?.length) await deleteRelationshipsBy_Uids(rddReq.x._uids, passport)
             break
 
 
-          case enums.idsAce.DataDeleteNodeProps:
-            const ddnpReq = /** @type { td.AceMutateRequestItemDataDeleteNodeProps } */ (arrayRequest[iRequest])
-            if (ddnpReq.x?.uids?.length && ddnpReq.x?.props?.length) await dataDeleteNodeProps(ddnpReq, passport)
+          case enums.idsAce.NodePropDeleteData:
+            const npddReq = /** @type { td.AceMutateRequestItemNodePropDeleteData } */ (arrayRequest[iRequest])
+            if (npddReq.x?.uids?.length && npddReq.x?.props?.length) await nodePropDeleteData(npddReq, passport)
             break
 
 
-          case enums.idsAce.DataDeleteRelationshipProps:
-            const ddrpReq = /** @type { td.AceMutateRequestItemDataDeleteRelationshipProps } */ (arrayRequest[iRequest])
-            if (ddrpReq.x?._uids?.length && ddrpReq.x?.props?.length) await dataDeleteRelationshipProps(ddrpReq, passport)
+          case enums.idsAce.RelationshipPropDeleteData:
+            const rpddReq = /** @type { td.AceMutateRequestItemRelationshipPropDeleteData } */ (arrayRequest[iRequest])
+            if (rpddReq.x?._uids?.length && rpddReq.x?.props?.length) await relationshipPropDeleteData(rpddReq, passport)
             break
 
 
-          case enums.idsAce.SchemaAndDataDeleteNodes:
-            await schemaAndDataDeleteNodes(/** @type { td.AceMutateRequestItemSchemaAndDataDeleteNodes } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.NodeDeleteDataAndDeleteFromSchema:
+            await nodeDeleteDataAndDeleteFromSchema(/** @type { td.AceMutateRequestItemNodeDeleteDataAndDeleteFromSchema } */(arrayRequest[iRequest]), passport)
             break
 
 
-          case enums.idsAce.SchemaAndDataDeleteNodeProps:
-            await schemaAndDataDeleteNodeProps(/** @type { td.AceMutateRequestItemSchemaAndDataDeleteNodeProps } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.NodePropDeleteDataAndDeleteFromSchema:
+            await nodePropDeleteDataAndDeleteFromSchema(/** @type { td.AceMutateRequestItemNodePropDeleteDataAndDeleteFromSchema } */(arrayRequest[iRequest]), passport)
             break
 
 
-          case enums.idsAce.SchemaAndDataUpdateNameOfNodes:
-            await schemaAndDataUpdateNameOfNodes(/** @type { td.AceMutateRequestItemSchemaAndDataUpdateNameOfNodes } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.SchemaUpdateNodeName:
+            await schemaUpdateNodeName(/** @type { td.AceMutateRequestItemSchemaUpdateNodeName } */(arrayRequest[iRequest]), passport)
             break
 
 
-          case enums.idsAce.SchemaAndDataUpdateNameOfNodeProps:
-            await schemaAndDataUpdateNameOfNodeProps(/** @type { td.AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.SchemaUpdateNodePropName:
+            await schemaUpdateNodePropName(/** @type { td.AceMutateRequestItemSchemaUpdateNodePropName } */(arrayRequest[iRequest]), passport)
             break
 
 
-          case enums.idsAce.SchemaAndDataUpdateNameOfRelationships:
-            await schemaAndDataUpdateNameOfRelationships(/** @type { td.AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.SchemaUpdateRelationshipName:
+            await schemaUpdateRelationshipName(/** @type { td.AceMutateRequestItemSchemaUpdateRelationshipName } */(arrayRequest[iRequest]), passport)
             break
 
 
-          case enums.idsAce.SchemaAndDataUpdateNameOfRelationshipProps:
-            await schemaAndDataUpdateNameOfRelationshipProps(/** @type { td.AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps } */(arrayRequest[iRequest]), passport)
+          case enums.idsAce.SchemaUpdateRelationshipPropName:
+            await schemaUpdateRelationshipPropName(/** @type { td.AceMutateRequestItemSchemaUpdateRelationshipPropName } */(arrayRequest[iRequest]), passport)
             break
         }
       }
@@ -210,7 +209,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
       }
 
 
-      /** @param { td.AceQueryRequestItemGetBackup } requestItem */
+      /** @param { td.AceQueryRequestItemBackupGet } requestItem */
       async function getBackup (requestItem) {
         passport.revokesAcePermissions?.forEach((/** @type { td.AceGraphPermission } */ value) => {
           if (value.action === 'read' && value.schema === true) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
@@ -230,7 +229,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
       }
 
 
-      /** @param { td.AceMutateRequestItemLoadBackup } requestItem */
+      /** @param { td.AceMutateRequestItemBackupLoad } requestItem */
       async function fileToGraph (requestItem) {
         if (typeof requestItem?.x?.backup !== 'string') throw AceError('mutate__invalid-backup', 'This request fails b/c requestItemXBackup is not a string', { requestItemXBackup: requestItem?.x?.backup })
 
@@ -260,7 +259,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
     /**
-     * @param { td.AceQueryRequestItemGetSchema } requstItem 
+     * @param { td.AceQueryRequestItemSchemaGet } requstItem 
      */
     function schemaGet (requstItem) {
       if (passport.revokesAcePermissions?.has(getRevokesKey({ action: 'read', schema: true }))) throw AceAuthError(enums.permissionActions.read, passport, { schema: true })
@@ -283,7 +282,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
     function throwIfMissingMustProps () {
       if (passport.$aceDataStructures.putMap.size) {
         for (const [ uid, requestItem ] of passport.$aceDataStructures.putMap) {
-          const x = /** @type { td.AceMutateRequestItemAddRelationshipToGraphX } */ (/** @type {*} */ (requestItem.x))
+          const x = /** @type { td.AceMutateRequestItemRelationshipInsertX } */ (/** @type {*} */ (requestItem.x))
           const lowerName = requestItem.node ? 'node' : 'relationship'
           const mustProps = passport.schemaDataStructures?.mustPropsMap?.get(requestItem[lowerName]) // the must props for a specific node or relationship
 
@@ -323,7 +322,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
 
 
         /**
-         * @param { td.AceMutateRequestItemAddRelationshipToGraph } rSchemaRelationshipProp 
+         * @param { td.AceMutateRequestItemRelationshipInsert } rSchemaRelationshipProp 
          * @param { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp } schemaRelationshipProp 
          * @param { string } propName 
          */
@@ -332,7 +331,7 @@ export async function _ace ({ passport, request, publicJWKs, privateJWKs }) {
           const storageUids = []
           const relationshipNodes = []
           const isInverse = schemaRelationshipProp.id === 'ReverseRelationshipProp'
-          const x = /** @type { td.AceMutateRequestItemAddRelationshipToGraphX } */ (rSchemaRelationshipProp.x)
+          const x = /** @type { td.AceMutateRequestItemRelationshipInsertX } */ (rSchemaRelationshipProp.x)
           const relationshipUids = x[getRelationshipProp(schemaRelationshipProp.x.relationship)]
 
           if (relationshipUids) {

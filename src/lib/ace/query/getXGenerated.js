@@ -9,9 +9,9 @@ import { AceError } from '../../objects/AceError.js'
  * @returns { td.AceQueryRequestItemGeneratedXSection }
  */
 export function getXGeneratedById (requestItem, passport) {
-  if (requestItem.id !== 'QueryByNode' && requestItem.id !== 'QueryByRelationship') throw AceError('getXGeneratedById__x-id-invalid', 'This request is failing b/c request.x.id is not a truthy string of QueryByNode or QueryByRelationship', { query: requestItem })
-  if (requestItem.id === 'QueryByNode' && !passport.schema?.nodes[requestItem.node]) throw AceError('getXGeneratedById__x-section-id-node-invalid', 'This request is failing b/c request.x.nodeName is not a node in your schema', { query: requestItem })
-  if (requestItem.id === 'QueryByRelationship' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
+  if (requestItem.id !== 'NodeQuery' && requestItem.id !== 'RelationshipQuery') throw AceError('getXGeneratedById__x-id-invalid', 'This request is failing b/c request.x.id is not a truthy string of NodeQuery or RelationshipQuery', { query: requestItem })
+  if (requestItem.id === 'NodeQuery' && !passport.schema?.nodes[requestItem.node]) throw AceError('getXGeneratedById__x-section-id-node-invalid', 'This request is failing b/c request.x.nodeName is not a node in your schema', { query: requestItem })
+  if (requestItem.id === 'RelationshipQuery' && !passport.schema?.relationships[requestItem.relationship]) throw AceError('getXGeneratedById__x-section-id-relationship-invalid', 'This request is failing b/c request.x.relationshipName is not a relationship in your schema', { query: requestItem })
 
   const props = getProps(requestItem.x)
   const updatedX = updateWhereUids(passport, maybeManuallySetAll(props, requestItem.x))
@@ -46,7 +46,7 @@ export function getXGeneratedByParent (xValue, xKey, passport, xGeneratedParent)
   let schemaPropValue
 
 
-  if (xGeneratedParent.id === 'QueryByRelationship') {
+  if (xGeneratedParent.id === 'RelationshipQuery') {
     if (!passport.schemaDataStructures?.relationshipPropsMap) throw AceError('getXGeneratedByParent__falsy-schemaDataStructures-relationshipPropsMap', 'The schema data structure relationshipPropsMap must be truthy, this is set if your schema is defined when you create an AcePassport', { relationshipPropsMap: '' })
 
     const relationshipPropsMap = xGeneratedParent.relationshipName ? passport.schemaDataStructures.relationshipPropsMap.get(xGeneratedParent.relationshipName) : null

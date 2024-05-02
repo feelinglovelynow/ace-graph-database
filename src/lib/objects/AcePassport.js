@@ -150,7 +150,7 @@ async function getUser (_passport) {
     const { token } = await _ace({
       passport: _passport,
       request: {
-        id: 'QueryByNode',
+        id: 'NodeQuery',
         node: 'AceToken',
         prop: 'token',
         x: {
@@ -218,7 +218,7 @@ async function getIsEnforcePermissionsOn (_passport) {
   const { isOn } = await _ace({
     passport: _passport,
     request: {
-      id: 'QueryByNode',
+      id: 'NodeQuery',
       node: 'AceSetting',
       prop: 'isOn',
       x: {

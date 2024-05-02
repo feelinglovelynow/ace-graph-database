@@ -46,7 +46,7 @@ const response = await ace({
 
     // add the Actor node, the Movie node and the actsInMovie relationship to the schema
     {
-      id: 'AddToSchema',
+      id: 'SchemaAdd',
       x: { // intellisense within x changes based on above id
         schema: {
           nodes: {
@@ -64,7 +64,7 @@ const response = await ace({
             actsInMovie: { // Relationship: actsInMovie
               id: 'ManyToMany',
               props: {
-                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with QueryByNode or QueryByRelationship, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (do not start with underscore) and which props are relationship props (start with underscore)
+                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with NodeQuery or RelationshipQuery, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (do not start with underscore) and which props are relationship props (start with underscore)
               }
             }
           }
@@ -73,46 +73,53 @@ const response = await ace({
     },
 
 
-    // See how the uid for the AddNodeToGraph is _:Matrix --- Thanks to enums placed after _: these nodes may be referenced lower @ AddRelationshipToGraph
-    { id: 'AddNodeToGraph', node: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
-    { id: 'AddNodeToGraph', node: 'Actor', x: { uid: '_:Keanu', firstName: 'Keanu', lastName: 'Reeves' } },
-    { id: 'AddNodeToGraph', node: 'Actor', x: { uid: '_:Laurence', firstName: 'Laurence', lastName: 'Fishburne' } },
-    { id: 'AddNodeToGraph', node: 'Actor', x: { uid: '_:Carrie', firstName: 'Carrie-Anne', lastName: 'Moss' } },
+    // See how the uid for the NodeInsert is _:Matrix or _:Keanu or ...
+    // Thanks to enums placed after _: these nodes may be referenced lower @ RelationshipInsert
+    // Before placing these nodes into the graph, Ace will give these nodes uids and use the created uids in the RelationshipInsert below
+    { id: 'NodeInsert', node: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
+    { id: 'NodeInsert', node: 'Actor', x: { uid: '_:Keanu', firstName: 'Keanu', lastName: 'Reeves' } },
+    { id: 'NodeInsert', node: 'Actor', x: { uid: '_:Laurence', firstName: 'Laurence', lastName: 'Fishburne' } },
+    { id: 'NodeInsert', node: 'Actor', x: { uid: '_:Carrie', firstName: 'Carrie-Anne', lastName: 'Moss' } },
 
 
-    // a is the actor b/c schema.nodes.Actor has the ForwardRelationshipProp (Actor.actsIn)
-    // b is the movie b/c schema.nodes.Movie has the ReverseRelationshipProp (Movie.actors)
-    { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
-    { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
-    { id: 'AddRelationshipToGraph', relationship: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
+    // Relationships unite two nodes and may also have props
+    // The uid for the first node is a and the uid for the second node is b
+    // For the relationship actsInMovie:
+      // a is the actor uid b/c schema.nodes.Actor has the ForwardRelationshipProp (Actor.actsIn)
+      // b is the movie uid b/c schema.nodes.Movie has the ReverseRelationshipProp (Movie.actors)
+    { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
+    { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
+    { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
 
 
-    // IF a uid is not specified for AddNodeToGraph as seen below THEN Ace creates one before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
-    // IF a uid is set (crypto.randomUUID()) THEN Ace won't create a uid before placing the node into storage AND this node can be used in relationships for this ace() call by using the uid in relationships
-    { id: 'AddNodeToGraph', node: 'Movie', x: { name: 'Avatar' } },
+    // IF a uid is not specified for NodeInsert as seen below
+      // Ace creates a uid for this node before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
+    // IF a uid is set (crypto.randomUUID()) for a node
+      // Ace won't create a uid before placing the node into storage AND this node can be used in relationships for this ace() call by using the uid in relationships
+    { id: 'NodeInsert', node: 'Movie', x: { name: 'Avatar' } },
 
 
     // put a backup of the graph @ response.backup (includes data added above)
-    { id: 'GetBackup', prop: 'backup' },
+    { id: 'BackupGet', prop: 'backup' },
 
 
     // put the current graph schema @ response.schema (includes above schema)
-    { id: 'GetSchema', prop: 'schema' },
+    { id: 'SchemaGet', prop: 'schema' },
 
 
-    // QueryByNode --- In SQL this would be: SELECT * FROM Actor --- { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
-    { id: 'QueryByNode', node: 'Actor', prop: 'actors' },
+    // NodeQuery --- In SQL this would be: SELECT * FROM Actor --- { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
+    { id: 'NodeQuery', node: 'Actor', prop: 'actors' },
 
 
-    // QueryByRelationship --- Querying by node or by relationship is possible --- { actsInMovie: [ { _uid: 'abc', _salary: 9001, star: { firstName: 'Keanu' }, actsIn: { name: 'The Matrix', ... } } ] }
+    // RelationshipQuery --- Querying by node or by relationship is possible --- { actsInMovie: [ { _uid: 'abc', _salary: 9001, star: { firstName: 'Keanu' }, actsIn: { name: 'The Matrix', ... } } ] }
     {
-      id: 'QueryByRelationship',
+      id: 'RelationshipQuery',
       relationship: 'actsInMovie',
       prop: 'actsInMovie',
       x: {
         _uid: true, // actsInMovie relationship prop: _uid will be in the response
         _salary: true, // actsInMovie relationship prop: _salary will be in the response
-        actsIn: true, // Actor.actsIn node prop: b/c no props are specified like in the QueryByNode above, all none relationship props for the Movie node (uid, name) will be in the response
+        actsIn: true, // Actor.actsIn node prop: b/c no props are specified like in the NodeQuery above, all none relationship props for the Movie node (uid, name) will be in the response
         actors: { // Movie.actors node prop
           $o: { alias: 'star' }, // rather then actors, show star in the response
           firstName: true, // only show the Actor's firstName
@@ -121,9 +128,9 @@ const response = await ace({
     },
 
 
-    // QueryByRelationship --- { keanuMatrixRelationship: { _uid: 'abc', _salary: 9001, actor: { firstName: 'Keanu' }, actsIn: { uid: '123' name: 'The Matrix' } } }
+    // RelationshipQuery --- { keanuMatrixRelationship: { _uid: 'abc', _salary: 9001, actor: { firstName: 'Keanu' }, actsIn: { uid: '123' name: 'The Matrix' } } }
     {
-      id: 'QueryByRelationship',
+      id: 'RelationshipQuery',
       relationship: 'actsInMovie',
       prop: 'keanuMatrixRelationship',
       x: {
@@ -137,9 +144,9 @@ const response = await ace({
     },
 
 
-    // QueryByNode --- { matrix: { uid: 'abc', name: 'The Matrix', actors: [ ... ] } }
+    // NodeQuery --- { matrix: { uid: 'abc', name: 'The Matrix', actors: [ ... ] } }
     {
-      id: 'QueryByNode',
+      id: 'NodeQuery',
       node: 'Movie',
       prop: 'matrix',
       x: { // intellisense below changes based on id and node above, if x is not defined, all nodes and all their none relationship props will be in the response
@@ -172,9 +179,9 @@ const response = await ace({
     },
 
 
-    // QueryByRelationship --- { actsInMovie: { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }
+    // RelationshipQuery --- { actsInMovie: { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }
     {
-      id: 'QueryByRelationship',
+      id: 'RelationshipQuery',
       relationship: 'actsInMovie',
       prop: 'actsInMovie',
       x: {
@@ -339,12 +346,13 @@ ace types
 1. Ace
 
 
-## 🙋‍♀️ Why Create Ace?
-1. A graph is a natural way to store data
-    * For example: Nodes = Neurons AND Relationships = Synapses
-    * In other words, when we are remembering something (eg: Mom's, Yoga Studio) we are not joining tables in our brain (eg: All Users, All Yoga Studio's), we are just walking the graph, from one node to the next
-1. Other graph databasse require JavaScript template strings and do not provide lovely intellisense like Prisma or Drizzle
-1. So Ace is the union of a graph database with JavaScript intellisense!
+## 🙋‍♀️ Why was Ace created?
+1. Graph = Natural Data Storage
+    * Node = Neuron
+    * Relationships = Synapses
+    * In other words: When we are remembering something (eg: Mom's, Yoga Studio) we are not joining tables in our mind (eg: All Users, All Yoga Studio's), we are just walking the graph, from one node to the next
+1. So graphs resemble a natural, ancient and proven storage technique but before Ace no graph database offered lovely intellisense like Prisma or Drizzle
+1. So Ace unites a graph database with JavaScript intellisense!
 
 
 ## 📀 Storage Options
@@ -361,19 +369,23 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Consistent idAce names (noun first)
+1. Quality of Life
+    * Camelcase error id's
+    * Organize mutation functions / files
+    * External: Property to Prop
+    * No more embedded functions (so I stop creating the same fn multiple times)
+    * loopOptions > switch 
 1. `ace()`
     * Response Types
     * Sanitize / Validate Input 
     * Graphs support 
-    * SchemaAndDataDeleteRelationships
-    * SchemaAndDataDeleteRelationshipProps
-    * SchemaAndDataAlterPropDataType
-    * SchemaAndDataAlterPropMustBeDefined
-    * SchemaAndDataAlterPropCascade
-    * SchemaAndDataAlterPropUniqueIndex
-    * SchemaAndDataAlterPropSortIndex
-    * SchemaAndDataAlterPropHas
+    * RelationshipDeleteDataAndDeleteFromSchema
+    * RelationshipPropDeleteDataAndDeleteFromSchema
+    * SchemaUpdatePropDataType
+    * SchemaUpdatePropMustBeDefined
+    * SchemaUpdatePropCascade
+    * SchemaUpdatePropIndex
+    * SchemaUpdatePropHas
 1. Runtime validation
     * v1
       * Accepts: a test object + (a schema node / a schema relationship) 
@@ -388,6 +400,14 @@ ace types
     * Relationship Prop
 1. Batch requests to storage to stay within storage required Maximum count
 1. $o: random
+1. Comments (param, returns, description, example usage, why, proofread) for all index functions
+1. App Worker > Ace Durable Object
+1. Create a GDPR Compliant Ecommerce Store w/ Ace
+    * Real project (example / benchmarks)
+    * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
+1. 2FA + Authy Support
+1. Studio
+    * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
 1. Logs
     * Why?
     * What?
@@ -400,20 +420,6 @@ ace types
     * Email Backup
     * Provide `ace()`, `request`  for how to get graph back to how it was before this error
         * Offline support > Response Allows Resume
-1. Quality of Life
-    * Camelcase error id's
-    * inup to addUp, insert to add and organize mutation functions / files
-    * External: Property to Prop
-    * No more embedded functions (so I stop creating the same fn multiple times)
-    * Comments (param, returns, description, example usage, why, proofread) for all index functions
-    * loopOptions > switch 
-1. App Worker > Ace Durable Object
-1. Studio
-    * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
-1. Create a GDPR Compliant Ecommerce Store w/ Ace
-    * Real project (example / benchmarks)
-    * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
-1. 2FA + Authy Support
 1. Simulator
     * Speed up time to test things that take time
     * Replay
@@ -567,9 +573,9 @@ curl --header "Content-Type: application/json" \
   --request POST \
   --data '{
     "request": [
-      { "id": "AddNodeToGraph", "node": "Movie",  "x": { "name": "Hercules" } },
-      { "id": "QueryByNode",  "node": "Movie", "prop": "movies" },
-      { "id": "QueryByRelationship",  "relationship": "actsInMovie", "prop": "actsInMovie" },
+      { "id": "NodeInsert", "node": "Movie",  "x": { "name": "Hercules" } },
+      { "id": "NodeQuery",  "node": "Movie", "prop": "movies" },
+      { "id": "RelationshipQuery",  "relationship": "actsInMovie", "prop": "actsInMovie" },
     ]
   }' \
   http://localhost:8787/ace

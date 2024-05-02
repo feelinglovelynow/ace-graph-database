@@ -67,14 +67,14 @@ import * as enums from './enums.js'
 /** AcePlugin
  *
  * @typedef { object } AcePlugin
- * @property { AceInstallPlugin } install
+ * @property { AcePluginInstall } install
  *
- * @typedef { object } AceInstallPlugin
+ * @typedef { object } AcePluginInstall
  * @property { AceFnRequest } request
  * @property { AceFnStringJWKs } [ publicJWKs ]
  * @property { AceFnStringJWKs } [ privateJWKs ]
  *
- * @typedef { object } AceUninstallPlugin
+ * @typedef { object } AcePluginUninstall
  */
 
 
@@ -178,18 +178,16 @@ import * as enums from './enums.js'
 
 /** AceMutate
  *
- * @typedef { AceMutateRequestItemLoadBackup | AceMutateRequestItemPlugin | AceMutateRequestItemEmpty | AceMutateRequestItemInsert | AceMutateRequestItemUpdate | AceMutateRequestItemUpsert | AceMutateRequestItemDataDelete | AceMutateRequestItemSchemaAndData | AceMutateRequestItemAddToSchema } AceMutateRequestItem
- * @typedef { AceMutateRequestItemAddNodeToGraph | AceMutateRequestItemAddRelationshipToGraph } AceMutateRequestItemInsert
- * @typedef { AceMutateRequestItemUpdateGraphNode | AceMutateRequestItemUpdateGraphRelationship } AceMutateRequestItemUpdate
- * @typedef { AceMutateRequestItemUpsertGraphNode | AceMutateRequestItemUpsertGraphRelationship } AceMutateRequestItemUpsert
- * @typedef { AceMutateRequestItemDataDeleteNodes | AceMutateRequestItemDataDeleteRelationships | AceMutateRequestItemDataDeleteNodeProps | AceMutateRequestItemDataDeleteRelationshipProps } AceMutateRequestItemDataDelete
- * @typedef { AceMutateRequestItemSchemaAndDataDeleteNodes | AceMutateRequestItemSchemaAndDataDeleteNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfNodes | AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships | AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps } AceMutateRequestItemSchemaAndData
- * @typedef { AceMutateRequestItemInstallPlugin | AceMutateRequestItemUninstallPlugin } AceMutateRequestItemPlugin
+ * @typedef { AceMutateRequestItemEmpty | AceMutateRequestItemBackupLoad | AceMutateRequestItemPlugin | AceMutateRequestItemSchema | AceMutateRequestItemNode | AceMutateRequestItemRelationship } AceMutateRequestItem
+ * @typedef { AceMutateRequestItemPluginInstall | AceMutateRequestItemPluginUninstall } AceMutateRequestItemPlugin
+ * @typedef { AceMutateRequestItemSchemaAdd | AceMutateRequestItemSchemaUpdateNodeName | AceMutateRequestItemSchemaUpdateNodePropName | AceMutateRequestItemSchemaUpdateRelationshipName | AceMutateRequestItemSchemaUpdateRelationshipPropName | AceMutateRequestItemNodeDeleteDataAndDeleteFromSchema | AceMutateRequestItemNodePropDeleteDataAndDeleteFromSchema } AceMutateRequestItemSchema
+ * @typedef { AceMutateRequestItemNodeInsert | AceMutateRequestItemNodeUpdate | AceMutateRequestItemNodeUpsert | AceMutateRequestItemNodeDeleteData | AceMutateRequestItemNodePropDeleteData | AceMutateRequestItemNodeDeleteDataAndDeleteFromSchema | AceMutateRequestItemNodePropDeleteDataAndDeleteFromSchema } AceMutateRequestItemNode
+ * @typedef { AceMutateRequestItemRelationshipInsert | AceMutateRequestItemRelationshipUpdate | AceMutateRequestItemRelationshipUpsert | AceMutateRequestItemRelationshipDeleteData | AceMutateRequestItemRelationshipPropDeleteData } AceMutateRequestItemRelationship
  *
- * @typedef { object } AceMutateRequestItemLoadBackup
- * @property { typeof enums.idsAce.LoadBackup } id
- * @property { AceMutateRequestItemLoadBackupX } x
- * @typedef { object } AceMutateRequestItemLoadBackupX
+ * @typedef { object } AceMutateRequestItemBackupLoad
+ * @property { typeof enums.idsAce.BackupLoad } id
+ * @property { AceMutateRequestItemBackupLoadX } x
+ * @typedef { object } AceMutateRequestItemBackupLoadX
  * @property { string } backup
  * @property { boolean } [ skipDataDelete ]
  *
@@ -197,135 +195,135 @@ import * as enums from './enums.js'
  * @property { typeof enums.idsAce.Empty } id - Delete all data and schema from graph
  * @property { string } [ prop ]
  *
- * @typedef { object } AceMutateRequestItemInstallPlugin
- * @property { typeof enums.idsAce.InstallPlugin } id
+ * @typedef { object } AceMutateRequestItemPluginInstall
+ * @property { typeof enums.idsAce.PluginInstall } id
  * @property { string } [ prop ]
- * @property { AceMutateRequestItemInstallPluginX } x
- * @typedef { object } AceMutateRequestItemInstallPluginX
- * @property { AceInstallPlugin } install
+ * @property { AceMutateRequestItemPluginInstallX } x
+ * @typedef { object } AceMutateRequestItemPluginInstallX
+ * @property { AcePluginInstall } install
  *
- * @typedef { object } AceMutateRequestItemUninstallPlugin
- * @property { typeof enums.idsAce.UninstallPlugin } id
+ * @typedef { object } AceMutateRequestItemPluginUninstall
+ * @property { typeof enums.idsAce.PluginUninstall } id
  * @property { string } [ prop ]
  * @property { { request: AceFnRequest } } x
  *
- * @typedef { object } AceMutateRequestItemAddNodeToGraph
- * @property { typeof enums.idsAce.AddNodeToGraph } id
+ * @typedef { object } AceMutateRequestItemNodeInsert
+ * @property { typeof enums.idsAce.NodeInsert } id
  * @property { string } node
  * @property { { uid?: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x
  *
- * @typedef { object } AceMutateRequestItemAddRelationshipToGraph
- * @property { typeof enums.idsAce.AddRelationshipToGraph } id
+ * @typedef { object } AceMutateRequestItemRelationshipInsert
+ * @property { typeof enums.idsAce.RelationshipInsert } id
  * @property { string } relationship
  * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x
  *
- * @typedef { object } AceMutateRequestItemUpdateGraphNode
- * @property { typeof enums.idsAce.UpdateGraphNode } id
+ * @typedef { object } AceMutateRequestItemNodeUpdate
+ * @property { typeof enums.idsAce.NodeUpdate } id
  * @property { string } node
  * @property { { uid: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x
  *
- * @typedef { object } AceMutateRequestItemUpdateGraphRelationship
- * @property { typeof enums.idsAce.UpdateGraphRelationship } id
+ * @typedef { object } AceMutateRequestItemRelationshipUpdate
+ * @property { typeof enums.idsAce.RelationshipUpdate } id
  * @property { string } relationship
  * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x
  *
- * @typedef { object } AceMutateRequestItemUpsertGraphNode
- * @property { typeof enums.idsAce.UpsertGraphNode } id
+ * @typedef { object } AceMutateRequestItemNodeUpsert
+ * @property { typeof enums.idsAce.NodeUpsert } id
  * @property { string } node
  * @property { { uid: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x
  *
- * @typedef { object } AceMutateRequestItemUpsertGraphRelationship
- * @property { typeof enums.idsAce.UpsertGraphRelationship } id
+ * @typedef { object } AceMutateRequestItemRelationshipUpsert
+ * @property { typeof enums.idsAce.RelationshipUpsert } id
  * @property { string } relationship
  * @property { { a: string, b: string, [propName: string]: any, $o?: AceMutateRequestOptions } } x
  * 
- * @typedef { AceMutateRequestItemUpdateGraphNode & { [relationshipProp: string]: string[] } } AceMutateRequestItemNodeWithRelationships
+ * @typedef { AceMutateRequestItemNodeUpdate & { [relationshipProp: string]: string[] } } AceMutateRequestItemNodeWithRelationships
  * 
- * @typedef { object } AceMutateRequestItemDataDeleteNodes
- * @property { typeof enums.idsAce.DataDeleteNodes } id
- * @property { AceMutateRequestItemDataDeleteNodesX } x
- * @typedef { object } AceMutateRequestItemDataDeleteNodesX
+ * @typedef { object } AceMutateRequestItemNodeDeleteData
+ * @property { typeof enums.idsAce.NodeDeleteData } id
+ * @property { AceMutateRequestItemNodeDeleteDataX } x
+ * @typedef { object } AceMutateRequestItemNodeDeleteDataX
  * @property { string[] } uids - The uids you'd love deleted. To cascade delete, add cascade to your schema
  *
- * @typedef { object } AceMutateRequestItemDataDeleteRelationships
- * @property { typeof enums.idsAce.DataDeleteRelationships } id
+ * @typedef { object } AceMutateRequestItemRelationshipDeleteData
+ * @property { typeof enums.idsAce.RelationshipDeleteData } id
  * @property { { _uids: string[] } } x
  *
- * @typedef { object } AceMutateRequestItemDataDeleteNodeProps
- * @property { typeof enums.idsAce.DataDeleteNodeProps } id
+ * @typedef { object } AceMutateRequestItemNodePropDeleteData
+ * @property { typeof enums.idsAce.NodePropDeleteData } id
  * @property { { uids: string[], props: string[] } } x
  *
- * @typedef { object } AceMutateRequestItemDataDeleteRelationshipProps
- * @property { typeof enums.idsAce.DataDeleteRelationshipProps } id
+ * @typedef { object } AceMutateRequestItemRelationshipPropDeleteData
+ * @property { typeof enums.idsAce.RelationshipPropDeleteData } id
  * @property { { _uids: string[], props: string[] } } x
  *
- * @typedef { string } AceMutateRequestItemSchemaAndDataDeleteNodesNode
+ * @typedef { string } AceMutateRequestItemNodeDeleteDataAndDeleteFromSchemaNode
  * 
- * @typedef { object } AceMutateRequestItemSchemaAndDataDeleteNodes
- * @property { typeof enums.idsAce.SchemaAndDataDeleteNodes } id
- * @property { AceMutateRequestItemSchemaAndDataDeleteNodesX } x
- * @typedef { object } AceMutateRequestItemSchemaAndDataDeleteNodesX
- * @property { AceMutateRequestItemSchemaAndDataDeleteNodesNode[] } nodes
+ * @typedef { object } AceMutateRequestItemNodeDeleteDataAndDeleteFromSchema
+ * @property { typeof enums.idsAce.NodeDeleteDataAndDeleteFromSchema } id
+ * @property { AceMutateRequestItemNodeDeleteDataAndDeleteFromSchemaX } x
+ * @typedef { object } AceMutateRequestItemNodeDeleteDataAndDeleteFromSchemaX
+ * @property { AceMutateRequestItemNodeDeleteDataAndDeleteFromSchemaNode[] } nodes
  *
- * @typedef { object } AceMutateRequestItemSchemaAndDataDeleteNodeProps
- * @property { typeof enums.idsAce.SchemaAndDataDeleteNodeProps } id
- * @property { AceMutateRequestItemSchemaAndDataDeleteNodePropsX } x
- * @typedef { object } AceMutateRequestItemSchemaAndDataDeleteNodePropsX
+ * @typedef { object } AceMutateRequestItemNodePropDeleteDataAndDeleteFromSchema
+ * @property { typeof enums.idsAce.NodePropDeleteDataAndDeleteFromSchema } id
+ * @property { AceMutateRequestItemNodePropDeleteDataAndDeleteFromSchemaX } x
+ * @typedef { object } AceMutateRequestItemNodePropDeleteDataAndDeleteFromSchemaX
  * @property { { node: string, prop: string }[] } props
  *
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodes
- * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfNodes } id
- * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX } x
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodesX
+ * @typedef { object } AceMutateRequestItemSchemaUpdateNodeName
+ * @property { typeof enums.idsAce.SchemaUpdateNodeName } id
+ * @property { AceMutateRequestItemSchemaUpdateNodeNameX } x
+ * @typedef { object } AceMutateRequestItemSchemaUpdateNodeNameX
  * @property { { nowName: string, newName: string }[] } nodes
  *
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodeProps
- * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfNodeProps } id
- * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX } x
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfNodePropsX
+ * @typedef { object } AceMutateRequestItemSchemaUpdateNodePropName
+ * @property { typeof enums.idsAce.SchemaUpdateNodePropName } id
+ * @property { AceMutateRequestItemSchemaUpdateNodePropNameX } x
+ * @typedef { object } AceMutateRequestItemSchemaUpdateNodePropNameX
  * @property { { node: string, nowName: string, newName: string }[] } props
  *
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationships
- * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfRelationships } id
- * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX } x
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipsX
+ * @typedef { object } AceMutateRequestItemSchemaUpdateRelationshipName
+ * @property { typeof enums.idsAce.SchemaUpdateRelationshipName } id
+ * @property { AceMutateRequestItemSchemaUpdateRelationshipNameX } x
+ * @typedef { object } AceMutateRequestItemSchemaUpdateRelationshipNameX
  * @property { { nowName: string, newName: string }[] } relationships
  *
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipProps
- * @property { typeof enums.idsAce.SchemaAndDataUpdateNameOfRelationshipProps } id
- * @property { AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipPropsX } x
- * @typedef { object } AceMutateRequestItemSchemaAndDataUpdateNameOfRelationshipPropsX
+ * @typedef { object } AceMutateRequestItemSchemaUpdateRelationshipPropName
+ * @property { typeof enums.idsAce.SchemaUpdateRelationshipPropName } id
+ * @property { AceMutateRequestItemSchemaUpdateRelationshipPropNameX } x
+ * @typedef { object } AceMutateRequestItemSchemaUpdateRelationshipPropNameX
  * @property { { relationship: string, nowName: string, newName: string }[] } props
  *
- * @typedef { object } AceMutateRequestItemAddToSchema
- * @property { typeof enums.idsAce.AddToSchema } id
+ * @typedef { object } AceMutateRequestItemSchemaAdd
+ * @property { typeof enums.idsAce.SchemaAdd } id
  * @property { string } [ prop ]
- * @property { AceMutateRequestItemAddToSchemaX } x
- * @typedef { object } AceMutateRequestItemAddToSchemaX
+ * @property { AceMutateRequestItemSchemaAddX } x
+ * @typedef { object } AceMutateRequestItemSchemaAddX
  * @property { AceSchema } schema
  *
  * @typedef { object } AceMutateRequestOptions
  * @property { string } [ privateJWK ]
  *
- * @typedef { { [propName: string]: any } } AceMutateRequestItemAddRelationshipToGraphX
+ * @typedef { { [propName: string]: any } } AceMutateRequestItemRelationshipInsertX
  */
 
 
 /** AceQuery
  * 
  * @typedef { object } AceQueryRequestItemNode
- * @property { typeof enums.idsAce.QueryByNode } id
+ * @property { typeof enums.idsAce.NodeQuery } id
  * @property { string } node
  * @property { string } prop
  * @property { AceQueryRequestItemNodeX } [ x ]
  *
  * @typedef { object } AceQueryRequestItemRelationship
- * @property { typeof enums.idsAce.QueryByRelationship } id
+ * @property { typeof enums.idsAce.RelationshipQuery } id
  * @property { string } relationship
  * @property { string } prop
  * @property { AceQueryRequestItemRelationshipX } [ x ]
  *
- * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemGetBackup | AceQueryRequestItemGetSchema } AceQueryRequestItem
+ * @typedef { AceQueryRequestItemNode | AceQueryRequestItemRelationship | AceQueryRequestItemBackupGet | AceQueryRequestItemSchemaGet } AceQueryRequestItem
  *
  * @typedef { boolean | { alias: string } } AceQueryXPropValue
  * 
@@ -470,12 +468,12 @@ import * as enums from './enums.js'
  * @property { string } value - The value Ace will query to find a unique match for
  * @property { string } prop - Find node by this prop that has a unique index
  *
- * @typedef { object } AceQueryRequestItemGetSchema
- * @property { typeof enums.idsAce.GetSchema } id
+ * @typedef { object } AceQueryRequestItemSchemaGet
+ * @property { typeof enums.idsAce.SchemaGet } id
  * @property { string } prop
  *
- * @typedef { object } AceQueryRequestItemGetBackup
- * @property { typeof enums.idsAce.GetBackup } id
+ * @typedef { object } AceQueryRequestItemBackupGet
+ * @property { typeof enums.idsAce.BackupGet } id
  * @property { string } prop
  * 
  * @typedef { object } AceQueryValue

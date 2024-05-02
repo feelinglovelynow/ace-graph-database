@@ -122,7 +122,7 @@ ACE_CRYPT_JWK='${ jwks.cryptJWK }'`)
 
         const gtfJWK = options.get('-j') || options.get('--jwk')
         const gtfName = options.get('-n') || options.get('--name') || (new Date()).toISOString()
-        const { backupFromSchema } = await aceFetch({ host: gtfHost, body: { request: { id: 'GetBackup', prop: 'backupFromSchema' } } })
+        const { backupFromSchema } = await aceFetch({ host: gtfHost, body: { request: { id: 'BackupGet', prop: 'backupFromSchema' } } })
 
         if (!fs.existsSync(files.cwd)) await fsPromises.mkdir(files.cwd)
         if (!fs.existsSync(files.backups)) await fsPromises.mkdir(files.backups)
@@ -154,7 +154,7 @@ ACE_CRYPT_JWK='${ jwks.cryptJWK }'`)
           ftgBackup = await decrypt(json.encrypted, json.iv, ftgJWK)
         }
 
-        await aceFetch({ host: ftgHost, body: { request: { id: 'LoadBackup', x: { backup: ftgBackup, skipDataDelete: ftgSkipDataDelete } } } })
+        await aceFetch({ host: ftgHost, body: { request: { id: 'BackupLoad', x: { backup: ftgBackup, skipDataDelete: ftgSkipDataDelete } } } })
         console.log('✨ backup applied!')
         break
 
@@ -175,7 +175,7 @@ ACE_CRYPT_JWK='${ jwks.cryptJWK }'`)
     async function getSchemaFromHost (host) {
       if (!host) return null
       else {
-        const { schema } = await aceFetch({ host, body: { request: { id: 'GetSchema', prop: 'schema' } } })
+        const { schema } = await aceFetch({ host, body: { request: { id: 'SchemaGet', prop: 'schema' } } })
         return schema || null
       }
     }

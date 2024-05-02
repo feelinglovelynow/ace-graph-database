@@ -1,42 +1,46 @@
 export const idsAce = new Set([
   'Empty',
 
-  'GetSchema',
-  'AddToSchema',
+  // Backup
+  'BackupGet',
+  'BackupLoad',
 
-  'GetBackup',
-  'LoadBackup',
+  // Plugin
+  'PluginInstall',
+  'PluginUninstall',
 
-  'AddNodeToGraph',
-  'AddRelationshipToGraph',
+  // Schema
+  'SchemaGet',
+  'SchemaAdd',
+  'SchemaUpdateNodeName',
+  'SchemaUpdateNodePropName',
+  'SchemaUpdateRelationshipName',
+  'SchemaUpdateRelationshipPropName',
 
-  'UpdateGraphNode',
-  'UpdateGraphRelationship',
+  // Schema Update Prop
+  'SchemaUpdatePropDataType',
+  'SchemaUpdatePropMustBeDefined',
+  'SchemaUpdatePropCascade',
+  'SchemaUpdatePropIndex',
+  'SchemaUpdatePropHas',
 
-  'UpsertGraphNode',
-  'UpsertGraphRelationship',
+  // Node
+  'NodeInsert',
+  'NodeUpdate',
+  'NodeUpsert',
+  'NodeQuery',
+  'NodeDeleteData',
+  'NodePropDeleteData',
+  'NodeDeleteDataAndDeleteFromSchema',
+  'NodePropDeleteDataAndDeleteFromSchema',
 
-  'QueryByNode',
-  'QueryByRelationship',
-
-  'InstallPlugin',
-  'UninstallPlugin',
-
-  'DataDeleteNodes',
-  'DataDeleteRelationships',
-
-  'DataDeleteNodeProps',
-  'DataDeleteRelationshipProps',
-
-  'SchemaAndDataDeleteNodes',
-  'SchemaAndDataDeleteRelationships',
-
-  'SchemaAndDataDeleteNodeProps',
-  'SchemaAndDataDeleteRelationshipProps',
-
-  'SchemaAndDataUpdateNameOfNodes',
-  'SchemaAndDataUpdateNameOfRelationships',
-
-  'SchemaAndDataUpdateNameOfNodeProps',
-  'SchemaAndDataUpdateNameOfRelationshipProps',
+  // Relationship
+  'RelationshipInsert',
+  'RelationshipUpdate',
+  'RelationshipUpsert',
+  'RelationshipQuery',
+  'RelationshipDeleteData',
+  'RelationshipPropDeleteData',
+  'RelationshipDeleteDataAndDeleteFromSchema',
+  'RelationshipPropDeleteDataAndDeleteFromSchema',
 ])

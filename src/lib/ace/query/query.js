@@ -89,7 +89,7 @@ async function getInitialUids (requestItem, passport) {
     }
 
     if (isValid && !uids?.length) {
-      uids = requestItem.id === 'QueryByNode' ?
+      uids = requestItem.id === 'NodeQuery' ?
         !xGenerated.nodeName ? [] : await passport.storage.get(getNodeUidsKey(xGenerated.nodeName)) :
         !xGenerated.relationshipName ? [] : await passport.storage.get(getRelationshipUidsKey(xGenerated.relationshipName))
 
