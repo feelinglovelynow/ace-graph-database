@@ -1,4 +1,4 @@
-<img src="./src/lib/images/logo.png" />
+<img src="./src/lib/images/logo.png" style="width: 100%;" />
 
 
 ## 🙏 Our Mission
@@ -19,7 +19,7 @@
 
 
 <br/>
-<img src="./src/lib/images/code.gif" />
+<img src="./src/lib/images/code.gif" style="width: 100%;" />
 
 
 ## ⚡️ Performance
