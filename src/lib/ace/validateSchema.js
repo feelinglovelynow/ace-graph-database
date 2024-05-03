@@ -8,8 +8,8 @@ import { AceError } from '../objects/AceError.js'
  * @param { td.AceSchema } schema
  */
 export function validateSchema (schema) {
-  if (!schema?.nodes || typeof schema.nodes !== 'object' || Array.isArray(schema.nodes)) throw AceError('schema__invalidNodes', 'The provided schema requires a nodes object please', { schema: JSON.stringify(schema) })
-  if (schema.relationships && (typeof schema.relationships !== 'object' || Array.isArray(schema.relationships))) throw AceError('schema__invalidRelationships', 'If you would love to provide relationships with your schema, please pass it as an object', { schema: JSON.stringify(schema) })
+  if (!schema?.nodes || typeof schema.nodes !== 'object' || Array.isArray(schema.nodes)) throw AceError('schema__invalidNodes', 'The provided schema requires a nodes object please', {})
+  if (schema.relationships && (typeof schema.relationships !== 'object' || Array.isArray(schema.relationships))) throw AceError('schema__invalidRelationships', 'If you would love to provide relationships with your schema, please pass it as an object', {})
 
   /** @type { Set<string> } - Helps ensure each node in `schema.nodes` is unique */
   const nodeNameSet = new Set()
@@ -33,13 +33,13 @@ export function validateSchema (schema) {
   const directionsMap = new Map()
 
   for (const nodeName in schema.nodes) {
-    if (nodeNameSet.has(nodeName)) throw AceError('schema__notUniqueNodeName', `The node name ${ nodeName } is not unique, please ensure each nodeName is unique`, { nodeName, schema: JSON.stringify(schema) })
+    if (nodeNameSet.has(nodeName)) throw AceError('schema__notUniqueNodeName', `The node name ${ nodeName } is not unique, please ensure each nodeName is unique`, { nodeName })
 
     nodeNameSet.add(nodeName)
 
-    if (typeof nodeName !== 'string') throw AceError('schema__invalidNodeType', `The node name ${ nodeName } is an invalid type, please add node that is a type of string`, { nodeName, schema: JSON.stringify(schema) })
-    if (!nodeName.match(/^[A-Za-z\_]+$/)) throw AceError('schema__invalidNodeCharacters', `The node name ${nodeName} has invalid characters, please add node names that have characters a-z or A-Z or underscores (helpful for generated jsdoc and ts types)`, { nodeName, schema: JSON.stringify(schema) })
-    if (nodeName.includes(DELIMITER)) throw AceError('schema__nodeDelimeter', `The node name ${ nodeName } includes ${ DELIMITER } which Ace does not allow b/c ${ DELIMITER } is used as a delimeter within our query language`, { nodeName, schema: JSON.stringify(schema) })
+    if (typeof nodeName !== 'string') throw AceError('schema__invalidNodeType', `The node name ${ nodeName } is an invalid type, please add node that is a type of string`, { nodeName })
+    if (nodeName.includes(DELIMITER)) throw AceError('schema__nodeDelimeter', `The node name ${ nodeName } includes ${ DELIMITER } which Ace does not allow b/c ${ DELIMITER } is used as a delimeter within our query language`, { nodeName })
+    if (nodeName.includes(' ')) throw AceError('schema__hasSpaces', `The node name ${ nodeName } is an invalid because it has a space in it, please add nodes that have no spaces in them`, { nodeName })
 
     for (const nodePropName in schema.nodes[nodeName]) {
       validateSchemaProp(nodePropName, schema.nodes[nodeName][nodePropName], false)
@@ -51,7 +51,7 @@ export function validateSchema (schema) {
 
         if (!mapValue) uniqueNodePropsMap.set(nodeName, new Set([ nodePropName ]))
         else {
-          if (mapValue.has(nodePropName)) throw AceError('schema__notUniqueNodePropName', `The node name ${ nodeName } and prop name ${ nodePropName } is not unique, please ensure all node prop names are unique for the node`, { nodeName, nodePropName, schema: JSON.stringify(schema) })
+          if (mapValue.has(nodePropName)) throw AceError('schema__notUniqueNodePropName', `The node name ${ nodeName } and prop name ${ nodePropName } is not unique, please ensure all node prop names are unique for the node`, { nodeName, nodePropName })
           else mapValue.add(nodePropName)
         }
       } else {
@@ -72,7 +72,7 @@ export function validateSchema (schema) {
   })
 
   for (const relationshipName of relationshipNameArray) {
-    if (relationshipNameSet.has(relationshipName)) throw AceError('schema__notUniqueRelationshipName', `The relationship name \`${ relationshipName }\` is not unique, please ensure each relationshipName is unique`, { relationshipName, schema: JSON.stringify(schema) })
+    if (relationshipNameSet.has(relationshipName)) throw AceError('schema__notUniqueRelationshipName', `The relationship name \`${ relationshipName }\` is not unique, please ensure each relationshipName is unique`, { relationshipName })
 
     relationshipNameSet.add(relationshipName)
 
@@ -82,7 +82,7 @@ export function validateSchema (schema) {
     if (typeof relationshipName !== 'string') throw AceError('schema__invalidRelationshipType', `The relationship name \`${ relationshipName }\` is not a type of string, please add relationships that are a type of string`, _errorData)
     if (!relationshipName.match(/^[A-Za-z\_]+$/)) throw AceError('schema__invalidRelationshipCharacters', `The relationship name \`${ relationshipName }\` has invalid characters, please add relationships include characters a-z or A-Z or underscores`, _errorData)
     if (relationship?.id !== enums.idsSchema.OneToOne && relationship?.id !== enums.idsSchema.ManyToMany && relationship?.id !== enums.idsSchema.OneToMany) throw AceError('schema__invalidRelationshipId', `The relationship name \`${ relationshipName }\` is invalid b/c relationship?.id is invalid, please ensure relationships have a valid relationship id of OneToOne, OneToMany or ManyToMany`, _errorData)
-    if (relationshipName.includes(DELIMITER)) throw AceError('schema__relationshipDelimeter', `The relationship name ${relationshipName} includes ${DELIMITER} which Ace does not allow b/c ${DELIMITER} is used as a delimeter within our query language`, { relationshipName, schema: JSON.stringify(schema) })
+    if (relationshipName.includes(DELIMITER)) throw AceError('schema__relationshipDelimeter', `The relationship name ${relationshipName} includes ${DELIMITER} which Ace does not allow b/c ${DELIMITER} is used as a delimeter within our query language`, { relationshipName })
 
     if (relationship.props) {
       if (typeof relationship.props !== 'object' || Array.isArray(relationship.props)) throw AceError('schema__invalidRelationshipProps', `The relationship name ${ relationshipName } has invalid props, if you'd love to include props please ensure relationship.props type, is an object`, _errorData)
@@ -130,7 +130,7 @@ export function validateSchema (schema) {
  * @returns 
  */
 function notify (relationshipName, directions) {
-  return AceError('schema__invalid-relationship-alignment', `The relationship name \`${ relationshipName }\` has invalid props, please ensure each relationship has 1 bidirectional relationship prop that is not an inverse or 2 relationship props where one is inverse and neither is bidirectional`, { relationshipName, directions })
+  return AceError('schema__invalidRelationshipAlignment', `The relationship name \`${ relationshipName }\` has invalid props, please ensure each relationship has 1 bidirectional relationship prop that is not an inverse or 2 relationship props where one is inverse and neither is bidirectional`, { relationshipName, directions })
 }
 
 
@@ -141,7 +141,7 @@ function notify (relationshipName, directions) {
  * @param { boolean } isRelationshipProp
  */
 function validateSchemaProp (propName, propValue, isRelationshipProp) {
-  validatePropKey(propName, isRelationshipProp)
+  validatePropName(propName, isRelationshipProp)
 
   switch (propValue.id) {
     case enums.idsSchema.Prop:
@@ -173,18 +173,19 @@ function validateSchemaProp (propName, propValue, isRelationshipProp) {
  * @param { string } prop
  * @param { boolean } isRelationshipProp
  */
-function validatePropKey (prop, isRelationshipProp) {
-  if (typeof prop !== 'string') throw AceError('validatePropKey___notString', `The prop ${ prop } is invalid because it is not a type of string, please ensure each prop has a type of string`, { prop })
- 
-  if (isRelationshipProp) {
-    if (prop === '_uid') throw AceError('validatePropKey___relationshipUid', 'The prop _uid is invalid because _uid is a reserved relationship prop', { prop })
-    if (prop === 'a') throw AceError('validatePropKey___relationshipA', 'The prop a is invalid because a is a reserved relationship prop', { prop })
-    if (prop === 'b') throw AceError('validatePropKey___relationshipB', 'The prop b is invalid because b is a reserved relationship prop', { prop })
-    if (!prop.startsWith('_')) throw AceError('validatePropKey___addUnderscore', `The prop ${ prop } is invalid because relationship props must start with an underscore. This helps know what props in a query are relationship props`, { prop })
-  } else {
-    if (prop === 'uid') throw AceError('validatePropKey___nodeUid', 'The prop uid is invalid because uid is a reserved node prop', { prop })
-    if (prop.startsWith('_')) throw AceError('validatePropKey___removeUnderscore', `The prop ${ prop } is invalid because none relationship props may not start with an underscore. This helps know what props in a query are relationship props`, { prop })
-  }
+function validatePropName (prop, isRelationshipProp) {
+  if (typeof prop !== 'string') throw AceError('schema__validatePropName__notString', `The prop ${ prop } is invalid because it is not a type of string, please ensure each prop has a type of string`, { prop })
+  if (prop.includes(' ')) throw AceError('schema__validatePropName__hasSpaces', `The prop ${ prop } is an invalid because it has a space in it, please add props that have no spaces in them`, { prop })
+  if (prop.includes(DELIMITER)) throw AceError('schema__validatePropName__delimeter', `The prop ${prop} includes ${DELIMITER} which Ace does not allow b/c ${DELIMITER} is used as a delimeter within our query language`, { prop })
 
-  if (prop.includes(DELIMITER)) throw AceError('validatePropKey__delimeter', `The prop ${ prop } includes ${ DELIMITER } which Ace does not allow b/c ${ DELIMITER } is used as a delimeter within our query language`, { prop })
+  if (isRelationshipProp) {
+    if (prop === '_uid') throw AceError('schema__validatePropName__relationshipUid', 'The prop _uid is invalid because _uid is a reserved relationship prop', { prop })
+    if (prop === 'a') throw AceError('schema__validatePropName__relationshipA', 'The prop a is invalid because a is a reserved relationship prop', { prop })
+    if (prop === 'b') throw AceError('schema__validatePropName__relationshipB', 'The prop b is invalid because b is a reserved relationship prop', { prop })
+    if (!prop.startsWith('_')) throw AceError('schema__validatePropName__addUnderscore', `The prop ${ prop } is invalid because relationship props must start with an underscore. This helps know what props in a query are relationship props`, { prop })
+  } else {
+    if (prop === 'uid') throw AceError('schema__validatePropName__nodeUid', 'The prop uid is invalid because uid is a reserved node prop', { prop })
+    if (prop.startsWith('_')) throw AceError('schema__validatePropName__removeUnderscore', `The prop ${ prop } is invalid because none relationship props may not start with an underscore. This helps know what props in a query are relationship props`, { prop })
+    if (prop === '$ace') throw AceError('schema__validatePropName__reservedAce', 'The prop $ace is reserved, please ensure no prop is named $ace', { prop })
+  }
 }

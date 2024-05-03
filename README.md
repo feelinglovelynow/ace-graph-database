@@ -398,11 +398,6 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Validations
-    * Schema
-        * Node and Prop name must not have a space in them
-    * ace()
-        * A prop of `$ace` is not allowed
 1. Cloudflare allows a `storage.get()` of up to [128](https://developers.cloudflare.com/durable-objects/api/transactional-storage-api/#get) keys at a time 
     * Create `./src/lib/ace/storage/get()`
     * If key count is > 120 => do the `storage.get()` in batches of 120 then concat the results

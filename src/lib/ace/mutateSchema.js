@@ -15,31 +15,31 @@ import { DELIMITER, SCHEMA_KEY, getNodeUidsKey, getRelationshipProp, getRelation
 export function addToSchema (passport, res, reqItem) {
   if (passport.revokesAcePermissions?.has(getRevokesKey({ action: enums.permissionActions.write, schema: true }))) throw AceAuthError(enums.permissionActions.write, passport, { schema: true })
 
-  /** @type { td.AceSchema } Deep copy current schema, only assign passport.schema to schema if this schema passes vaidation */
-  let schema = passport.schema ? JSON.parse(JSON.stringify(passport.schema)) : {}
+  /** @type { td.AceSchema } Deep copy current schema, only assign passport.schema to _schema if _schema passes vaidation */
+  let _schema = passport.schema ? JSON.parse(JSON.stringify(passport.schema)) : {}
 
   // add nodes to schema
   if (reqItem.x.schema.nodes) {
     for (const node in reqItem.x.schema.nodes) {
-      if (!schema) schema = { nodes: { [node]: reqItem.x.schema.nodes[node] }, relationships: {} }
-      else if (!schema.nodes) schema.nodes = { [node]: reqItem.x.schema.nodes[node] }
-      else if (schema.nodes[node]) schema.nodes[node] = { ...schema.nodes[node], ...reqItem.x.schema.nodes[node] }
-      else schema.nodes[node] = reqItem.x.schema.nodes[node]
+      if (!_schema) _schema = { nodes: { [node]: reqItem.x.schema.nodes[node] }, relationships: {} }
+      else if (!_schema.nodes) _schema.nodes = { [node]: reqItem.x.schema.nodes[node] }
+      else if (_schema.nodes[node]) _schema.nodes[node] = { ..._schema.nodes[node], ...reqItem.x.schema.nodes[node] }
+      else _schema.nodes[node] = reqItem.x.schema.nodes[node]
     }
   }
 
   // add relationships to schema
   if (reqItem.x.schema.relationships) {
     for (const relationship in reqItem.x.schema.relationships) {
-      if (!schema) schema = { nodes: {}, relationships: { [relationship]: reqItem.x.schema.relationships[relationship] } }
-      else if (!schema.relationships) schema.relationships = { [relationship]: reqItem.x.schema.relationships[relationship] }
-      else if (schema.relationships[relationship]) schema.relationships[relationship] = { ...schema.relationships[relationship], ...reqItem.x.schema.relationships[relationship] }
-      else schema.relationships[relationship] = reqItem.x.schema.relationships[relationship]
+      if (!_schema) _schema = { nodes: {}, relationships: { [relationship]: reqItem.x.schema.relationships[relationship] } }
+      else if (!_schema.relationships) _schema.relationships = { [relationship]: reqItem.x.schema.relationships[relationship] }
+      else if (_schema.relationships[relationship]) _schema.relationships[relationship] = { ..._schema.relationships[relationship], ...reqItem.x.schema.relationships[relationship] }
+      else _schema.relationships[relationship] = reqItem.x.schema.relationships[relationship]
     }
   }
 
-  put(SCHEMA_KEY, validateSchema(schema), passport)
-  passport.schema = schema
+  put(SCHEMA_KEY, validateSchema(_schema), passport)
+  passport.schema = _schema
   setSchemaDataStructures(passport)
   if (reqItem.prop) res.now[reqItem.prop] = passport.schema
 }
