@@ -12,7 +12,7 @@ import { AcePassport } from './lib/objects/AcePassport.js'
 async function getResponse (storage, request) {
   const url = new URL(request.url)
 
-  if (url.pathname !== '/ace') throw AceError('ace__invalid-url', `The request is invalid b/c the url pathname ${url.pathname} is invalid, please call with the only valid url pathname, which is /ace`, { pathname: url.pathname, validPathname: '/ace' })
+  if (url.pathname !== '/ace') throw AceError('ace__invalidPathname', `The request is invalid b/c url.pathname: ${ url.pathname } is invalid, please call with the only valid url pathname, which is /ace`, { pathname: url.pathname, validPathname: '/ace' })
   else {
     const body = await request.json()
     const options = /** @type { td.AceFnOptions } */ ({
@@ -32,7 +32,7 @@ export default {
   /**
    * @param { Request } request 
    * @param { td.Ace_CF_Env } env 
-   * @returns 
+   * @returns { Promise<Response> }
    */
   async fetch (request, env) {
     switch (request.method) {
@@ -43,7 +43,7 @@ export default {
         const stub = env.AceGraphDatabase.get(id)
         return await stub.fetch(request)
       default:
-        throw AceError('ace__invalid-method', `The request method is invalid because the method ${ request.method } is invalid, please call with a valid request method, POST`, { method: request.method })
+        throw getMethodError(request)
     }
   },
 }
@@ -53,9 +53,8 @@ export default {
 export class AceGraphDatabase {
   /**
    * @param { td.Ace_CF_DO_State } state 
-   * @param { td.Ace_CF_Env } env 
    */
-  constructor (state, env) {
+  constructor (state) {
     this.state = state;
   }
 
@@ -71,7 +70,7 @@ export class AceGraphDatabase {
         case 'POST':
           return await getResponse(this.state.storage, request)
         default:
-          throw AceError('ace__invalid-method', `The request method is invalid because the method ${ request.method } is invalid, please call with a valid request method, POST`, { method: request.method })
+          throw getMethodError(request)
       }
     } catch (e) {
       if (typeof e === 'object') return new Response(JSON.stringify(e), { headers: getHeaders('json'), status: 400 })
@@ -93,4 +92,13 @@ function getHeaders (type) {
     case 'json':
       return { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'content-type': 'application/json' }
   }
+}
+
+
+/**
+ * @param { Request } request 
+ * @returns { td.AceError }
+ */
+function getMethodError (request) {
+  return AceError('ace__invalidMethod', `The request is invalid because request.method ${ request.method } is invalid, please call with the valid request method, POST`, { method: request.method })
 }

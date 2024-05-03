@@ -7,56 +7,52 @@ import { getRelationshipProp, getSortIndexKey, getRevokesKey, getUniqueIndexKey,
 
 
 /**
- * @param { td.AceQueryRequestItemNode } requestItem 
  * @param { td.AcePassport } passport
- * @param { td.AceFnFullResponse } response
+ * @param { td.AceFnFullResponse } res
  * @param { td.AceFnCryptoJWKs } publicJWKs
- * @param { number } iRequest
+ * @param { number } iReq
+ * @param { td.AceQueryRequestItemNode } reqItem 
  * @returns { Promise<void> }
  */
-export async function queryNode (requestItem, passport, response, publicJWKs, iRequest) {
-  if (passport.schemaDataStructures?.nodeNamesSet?.has(requestItem.node)) {
-    const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
-    
-    if (uids.length) await addNodesToResponse(xGenerated, response, uids, null, isUsingSortIndex, passport, publicJWKs, iRequest)
-    else {
-      response.now[xGenerated.propName] = null
-      response.original[xGenerated.propName] = null
-    }
+export async function queryNode (passport, res, publicJWKs, iReq, reqItem) {
+  const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(reqItem, passport)
+  
+  if (uids.length) await addNodesToResponse(xGenerated, res, uids, null, isUsingSortIndex, passport, publicJWKs, iReq)
+  else {
+    res.now[xGenerated.propName] = null
+    res.original[xGenerated.propName] = null
   }
 }
 
 
 /**
- * @param { td.AceQueryRequestItemRelationship } requestItem 
  * @param { td.AcePassport } passport
- * @param { td.AceFnFullResponse } response
+ * @param { td.AceFnFullResponse } res
  * @param { td.AceFnCryptoJWKs } publicJWKs
- * @param { number } iRequest
+ * @param { number } iReq
+ * @param { td.AceQueryRequestItemRelationship } reqItem 
  * @returns { Promise<void> }
  */
-export async function queryRelationship (requestItem, passport, response, publicJWKs, iRequest) {
-  if (passport.schemaDataStructures?.relationshipNamesSet?.has(requestItem.relationship)) {
-    const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(requestItem, passport)
+export async function queryRelationship (passport, res, publicJWKs, iReq, reqItem) {
+  const { uids, xGenerated, isUsingSortIndex } = await getInitialUids(reqItem, passport)
 
-    if (uids.length) await addRelationshipsToResponse(xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest)
-    else {
-      response.now[xGenerated.propName] = null
-      response.original[xGenerated.propName] = null
-    }
+  if (uids.length) await addRelationshipsToResponse(xGenerated, res, uids, isUsingSortIndex, passport, publicJWKs, iReq)
+  else {
+    res.now[xGenerated.propName] = null
+    res.original[xGenerated.propName] = null
   }
 }
 
 
 /**
- * @param { td.AceQueryRequestItemNode | td.AceQueryRequestItemRelationship } requestItem
+ * @param { td.AceQueryRequestItemNode | td.AceQueryRequestItemRelationship } reqItem
  * @param { td.AcePassport } passport
  * @returns { Promise<{ uids: any, isUsingSortIndex: any, xGenerated: td.AceQueryRequestItemGeneratedXSection }> }
  */
-async function getInitialUids (requestItem, passport) {
+async function getInitialUids (reqItem, passport) {
   let uids
 
-  const xGenerated = getXGeneratedById(requestItem, passport)
+  const xGenerated = getXGeneratedById(reqItem, passport)
 
   if (xGenerated.x?.$o?.sort) {
     const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x?.$o?.sort.prop) // IF sorting by an property requested => see if property is a sort index
@@ -89,7 +85,7 @@ async function getInitialUids (requestItem, passport) {
     }
 
     if (isValid && !uids?.length) {
-      uids = requestItem.id === 'NodeQuery' ?
+      uids = reqItem.id === 'NodeQuery' ?
         !xGenerated.nodeName ? [] : await passport.storage.get(getNodeUidsKey(xGenerated.nodeName)) :
         !xGenerated.relationshipName ? [] : await passport.storage.get(getRelationshipUidsKey(xGenerated.relationshipName))
 
@@ -107,16 +103,16 @@ async function getInitialUids (requestItem, passport) {
 
 /**
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
- * @param { td.AceFnFullResponse } response 
+ * @param { td.AceFnFullResponse } res 
  * @param { string[] } uids 
  * @param { any[] | null } graphRelationships
  * @param { boolean } isUsingSortIndex
  * @param { td.AcePassport } passport
  * @param { td.AceFnCryptoJWKs } publicJWKs
- * @param { number } iRequest
+ * @param { number } iReq
  * @returns { Promise<void> }
  */
-async function addNodesToResponse (xGenerated, response, uids, graphRelationships, isUsingSortIndex, passport, publicJWKs, iRequest) {
+async function addNodesToResponse (xGenerated, res, uids, graphRelationships, isUsingSortIndex, passport, publicJWKs, iReq) {
   const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop: '*' }))
 
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { node: xGenerated.nodeName })
@@ -125,25 +121,25 @@ async function addNodesToResponse (xGenerated, response, uids, graphRelationship
 
   for (let i = 0; i < uids.length; i++) {
     const node = graphNodes.get(uids[i])
-    if (isRevokesAllowing(node.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { node }, graphRelationships?.[i] || null, passport, publicJWKs, iRequest) // call desired function on each node
+    if (isRevokesAllowing(node.x, { permission }, passport)) await addPropsToResponse(xGenerated, res, { node }, graphRelationships?.[i] || null, passport, publicJWKs, iReq) // call desired function on each node
   }
 
-  await doQueryOptions(xGenerated, response, isUsingSortIndex, uids, publicJWKs, passport)
-  removeEmptyObjects(xGenerated, response)
+  await doQueryOptions(xGenerated, res, isUsingSortIndex, uids, publicJWKs, passport)
+  removeEmptyObjects(xGenerated, res)
 }
 
 
 /**
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
- * @param { td.AceFnFullResponse } response 
+ * @param { td.AceFnFullResponse } res 
  */
-function removeEmptyObjects (xGenerated, response) {
-  if (Array.isArray(response.now[xGenerated.propName])) {
-    for (let i = response.now[xGenerated.propName].length - 1; i >= 0; i--) {
-      if (!isObjPopulated(response.now[xGenerated.propName][i])) response.now[xGenerated.propName].splice(i, 1)
+function removeEmptyObjects (xGenerated, res) {
+  if (Array.isArray(res.now[xGenerated.propName])) {
+    for (let i = res.now[xGenerated.propName].length - 1; i >= 0; i--) {
+      if (!isObjPopulated(res.now[xGenerated.propName][i])) res.now[xGenerated.propName].splice(i, 1)
     }
 
-    if (!response.now[xGenerated.propName].length) response.now[xGenerated.propName] = null
+    if (!res.now[xGenerated.propName].length) res.now[xGenerated.propName] = null
   }
 }
 
@@ -173,53 +169,52 @@ function isRevokesAllowing (node, options, passport) {
  * @param { td.AceQueryAddPropsItem } item 
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
  * @param { string } prop 
- * @param { any } responseOriginalItem 
+ * @param { any } resOriginalItem 
  * @param { td.AcePassport } passport 
  * @returns 
  */
-function validateAddProps (item, xGenerated, prop, responseOriginalItem, passport) {
+function validateAddProps (item, xGenerated, prop, resOriginalItem, passport) {
   const revokesOptions = item.relationship ?
     { key: getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop }) } :
     { key: getRevokesKey({ action: 'read', node: xGenerated.nodeName, prop }) }
 
-  return isRevokesAllowing(responseOriginalItem, revokesOptions, passport)
+  return isRevokesAllowing(resOriginalItem, revokesOptions, passport)
 }
 
 
 /**
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
- * @param { td.AceFnFullResponse } response 
+ * @param { td.AceFnFullResponse } res 
  * @param { td.AceQueryAddPropsItem } item 
  * @param { { key: string, value: any } | null } graphRelationship
  * @param { td.AcePassport } passport
  * @param { td.AceFnCryptoJWKs } publicJWKs
- * @param { number } iRequest
+ * @param { number } iReq
  * @returns { Promise<void> }
  */
-async function addPropsToResponse (xGenerated, response, item, graphRelationship, passport, publicJWKs, iRequest) {
-  let graphItem, _uid = '', uid = ''
+async function addPropsToResponse (xGenerated, res, item, graphRelationship, passport, publicJWKs, iReq) {
+  let graphItem, uid = ''
 
   if (item.node) {
     graphItem = item.node
     uid = item.node?.x?.uid
   } else if (item.relationship) {
     graphItem = item.relationship
-    _uid = item.relationship?.x?._uid
   } else if (item.uid) {
     uid = item.uid
     graphItem = await passport.storage.get(uid)
   }
 
   if (!graphItem) {
-    response.now[ xGenerated.propName ] = null
-    response.original[ xGenerated.propName ] = null
+    res.now[ xGenerated.propName ] = null
+    res.original[ xGenerated.propName ] = null
   } else if (/** @type {*} */(xGenerated.x) !== false) {
-    const responseOriginalItem = graphItem.x
-    const responseNowItem = /** @type { { [propertyName: string]: any } } */ ({})
+    const resOriginalItem = graphItem.x
+    const resNowItem = /** @type { { [propName: string]: any } } */ ({})
 
     if (graphRelationship?.value) {
       for (const prop in graphRelationship.value) {
-        if (prop.startsWith('_')) responseOriginalItem[prop] = graphRelationship.value[prop]
+        if (prop.startsWith('_')) resOriginalItem[prop] = graphRelationship.value[prop]
       }
     }
 
@@ -227,15 +222,15 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
     const relationshipPropsMap = (item.relationship && passport.schemaDataStructures?.relationshipPropsMap) ? passport.schemaDataStructures.relationshipPropsMap.get(xGenerated.relationshipName || '') : undefined
 
     if (xGenerated.x?.$o?.all) { // show all not relationship props
-      for (const prop in responseOriginalItem) {
-        if ((!item.relationship || (prop !== 'a' && prop !== 'b')) && validateAddProps(item, xGenerated, prop, responseOriginalItem, passport)) { // on relationships, skip the a and b props AND ensure this user may query this data
-          if (!xGenerated.resHide || !xGenerated.resHide?.has(prop)) responseNowItem[xGenerated.x?.[prop]?.alias || prop] = responseOriginalItem[prop]
+      for (const prop in resOriginalItem) {
+        if ((!item.relationship || (prop !== 'a' && prop !== 'b')) && validateAddProps(item, xGenerated, prop, resOriginalItem, passport)) { // on relationships, skip the a and b props AND ensure this user may query this data
+          if (!xGenerated.resHide || !xGenerated.resHide?.has(prop)) resNowItem[xGenerated.x?.[prop]?.alias || prop] = resOriginalItem[prop]
         }
       }
     }
 
     for (const xKey in xGenerated.x) { // loop a section of query.x object
-      if (validateAddProps(item, xGenerated, xKey, responseOriginalItem, passport)) {
+      if (validateAddProps(item, xGenerated, xKey, resOriginalItem, passport)) {
         const xValue = xGenerated.x[xKey]
         const isTruthy = xValue === true
         const alias = xValue?.alias
@@ -249,36 +244,36 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
         }
 
         if (!xGenerated.resHide || !xGenerated.resHide?.has(xKey)) {
-          if (typeof responseOriginalItem[xKey] !== 'undefined') {
-            if (isTruthy) responseNowItem[xKey] = responseOriginalItem[xKey]
-            else if (alias) responseNowItem[alias] = responseOriginalItem[xKey]
+          if (typeof resOriginalItem[xKey] !== 'undefined') {
+            if (isTruthy) resNowItem[xKey] = resOriginalItem[xKey]
+            else if (alias) resNowItem[alias] = resOriginalItem[xKey]
           } else if (parentNodeOptions.schemaRelationshipProp?.id === enums.idsSchema.RelationshipProp && typeof graphRelationship?.value[xKey] !== 'undefined') { // this prop is defined @ schema.relationships
-            if (isTruthy) responseNowItem[xKey] = graphRelationship.value[xKey]
-            else if (alias) responseNowItem[alias] = graphRelationship?.value[xKey]
+            if (isTruthy) resNowItem[xKey] = graphRelationship.value[xKey]
+            else if (alias) resNowItem[alias] = graphRelationship?.value[xKey]
           } else if (parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.ForwardRelationshipProp || parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.ReverseRelationshipProp || parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.BidirectionalRelationshipProp) { // this prop is defined @ schema.nodes and is a SchemaRelationshipProp
             const relationshipUids = graphItem[getRelationshipProp(parentNodeOptions.schemaNodeProp.x.relationship)]
-            await addRelationshipPropsToResponse(uid, relationshipUids, parentNodeOptions.schemaNodeProp, xKey, xValue, xGenerated, responseNowItem, responseOriginalItem, passport, publicJWKs, iRequest)
+            await addRelationshipPropsToResponse(uid, relationshipUids, parentNodeOptions.schemaNodeProp, xKey, xValue, xGenerated, resNowItem, resOriginalItem, passport, publicJWKs, iReq)
           } else if (item.relationship && xKey !== '$o' && relationshipPropsMap) {
             const r = relationshipPropsMap.get(xKey)
             const schemaNodeProp = r?.propValue
             const relationshipGeneratedQueryXSection = getXGeneratedByParent(xValue, xKey, passport, xGenerated)  
 
             if (schemaNodeProp?.id === 'BidirectionalRelationshipProp') {
-              const uids = [ responseOriginalItem.a, responseOriginalItem.b ]
-              const graphRelationship = { key: responseOriginalItem._uid, value: responseOriginalItem }
+              const uids = [ resOriginalItem.a, resOriginalItem.b ]
+              const graphRelationship = { key: resOriginalItem._uid, value: resOriginalItem }
               const graphRelationships = [ graphRelationship, graphRelationship ]
-              await addNodesToResponse(relationshipGeneratedQueryXSection, { now: responseNowItem, original: responseOriginalItem }, uids, graphRelationships, false, passport, publicJWKs, iRequest)
+              await addNodesToResponse(relationshipGeneratedQueryXSection, { now: resNowItem, original: resOriginalItem }, uids, graphRelationships, false, passport, publicJWKs, iReq)
             } else {
               let uid
 
-              if (schemaNodeProp?.id === 'ForwardRelationshipProp') uid = responseOriginalItem.b
-              else if (schemaNodeProp?.id === 'ReverseRelationshipProp') uid = responseOriginalItem.a
+              if (schemaNodeProp?.id === 'ForwardRelationshipProp') uid = resOriginalItem.b
+              else if (schemaNodeProp?.id === 'ReverseRelationshipProp') uid = resOriginalItem.a
 
               if (uid) {
-                await addPropsToResponse(relationshipGeneratedQueryXSection, { now: responseNowItem, original: responseOriginalItem }, { uid }, null, passport, publicJWKs, iRequest)
+                await addPropsToResponse(relationshipGeneratedQueryXSection, { now: resNowItem, original: resOriginalItem }, { uid }, null, passport, publicJWKs, iReq)
                 
-                if (responseNowItem[relationshipGeneratedQueryXSection.propName]?.length) responseNowItem[relationshipGeneratedQueryXSection.propName] = responseNowItem[relationshipGeneratedQueryXSection.propName][0]
-                if (responseOriginalItem[relationshipGeneratedQueryXSection.propName]?.length) responseOriginalItem[relationshipGeneratedQueryXSection.propName] = responseOriginalItem[relationshipGeneratedQueryXSection.propName][0]
+                if (resNowItem[relationshipGeneratedQueryXSection.propName]?.length) resNowItem[relationshipGeneratedQueryXSection.propName] = resNowItem[relationshipGeneratedQueryXSection.propName][0]
+                if (resOriginalItem[relationshipGeneratedQueryXSection.propName]?.length) resOriginalItem[relationshipGeneratedQueryXSection.propName] = resOriginalItem[relationshipGeneratedQueryXSection.propName][0]
               }
             }
           }
@@ -286,12 +281,12 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
       }
     }
 
-    if (response.now[ xGenerated.propName ]?.length) {
-      if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[ xGenerated.propName ].push(responseNowItem)
-      response.original[ xGenerated.propName ].push(responseOriginalItem)
+    if (res.now[ xGenerated.propName ]?.length) {
+      if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) res.now[ xGenerated.propName ].push(resNowItem)
+      res.original[ xGenerated.propName ].push(resOriginalItem)
     } else {
-      if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) response.now[ xGenerated.propName ] = [ responseNowItem ]
-      response.original[ xGenerated.propName ] = [ responseOriginalItem ]
+      if (!xGenerated.resHide || !xGenerated.resHide.has(xGenerated.propName)) res.now[ xGenerated.propName ] = [ resNowItem ]
+      res.original[ xGenerated.propName ] = [ resOriginalItem ]
     }
   }
 }
@@ -299,15 +294,15 @@ async function addPropsToResponse (xGenerated, response, item, graphRelationship
 
 /**
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
- * @param { td.AceFnFullResponse } response 
+ * @param { td.AceFnFullResponse } res 
  * @param { string[] } uids 
  * @param { boolean } isUsingSortIndex
  * @param { td.AcePassport } passport
  * @param { td.AceFnCryptoJWKs } publicJWKs
- * @param { number } iRequest
+ * @param { number } iReq
  * @returns { Promise<void> }
  */
-async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSortIndex, passport, publicJWKs, iRequest) {
+async function addRelationshipsToResponse (xGenerated, res, uids, isUsingSortIndex, passport, publicJWKs, iReq) {
   const permission = passport.revokesAcePermissions?.get(getRevokesKey({ action: 'read', relationship: xGenerated.relationshipName, prop: '*' }))
 
   if (permission && !permission.allowPropName) throw AceAuthError(enums.permissionActions.read, passport, { relationship: xGenerated.relationshipName })
@@ -329,11 +324,11 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
   for (let i = 0; i < uids.length; i++) {
     const relationship = rCache.get(uids[i])
 
-    if (isRevokesAllowing(relationship.x, { permission }, passport)) await addPropsToResponse(xGenerated, response, { relationship }, null, passport, publicJWKs, iRequest)
+    if (isRevokesAllowing(relationship.x, { permission }, passport)) await addPropsToResponse(xGenerated, res, { relationship }, null, passport, publicJWKs, iReq)
   }
 
-  await doQueryOptions(xGenerated, response, isUsingSortIndex, uids, publicJWKs, passport)
-  removeEmptyObjects(xGenerated, response)
+  await doQueryOptions(xGenerated, res, isUsingSortIndex, uids, publicJWKs, passport)
+  removeEmptyObjects(xGenerated, res)
 }
 
 
@@ -344,13 +339,13 @@ async function addRelationshipsToResponse (xGenerated, response, uids, isUsingSo
  * @param { string } xKey 
  * @param { any } xValue 
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
- * @param { { [propertyName: string]: any } } responseNowItem 
- * @param { any } responseOriginalItem 
+ * @param { { [propName: string]: any } } resNowItem 
+ * @param { any } resOriginalItem 
  * @param { td.AcePassport } passport
  * @param { td.AceFnCryptoJWKs } publicJWKs
- * @param { number } iRequest
+ * @param { number } iReq
  */
-async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNodeProp, xKey, xValue, xGenerated, responseNowItem, responseOriginalItem, passport, publicJWKs, iRequest) {
+async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNodeProp, xKey, xValue, xGenerated, resNowItem, resOriginalItem, passport, publicJWKs, iReq) {
   if (uid && schemaNodeProp && relationshipUids?.length) {
     let findByUidFound = false
     let findBy_UidFound = false
@@ -426,7 +421,7 @@ async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNode
       else isValid = false
     }
 
-    if (isValid) await addNodesToResponse(relationshipGeneratedQueryXSection, { now: responseNowItem, original: responseOriginalItem }, nodeUids, graphRelationships, false, passport, publicJWKs, iRequest)
+    if (isValid) await addNodesToResponse(relationshipGeneratedQueryXSection, { now: resNowItem, original: resOriginalItem }, nodeUids, graphRelationships, false, passport, publicJWKs, iReq)
   }
 }
 

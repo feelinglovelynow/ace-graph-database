@@ -12,10 +12,10 @@ export function AcePassport (options) {
   let passport = {}
 
   if (options.storage) passport.storage = options.storage
-  else throw AceError('passport__storage-falsy', 'Please pass options.storage to AcePassport(options)', { options })
+  else throw AceError('passport__storageFalsy', 'Please pass options.storage to AcePassport(options)', { options })
 
-  if (!options.source) throw AceError('passport__falsy-source', 'Please pass options.source to AcePassport(options)', { options })
-  if (!enums.passportSource[options.source]) throw AceError('passport__invalid-source', 'Please pass a valid options.source to AcePassport(options)', { options, validSources: enums.passportSource })
+  if (!options.source) throw AceError('passport__falsySource', 'Please pass options.source to AcePassport(options)', { options })
+  if (!enums.passportSource[options.source]) throw AceError('passport__invalidSource', 'Please pass a valid options.source to AcePassport(options)', { options, validSources: enums.passportSource })
 
   passport.source = options.source
   passport.$aceDataStructures = /** @type { td.AceFn$DataStructure } */ ({ newUids: new Map(), deletedKeys: new Set(), putMap: new Map() })
@@ -57,8 +57,8 @@ export async function stamp (passport) {
   }
 
   if (passport.isEnforcePermissionsOn) {
-    if (!passport.user) throw AceError('auth__invalid-user', `The request is invalid b/c passport.user is falsy, please ensure the provided token \`${passport.token}\` aligns with a user`, { token: passport.token, source: passport.source })
-    if (!passport.user?.role) throw AceError('auth__invalid-role', `The request is invalid b/c passport.user.role is falsy, please ensure the provided token \`${passport.token}\` aligns with a user and the user has a role`, { token: passport.token, source: passport.source })
+    if (!passport.user) throw AceError('auth__invalidUser', `The request is invalid b/c passport.user is falsy, please ensure the provided token \`${passport.token}\` aligns with a user`, { token: passport.token, source: passport.source })
+    if (!passport.user?.role) throw AceError('auth__invalidRole', `The request is invalid b/c passport.user.role is falsy, please ensure the provided token \`${passport.token}\` aligns with a user and the user has a role`, { token: passport.token, source: passport.source })
   }
 }
 

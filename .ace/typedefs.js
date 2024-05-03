@@ -173,6 +173,11 @@ import * as enums from './enums.js'
  * @property { boolean } [ cascade ] - When this schema.node is deleted, also delete the node that this prop points to
  *
  * @typedef { { [propName: string]: AceSchemaRelationshipProp } } AceSchemaRelationshipProps - Props for this relationship
+ * 
+ * @typedef { object } AceSchemaDirectionsMapDirection
+ * @property { string } nodeName
+ * @property { string } nodePropName
+ * @property { typeof enums.idsSchema.ForwardRelationshipProp | typeof enums.idsSchema.ReverseRelationshipProp | typeof enums.idsSchema.BidirectionalRelationshipProp } id
  */
 
 
@@ -340,6 +345,11 @@ import * as enums from './enums.js'
  * @property { Set<string> } props
  *
  * @typedef { { [key: string]: CryptoKey } } AceQueryPublicJWKs
+ * 
+ * @typedef { object } AceQueyWhereGetValueResponse
+ * @property { any } value
+ * @property { 'value' | 'prop' } is
+ * @property { null | AceQueryRequestItemGeneratedXSection } xGenerated
  *
  * @typedef { { node?: any, relationship?: any, uid?: string } } AceQueryAddPropsItem
  * 
@@ -359,12 +369,12 @@ import * as enums from './enums.js'
  * @property { AceQueryFilterByUniques } [ filterByUniques ]
  * @property { AceQueryRequestItemPublicJWKOption } [ publicJWKs ]
  * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this `prop` to each node in the response
- * @property { AceQuerySumAsProperty } [ sumAsProp ]
- * @property { AceQueryAverageAsProperty } [ avgAsProp ]
- * @property { AceQueryMinAmountAsProperty } [ minAmtAsProp ]
- * @property { AceQueryMaxAmountAsProperty } [ maxAmtAsProp ]
- * @property { AceQueryDerivedProperty } [ newProps ]
- * @property { AceQueryPropertyAdjacentToResponse } [ propAdjToRes ]
+ * @property { AceQuerySumAsProp } [ sumAsProp ]
+ * @property { AceQueryAverageAsProp } [ avgAsProp ]
+ * @property { AceQueryMinAmountAsProp } [ minAmtAsProp ]
+ * @property { AceQueryMaxAmountAsProp } [ maxAmtAsProp ]
+ * @property { AceQueryDerivedProp } [ newProps ]
+ * @property { AceQueryPropAdjacentToResponse } [ propAdjToRes ]
  * @property { AceQueryFindGroup } [ findByOr ]
  * @property { AceQueryFindGroup } [ findByAnd ]
  * @property { AceQueryWherePropValue } [ findByPropValue ]
@@ -381,7 +391,7 @@ import * as enums from './enums.js'
  * @property { AceQueryWherePropRes } [ filterByPropRes ]
  * @property { AceQueryLimit } [ limit ]
  * @property { string[] } [ resHide ] - Array of props you'd love to hide in the response
- * @property { AceQueryPropertyAsResponse } [ propAsRes ]
+ * @property { AceQueryPropAsResponse } [ propAsRes ]
  * @property { boolean } [ countAsRes ] - Display the count of results as the response
  * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
  * @property { string } [ avgAsRes ] - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
@@ -399,12 +409,12 @@ import * as enums from './enums.js'
  * @property { string[] } [ filterBy_Uids ]
  * @property { AceQueryRequestItemPublicJWKOption } [ publicJWKs ]
  * @property { string } [ countAsProp ] - Find the count for the number of items in the response and then add this value as this `prop` to each node in the response
- * @property { AceQuerySumAsProperty } [ sumAsProp ]
- * @property { AceQueryAverageAsProperty } [ avgAsProp ]
- * @property { AceQueryMinAmountAsProperty } [ minAmtAsProp ]
- * @property { AceQueryMaxAmountAsProperty } [ maxAmtAsProp ]
- * @property { AceQueryDerivedProperty } [ newProps ]
- * @property { AceQueryPropertyAdjacentToResponse } [ propAdjToRes ]
+ * @property { AceQuerySumAsProp } [ sumAsProp ]
+ * @property { AceQueryAverageAsProp } [ avgAsProp ]
+ * @property { AceQueryMinAmountAsProp } [ minAmtAsProp ]
+ * @property { AceQueryMaxAmountAsProp } [ maxAmtAsProp ]
+ * @property { AceQueryDerivedProp } [ newProps ]
+ * @property { AceQueryPropAdjacentToResponse } [ propAdjToRes ]
  * @property { AceQueryFindGroup } [ findByOr ]
  * @property { AceQueryFindGroup } [ findByAnd ]
  * @property { string } [ findByDefined ]
@@ -421,7 +431,7 @@ import * as enums from './enums.js'
  * @property { AceQueryWherePropRes } [ filterByPropRes ]
  * @property { AceQueryLimit } [ limit ]
  * @property { string[] } [ resHide ] - Array of props you'd love to hide in the response
- * @property { AceQueryPropertyAsResponse } [ propAsRes ]
+ * @property { AceQueryPropAsResponse } [ propAsRes ]
  * @property { boolean } [ countAsRes ] - Display the count of results as the response
  * @property { string } [ sumAsRes ] - Loop the items in the response, calculate the sum of this property, amongst all response items and set it as the response
  * @property { string } [ avgAsRes ] - Loop the items in the response, calculate the average of this property, amongst all response items and set it as the response
@@ -487,38 +497,38 @@ import * as enums from './enums.js'
  * @property { number } [ skip ]
  * @property { number } [ count ]
  *
- * @typedef { object } AceQueryProperty
+ * @typedef { object } AceQueryProp
  * @property { string } prop - String property name
  * @property { string[] } [ relationships ] - If this property is not on the node, list the relationship properties to get to the desired nodes
  *
- * @typedef { object } AceQuerySumAsProperty
- * @property { string } computeProp - Add the sum of the `computeProperty` of each node in the response
- * @property { string } newProp - Add the sum of the `computeProperty` of each node in the response and add this value as the `newProperty` to each node in the response
+ * @typedef { object } AceQuerySumAsProp
+ * @property { string } computeProp - Add the sum of the `computeProp` of each node in the response
+ * @property { string } newProp - Add the sum of the `computeProp` of each node in the response and add this value as the `newProp` to each node in the response
  *
- * @typedef { object } AceQueryPropertyAsResponse
+ * @typedef { object } AceQueryPropAsResponse
  * @property { string } prop - String that is the prop name that you would love to show as the response
  * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to source. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.enum, the relationships will be `[ 'role' ]`, property is `'enum'` and in the query I've got `{ x: { role: { uid: true } } }`
  *
- * @typedef { object } AceQueryPropertyAdjacentToResponse
+ * @typedef { object } AceQueryPropAdjacentToResponse
  * @property { string } sourceProp
  * @property { string } adjacentProp
  * @property { string[] } [ relationships ] - Array of strings (node relationship prop names) that takes us, from the node we are starting on, to the desired node, with the property you'd love to see, as the response. The relationship must be defined in the query to find any properties of the relationship. So if I am starting @ AceUser and I'd love to get to AceUser.role.enum, the relationships will be `[ 'role' ]`, property is `'enum'` and in the query I've got `{ x: { role: { uid: true } } }`
  *
- * @typedef { object } AceQueryAverageAsProperty
- * @property { string } computeProp - Add the sum of the `computeProperty` of each node in the response and then divide by the count of items in the response
- * @property { string } newProp - Add the sum of the `computeProperty` of each node in the response and then divide by the count of items in the response and add this value as the `newProperty` to each node in the response
+ * @typedef { object } AceQueryAverageAsProp
+ * @property { string } computeProp - Add the sum of the `computeProp` of each node in the response and then divide by the count of items in the response
+ * @property { string } newProp - Add the sum of the `computeProp` of each node in the response and then divide by the count of items in the response and add this value as the `newProp` to each node in the response
  *
- * @typedef { object } AceQueryMinAmountAsProperty
- * @property { string } computeProp - Find the smallest numerical value of each node's `computeProperty` in the response
- * @property { string } newProp - Find the smallest numerical value of each node's `computeProperty` in the response and then add this value as the `newProperty` to each node in the response
+ * @typedef { object } AceQueryMinAmountAsProp
+ * @property { string } computeProp - Find the smallest numerical value of each node's `computeProp` in the response
+ * @property { string } newProp - Find the smallest numerical value of each node's `computeProp` in the response and then add this value as the `newProp` to each node in the response
  *
- * @typedef { object } AceQueryMaxAmountAsProperty
- * @property { string } computeProp - Find the largest numerical value of each node's `computeProperty` in the response
- * @property { string } newProp - Find the largest numerical value of each node's `computeProperty` in the response and then add this value as the `newProperty` to each node in the response
+ * @typedef { object } AceQueryMaxAmountAsProp
+ * @property { string } computeProp - Find the largest numerical value of each node's `computeProp` in the response
+ * @property { string } newProp - Find the largest numerical value of each node's `computeProp` in the response and then add this value as the `newProp` to each node in the response
  *
- * @typedef { { [propName: string]: AceQueryDerivedGroup } } AceQueryDerivedProperty
+ * @typedef { { [propName: string]: AceQueryDerivedGroup } } AceQueryDerivedProp
  * @typedef { { add: AceQueryDerivedGroupItem[], subtract?: never, multiply?: never, divide?: never } | { subtract: AceQueryDerivedGroupItem[], add?: never, multiply?: never, divide?: never } | { multiply: AceQueryDerivedGroupItem[], add?: never, subtract?: never, divide?: never } | { divide: AceQueryDerivedGroupItem[], add?: never, subtract?: never, multiply?: never } } AceQueryDerivedGroup
- * @typedef { number | string | AceQueryProperty | AceQueryDerivedGroup } AceQueryDerivedGroupItem
+ * @typedef { number | string | AceQueryProp | AceQueryDerivedGroup } AceQueryDerivedGroupItem
 */  
 
 

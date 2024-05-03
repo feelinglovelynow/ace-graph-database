@@ -35,7 +35,7 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
 
     if (relationshipNodeName) schemaRelationshipProp = /** @type { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[relationshipNodeName]?.[relationshipPropName])
 
-    if (!schemaRelationshipProp) throw AceError('get-relationship-node__falsy-relationship', `The relationships array is invalid because one of it's items: ${ relationshipPropName } is not a valid relationship prop according to your schema, please align each item in the relationships array with valid schema props`, { relationships })
+    if (!schemaRelationshipProp) throw AceError('getRelationshipNode__falsyRelationship', `The relationships array is invalid because one of it's items: ${ relationshipPropName } is not a valid relationship prop according to your schema, please align each item in the relationships array with valid schema props`, { relationships })
     else {
       if (iRelationships === 0) {
         response.xGenerated = /** @type { td.AceQueryRequestItemGeneratedXSection } */ (xGenerated.x[relationshipPropName])
@@ -55,7 +55,7 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
     }
   }
   
-  if (schemaRelationshipProp?.x?.has === 'many' && Array.isArray(response.node) && response.node.length) throw AceError('get-relationship-node__ending-with-many', `The relationships array is invalid because it ends with a property that is a "many" relationship, we must end with a "one" relationship`, { relationships, queryId: xGenerated.id, queryX: xGenerated.x })
+  if (schemaRelationshipProp?.x?.has === 'many' && Array.isArray(response.node) && response.node.length) throw AceError('getRelationshipNode__endingWithMany', `The relationships array is invalid because it ends with a property that is a "many" relationship, we must end with a "one" relationship`, { relationships, queryId: xGenerated.id, queryX: xGenerated.x })
 
   return response
 }

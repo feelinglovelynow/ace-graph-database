@@ -1,4 +1,5 @@
-import { cryptAlgorithm, uint8ToBase64, base64ToUint8, arrayBufferToBase64, arrayBufferToString, stringToUint8 } from './util.js'
+import { getRandomBase64 } from './getRandomBase64.js'
+import { cryptAlgorithm, base64ToUint8, arrayBufferToBase64, arrayBufferToString, stringToUint8 } from './util.js'
 
 
 /**
@@ -6,8 +7,7 @@ import { cryptAlgorithm, uint8ToBase64, base64ToUint8, arrayBufferToBase64, arra
  * @param { string } jwk 
  */
 export async function encrypt (original, jwk) {
-  const ivUint8 = crypto.getRandomValues(new Uint8Array(16))
-  const ivBase64 = uint8ToBase64(ivUint8)
+  const ivBase64 = getRandomBase64()
 
   const cryptoKey = await crypto.subtle.importKey('jwk', JSON.parse(jwk), cryptAlgorithm, true, ['encrypt', 'decrypt'])
   const encryptArrayBuffer = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: base64ToUint8(ivBase64) }, cryptoKey, stringToUint8(original))

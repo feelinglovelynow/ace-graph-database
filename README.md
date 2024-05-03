@@ -369,23 +369,11 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Quality of Life
-    * Camelcase error id's
-    * Organize mutation functions / files
-    * External: Property to Prop
-    * No more embedded functions (so I stop creating the same fn multiple times)
-    * loopOptions > switch 
 1. `ace()`
     * Response Types
     * Sanitize / Validate Input 
     * Graphs support 
-    * RelationshipDeleteDataAndDeleteFromSchema
-    * RelationshipPropDeleteDataAndDeleteFromSchema
-    * SchemaUpdatePropDataType
-    * SchemaUpdatePropMustBeDefined
-    * SchemaUpdatePropCascade
-    * SchemaUpdatePropIndex
-    * SchemaUpdatePropHas
+    * Complete idsAce
 1. Runtime validation
     * v1
       * Accepts: a test object + (a schema node / a schema relationship) 
@@ -399,6 +387,7 @@ ace types
     * Node Prop
     * Relationship Prop
 1. Batch requests to storage to stay within storage required Maximum count
+1. Validate Schema: Node and Prop name do not have a space in them
 1. $o: random
 1. Comments (param, returns, description, example usage, why, proofread) for all index functions
 1. App Worker > Ace Durable Object

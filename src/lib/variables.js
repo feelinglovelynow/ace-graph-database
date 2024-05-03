@@ -102,22 +102,22 @@ export function getRelationshipNameFromProp (prop) {
 
 /**
  * @param { string } name - Node name or relationship name
- * @param { string } propertyKey
- * @param { string | boolean | number } propertyValue
+ * @param { string } propKey
+ * @param { string | boolean | number } propValue
  * @returns { string }
  */
-export function getUniqueIndexKey (name, propertyKey, propertyValue) {
-  return INDEX_UNIQUE_PREFIX + name + DELIMITER + propertyKey + DELIMITER + String(propertyValue)
+export function getUniqueIndexKey (name, propKey, propValue) {
+  return INDEX_UNIQUE_PREFIX + name + DELIMITER + propKey + DELIMITER + encodeURIComponent(String(propValue))
 }
 
 
 /**
  * @param { string } name - Node name or relationship name
- * @param { string } propertyKey
+ * @param { string } propKey
  * @returns { string }
  */
-export function getSortIndexKey (name, propertyKey) {
-  return INDEX_SORT_PREFIX + name + DELIMITER + propertyKey
+export function getSortIndexKey (name, propKey) {
+  return INDEX_SORT_PREFIX + name + DELIMITER + propKey
 }
 
 

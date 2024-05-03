@@ -3,6 +3,7 @@ import { core } from '../tsc/src/lib/ace/plugins/core.d'
 import { sign, verify } from '../tsc/src/lib/security/hash.d'
 import { createJWKs } from '../tsc/src/lib/security/createJWKs.d'
 import { encrypt, decrypt } from '../tsc/src/lib/security/crypt.d'
+import { getRandomBase64 } from '../tsc/src/lib/security/getRandomBase64.d'
 import { ADD_NOW_DATE, REQUEST_UID_PREFIX, REQUEST_TOKEN_HEADER, PRE_QUERY_OPTIONS_FLOW, DEFAULT_QUERY_OPTIONS_FLOW, POST_QUERY_OPTIONS_FLOW, getNow } from '../tsc/src/lib/variables.d'
 
 const plugins = {
@@ -15,6 +16,7 @@ const security = {
   encrypt,
   decrypt,
   createJWKs,
+  getRandomBase64,
 }
 
 export {

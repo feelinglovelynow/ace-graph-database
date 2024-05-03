@@ -15,22 +15,20 @@ export function getDerivedValue (xGenerated, graphNode, derivedGroup, passport) 
   const groupItems = symbol ? derivedGroup[symbol] : null
   const response = /** @type {*} */ ({ value: undefined, using: undefined })
 
-
   if (symbol && groupItems) {
     for (const item of groupItems) {
-      if (/** @type { td.AceQueryProperty } */ (item)?.prop) {
-        const queryProperty = /** @type { td.AceQueryProperty } */ (item)
+      if (/** @type { td.AceQueryProp } */ (item)?.prop) {
+        const queryProp = /** @type { td.AceQueryProp } */ (item)
 
-        if (!queryProperty.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProperty.prop], response)
+        if (!queryProp.relationships?.length) setDerivedValueAndUsing(symbol, graphNode[queryProp.prop], response)
         else {
-          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, queryProperty.relationships)
-          if (rRelationshipNode.node?.[queryProperty.prop]) setDerivedValueAndUsing(symbol, rRelationshipNode.node[queryProperty.prop], response)
+          const rRelationshipNode = getRelationshipNode(xGenerated, graphNode, passport, queryProp.relationships)
+          if (rRelationshipNode.node?.[queryProp.prop]) setDerivedValueAndUsing(symbol, rRelationshipNode.node[queryProp.prop], response)
         }
       } else if (/** @type { td.AceQueryDerivedGroup } */ (item)?.add || /** @type { td.AceQueryDerivedGroup } */ (item)?.subtract || /** @type { td.AceQueryDerivedGroup } */ (item)?.multiply || /** @type { td.AceQueryDerivedGroup } */ (item)?.divide) {
         const queryDerivedGroup = /** @type { td.AceQueryDerivedGroup } */ (item)
-        const innerSymbol = getSymbol(queryDerivedGroup)
         const v = getDerivedValue(xGenerated, graphNode, queryDerivedGroup, passport)
-        setDerivedValueAndUsing(innerSymbol, v, response)
+        setDerivedValueAndUsing(symbol, v, response)
       } else {
         setDerivedValueAndUsing(symbol, item, response)
       }
@@ -72,7 +70,7 @@ function getSymbol (derivedGroup) {
   else if (derivedGroup.subtract) symbol = enums.queryDerivedSymbol.subtract
   else if (derivedGroup.multiply) symbol = enums.queryDerivedSymbol.multiply
   else if (derivedGroup.divide) symbol = enums.queryDerivedSymbol.divide
-  else throw AceError('query__invalid-new-props-symbol', 'Please include add, subtract, multiply or divide when using newProps', { current: derivedGroup, example: { newProps: { fullName: { add: [ { prop: 'firstName' }, ' ', { prop: 'lastName' } ] } } } } )
+  else throw AceError('aceFn__invalidNewPropsSymbol', 'Please include add, subtract, multiply or divide when using newProps', { current: derivedGroup, example: { newProps: { fullName: { add: [ { prop: 'firstName' }, ' ', { prop: 'lastName' } ] } } } } )
 
   return symbol
 }
