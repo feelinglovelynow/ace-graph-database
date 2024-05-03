@@ -387,8 +387,10 @@ ace types
     * Node Prop
     * Relationship Prop
 1. Batch requests to storage to stay within storage required Maximum count
+  * Storage get() function, if the uids is greater then the maximum count, do the storage.get() in pieces then concat the results
 1. Validate Schema: Node and Prop name do not have a space in them
 1. $o: random
+1. New Props: Response support
 1. Comments (param, returns, description, example usage, why, proofread) for all index functions
 1. App Worker > Ace Durable Object
 1. Create a GDPR Compliant Ecommerce Store w/ Ace

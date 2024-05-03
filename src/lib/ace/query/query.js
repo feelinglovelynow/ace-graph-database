@@ -55,8 +55,8 @@ async function getInitialUids (reqItem, passport) {
   const xGenerated = getXGeneratedById(reqItem, passport)
 
   if (xGenerated.x?.$o?.sort) {
-    const indexKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x?.$o?.sort.prop) // IF sorting by an property requested => see if property is a sort index
-    if (indexKey) uids = await passport.storage.get(indexKey)
+    const sortIndexStorageKey = getSortIndexKey(xGenerated.nodeName || xGenerated.relationshipName || '', xGenerated.x?.$o?.sort.prop) // IF sorting by an property requested => see if property is a sort index
+    if (sortIndexStorageKey) uids = await passport.storage.get(sortIndexStorageKey)
   }
 
   let isUsingSortIndex = false
@@ -229,34 +229,38 @@ async function addPropsToResponse (xGenerated, res, item, graphRelationship, pas
       }
     }
 
-    for (const xKey in xGenerated.x) { // loop a section of query.x object
-      if (validateAddProps(item, xGenerated, xKey, resOriginalItem, passport)) {
-        const xValue = xGenerated.x[xKey]
-        const isTruthy = xValue === true
-        const alias = xValue?.alias
+    for (const xPropName in xGenerated.x) { // loop a section of query.x object
+      if (validateAddProps(item, xGenerated, xPropName, resOriginalItem, passport)) {
+        const xPropValue = xGenerated.x[xPropName]
 
         /** @type { { schemaNodeProp?: td.AceSchemaProp | td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp, schemaRelationshipProp?: td.AceSchemaRelationshipProp } } - If graphItemType is node, add node info to this object  */
         const parentNodeOptions = {}
 
         if (!item.relationship) {
-          parentNodeOptions.schemaNodeProp = passport.schema?.nodes[xGenerated.nodeName || '']?.[xKey]
-          parentNodeOptions.schemaRelationshipProp = (xGenerated.relationshipName) ? passport.schema?.relationships?.[xGenerated.relationshipName]?.props?.[xKey] : undefined
+          parentNodeOptions.schemaNodeProp = passport.schema?.nodes[xGenerated.nodeName || '']?.[xPropName]
+          parentNodeOptions.schemaRelationshipProp = (xGenerated.relationshipName) ? passport.schema?.relationships?.[xGenerated.relationshipName]?.props?.[xPropName] : undefined
         }
 
-        if (!xGenerated.resHide || !xGenerated.resHide?.has(xKey)) {
-          if (typeof resOriginalItem[xKey] !== 'undefined') {
-            if (isTruthy) resNowItem[xKey] = resOriginalItem[xKey]
-            else if (alias) resNowItem[alias] = resOriginalItem[xKey]
-          } else if (parentNodeOptions.schemaRelationshipProp?.id === enums.idsSchema.RelationshipProp && typeof graphRelationship?.value[xKey] !== 'undefined') { // this prop is defined @ schema.relationships
-            if (isTruthy) resNowItem[xKey] = graphRelationship.value[xKey]
-            else if (alias) resNowItem[alias] = graphRelationship?.value[xKey]
+        if (!xGenerated.resHide || !xGenerated.resHide?.has(xPropName)) {
+          if (typeof resOriginalItem[xPropName] !== 'undefined') { // the graph item has the prop we are looking for
+            if (xPropValue === true) resNowItem[xPropName] = resOriginalItem[xPropName] // they just want this value in the response
+            else if (xPropValue?.alias) { // they want this value in the response but using an alias
+              resNowItem[xPropValue.alias] = resOriginalItem[xPropName] // add alias value to now
+              resOriginalItem[xPropValue.alias] = resOriginalItem[xPropName] // IF an alias is used add that alias prop onto the original (helpful @ new props when we are using the original to do calculations and the user may be using the alias prop name)
+            }
+          } else if (parentNodeOptions.schemaRelationshipProp?.id === enums.idsSchema.RelationshipProp && typeof graphRelationship?.value[xPropName] !== 'undefined') { // this prop is defined @ schema.relationships
+            if (xPropValue === true) resNowItem[xPropName] = graphRelationship.value[xPropName]
+            else if (xPropValue?.alias) {
+              resNowItem[xPropValue.alias] = graphRelationship?.value[xPropName]
+              resOriginalItem[xPropValue.alias] = graphRelationship?.value[xPropName]
+            }
           } else if (parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.ForwardRelationshipProp || parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.ReverseRelationshipProp || parentNodeOptions.schemaNodeProp?.id === enums.idsSchema.BidirectionalRelationshipProp) { // this prop is defined @ schema.nodes and is a SchemaRelationshipProp
             const relationshipUids = graphItem[getRelationshipProp(parentNodeOptions.schemaNodeProp.x.relationship)]
-            await addRelationshipPropsToResponse(uid, relationshipUids, parentNodeOptions.schemaNodeProp, xKey, xValue, xGenerated, resNowItem, resOriginalItem, passport, publicJWKs, iReq)
-          } else if (item.relationship && xKey !== '$o' && relationshipPropsMap) {
-            const r = relationshipPropsMap.get(xKey)
+            await addRelationshipPropsToResponse(uid, relationshipUids, parentNodeOptions.schemaNodeProp, xPropName, xPropValue, xGenerated, resNowItem, resOriginalItem, passport, publicJWKs, iReq)
+          } else if (item.relationship && xPropName !== '$o' && relationshipPropsMap) {
+            const r = relationshipPropsMap.get(xPropName)
             const schemaNodeProp = r?.propValue
-            const relationshipGeneratedQueryXSection = getXGeneratedByParent(xValue, xKey, passport, xGenerated)  
+            const relationshipGeneratedQueryXSection = getXGeneratedByParent(xPropValue, xPropName, passport, xGenerated)  
 
             if (schemaNodeProp?.id === 'BidirectionalRelationshipProp') {
               const uids = [ resOriginalItem.a, resOriginalItem.b ]
@@ -336,8 +340,8 @@ async function addRelationshipsToResponse (xGenerated, res, uids, isUsingSortInd
  * @param { string } uid
  * @param { string[] } relationshipUids
  * @param { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp | td.AceSchemaProp } schemaNodeProp
- * @param { string } xKey 
- * @param { any } xValue 
+ * @param { string } xPropName 
+ * @param { any } xPropValue 
  * @param { td.AceQueryRequestItemGeneratedXSection } xGenerated 
  * @param { { [propName: string]: any } } resNowItem 
  * @param { any } resOriginalItem 
@@ -345,14 +349,14 @@ async function addRelationshipsToResponse (xGenerated, res, uids, isUsingSortInd
  * @param { td.AceFnCryptoJWKs } publicJWKs
  * @param { number } iReq
  */
-async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNodeProp, xKey, xValue, xGenerated, resNowItem, resOriginalItem, passport, publicJWKs, iReq) {
+async function addRelationshipPropsToResponse (uid, relationshipUids, schemaNodeProp, xPropName, xPropValue, xGenerated, resNowItem, resOriginalItem, passport, publicJWKs, iReq) {
   if (uid && schemaNodeProp && relationshipUids?.length) {
     let findByUidFound = false
     let findBy_UidFound = false
     let findByUniqueFound = false
     let nodeUids = /** @type { string[] } */ ([])
     const graphRelationships = /** @type { any[] } */ ([])
-    const relationshipGeneratedQueryXSection = getXGeneratedByParent(xValue, xKey, passport, xGenerated)  
+    const relationshipGeneratedQueryXSection = getXGeneratedByParent(xPropValue, xPropName, passport, xGenerated)  
 
     const uniqueKeys = /** @type { string[] } */ ([])
 
