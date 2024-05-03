@@ -364,12 +364,12 @@ ace types
 
 ## 🙋‍♀️ Why was Ace created?
 1. Graph = Natural Data Storage
-    * Node = Neuron
+    * Nodes = Neurons
     * Relationships = Synapses
 1. Example:
     * To remember Mom's Yoga Studio, I do not join All Users and All Yoga Studio's in my mind
-    * Instead I just walking the graph, from one node to the next, just like Ace
-1. So graphs resemble how we store data but before Ace no graph database offered lovely intellisense like Prisma or Drizzle
+    * Instead I just walk the graph, from one node to the next, just like Ace
+1. So graphs resemble how we naturally store data but before Ace, no graph database offered lovely intellisense like Prisma or Drizzle
     * So this is the hole in the market we fill
     * Ace unites a Graph Database with JavaScript Intellisense!
 
@@ -398,30 +398,36 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
-1. Batch requests to storage to stay within storage required Maximum count
-    * Storage get() function, if the uids is greater then the maximum count, do the storage.get() in pieces then concat the results
+1. Validations
+    * Schema
+        * Node and Prop name must not have a space in them
+    * ace()
+        * A prop of `$ace` is not allowed
+1. Cloudflare allows a `storage.get()` of up to [128](https://developers.cloudflare.com/durable-objects/api/transactional-storage-api/#get) keys at a time 
+    * Create `./src/lib/ace/storage/get()`
+    * If key count is > 120 => do the `storage.get()` in batches of 120 then concat the results
+1. $o
+    * `random`
+    * `newProps` (support based on response)
 1. `ace()`
     * Response Types
     * Sanitize / Validate Input 
     * Graphs support 
     * Complete idsAce
-1. Runtime validation
-    * v1
-      * Accepts: a test object + (a schema node / a schema relationship) 
-      * Responds: does the test object obey the schema
-    * v2
-      * Also accepts options to add validations, edit validations or remove validations
 1. Relationship prop indexes
     * Sort Index
     * Unique Index
 1. Full Text Index
     * Node Prop
     * Relationship Prop
-1. $o: random
-1. Validations:
-    * Schema: Node and Prop name do not have a space in them
-    * ace(): $ace prop not allowed
-1. New Props: Response support
+1. Schema default values
+    * If value is `now` and dataType is `isoString` rather then default to string now, default to the current timestamp
+1. Runtime validation
+    * v1
+      * Accepts: a test object + (a schema node / a schema relationship) 
+      * Responds: does the test object obey the schema
+    * v2
+      * Also accepts options to add validations, edit validations or remove validations
 1. Comments (param, returns, description, example usage, why, proofread) for all index functions
 1. Create a GDPR Compliant Ecommerce Store w/ Ace
     * Real project (example / benchmarks)
