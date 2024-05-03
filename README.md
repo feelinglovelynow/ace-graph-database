@@ -1,4 +1,4 @@
-<img src="./src/lib/images/logo.png" style="width: 100%;" />
+<img src="./src/lib/images/logo.png" width="100%" />
 
 
 ## 🙏 Our Mission
@@ -19,17 +19,7 @@
 
 
 <br/>
-<img src="./src/lib/images/code.gif" style="width: 100%;" />
-
-
-## ⚡️ Performance
-* Goodbye joins and greetings `maps`, aka node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
-    * For example, If a users uid is `abc` and you'd love to get all that users friends, Ace will:
-        1. `O(1)` lookup the users node `map.get('abc')`
-        1. Find the the index of friend uids in the value for that node, `[ 'xyz', '123' ]`
-        1. `O(1)` lookup each friend `map.get([ 'xyz', '123' ])` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
-    * JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
-    * By [v3](#-version-3-roadmap) we plan on providing Universal (Self) Hosting and Ace Cloud Hosting options thanks to a low level language rewrite (maybe w/ [Zig](https://ziglang.org/) 1.x) that'll compile to a binary and can be hosted anywhere! 😀
+<img src="./src/lib/images/code.gif" width="100%" />
 
 
 ## 🎬 Create a Movie Graph 
@@ -384,6 +374,16 @@ ace types
     * Ace unites a Graph Database with JavaScript Intellisense!
 
 
+## ⚡️ Performance
+* Goodbye joins and greetings `maps`, aka node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
+    * For example, If a users uid is `abc` and you'd love to get all that users friends, Ace will:
+        1. `O(1)` lookup the users node `map.get('abc')`
+        1. Find the the index of friend uids in the value for that node, `friends: [ 'xyz', '123' ]`
+        1. `O(1)` lookup each friend `map.get([ 'xyz', '123' ])` from [Cloudflare's](https://developers.cloudflare.com/durable-objects/) key value store (aka: a Map)
+    * JavaScript is not the fastest language, but for something this simple, (`map.put()` & `map.get()`), it’s a lovely v1 language
+    * By [v3](#-version-3-roadmap) we plan on providing Universal (Self) Hosting and Ace Cloud Hosting options thanks to a low level language rewrite (maybe w/ [Zig](https://ziglang.org/) 1.x) that'll compile to a binary and can be hosted anywhere! 😀
+
+
 ## 📀 Storage Options
 1. Cloudflare Durable Object
     * Version 1
@@ -423,10 +423,24 @@ ace types
     * ace(): $ace prop not allowed
 1. New Props: Response support
 1. Comments (param, returns, description, example usage, why, proofread) for all index functions
-1. App Worker > Ace Durable Object
 1. Create a GDPR Compliant Ecommerce Store w/ Ace
     * Real project (example / benchmarks)
     * Ecomm store w/ EU Customer Data Stored in an EU Durable Object
+1. App Worker > Ace Durable Object
+1. Schema Migrations
+    * Every schema node relationship and prop has a uid
+        * This way when we are compaing schemas we can know how the schema has been updated
+    * `ace migrationToFile`
+        * recieve devSchema & mainSchema
+        * Create a plugin, install gets us from one schema to the next, uninstall gets us from prod schema to dev schema
+        * Save plugin to the ace/migrations
+        * Optional options
+            * File Name (Default now timestamp)
+            * JWK (To Encrypt the plugin)
+    * `ace applyMigration`
+        * Run migration plugin install @ host
+    * `ace revertMigration`
+        * Run migration plugin uninstall @ host
 1. 2FA + Authy Support
 1. Studio
     * (View / Edit) data from multiple graphs, simultaneously, locally in the browser
@@ -434,6 +448,7 @@ ace types
     * Why?
     * What?
     * Where?
+    * Write ahead logs?
 1. On Error Flow (error categories?)
     * Retry: Count, MS Before Trying Again
     * Log to KV
@@ -458,6 +473,11 @@ ace types
     * I/O Errors
     * Out of memory errors
 1. Docs
+    * Data Types
+    * Hash w/o Salt Example
+    * Hash w/ Salt Example
+    * Prerequisites: First time Cloud deploy 
+    * Prerequisites: Updating Cloud Graph
     * Search
     * Link to see / edit on GitHub
     * Forum
