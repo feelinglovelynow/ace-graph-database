@@ -18,6 +18,10 @@
 1. The Ace query language is a typesafe function called `ace()`, that enables expressive queries and transactional mutations
 
 
+<br/>
+<img src="./src/lib/images/code.gif" />
+
+
 ## ⚡️ Performance
 * Goodbye joins and greetings `maps`, aka node and relationship queries are [O(1)](https://stackoverflow.com/questions/697918/what-does-o1-access-time-mean)
     * For example, If a users uid is `abc` and you'd love to get all that users friends, Ace will:
@@ -95,7 +99,7 @@ const response = await ace({
       // a is the actor uid b/c schema.nodes.Actor has the ForwardRelationshipProp (Actor.actsIn)
       // b is the movie uid b/c schema.nodes.Movie has the ReverseRelationshipProp (Movie.actors)
     { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Keanu', b: '_:Matrix', _salary: 9001 } },
-    { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 420 } },
+    { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Carrie', b: '_:Matrix', _salary: 720 } },
     { id: 'RelationshipInsert', relationship: 'actsInMovie', x: { a: '_:Laurence', b: '_:Matrix', _salary: 369 } },
 
 
@@ -124,6 +128,7 @@ const response = await ace({
       node: 'Movie',
       prop: 'movies',
       x: { // If x is not defined like the Actor NodeQuery above, all none relationship props (uid, firstName, lastName) will be in the response. If x is defined as we see here, only the requested props in x will be in the response. Intellisense w/in x changes based on the id and node thanks to generated types based on your schema
+        uid: true,
         name: true,
         actors: {
           _salary: true, // relationship props, as defined above in the schema, start with an underscore and you can see why in the queries it's helpful to start relationship props with an underscore
