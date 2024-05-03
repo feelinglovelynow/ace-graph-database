@@ -394,7 +394,7 @@ ace types
 
 ## 🤓 Version 1 Roadmap
 1. Batch requests to storage to stay within storage required Maximum count
-  * Storage get() function, if the uids is greater then the maximum count, do the storage.get() in pieces then concat the results
+    * Storage get() function, if the uids is greater then the maximum count, do the storage.get() in pieces then concat the results
 1. `ace()`
     * Response Types
     * Sanitize / Validate Input 
