@@ -33,7 +33,18 @@ export function getRelationshipNode (xGenerated, startingNode, passport, relatio
   for (let iRelationships = 0; iRelationships < relationships.length; iRelationships++) {
     const relationshipPropName = relationships[iRelationships]
 
-    if (relationshipNodeName) schemaRelationshipProp = /** @type { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[relationshipNodeName]?.[relationshipPropName])
+    if (relationshipNodeName) {
+      schemaRelationshipProp = /** @type { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[relationshipNodeName]?.[relationshipPropName])
+    
+      if (!schemaRelationshipProp) { // IF the relationshipPropName is not in the schema it might be an alias
+        for (const xPropName in xGenerated.x) { // loop the x values to find the x props
+          if (xGenerated.x[xPropName]?.$o?.alias === relationshipPropName) { // if one of the props has an alias that matches the relationshipPropName
+            schemaRelationshipProp = /** @type { td.AceSchemaForwardRelationshipProp | td.AceSchemaReverseRelationshipProp | td.AceSchemaBidirectionalRelationshipProp } */ (passport.schema?.nodes?.[relationshipNodeName]?.[xPropName]) // use the xPropName rather then the alias name in the relationships array
+            break
+          }
+        }
+      }
+    }
 
     if (!schemaRelationshipProp) throw AceError('getRelationshipNode__falsyRelationship', `The relationships array is invalid because one of it's items: ${ relationshipPropName } is not a valid relationship prop according to your schema, please align each item in the relationships array with valid schema props`, { relationships })
     else {

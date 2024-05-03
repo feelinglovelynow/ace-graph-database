@@ -41,13 +41,17 @@ import { ace } from '@ace/db'
 
 const response = await ace({
   host: 'http://localhost:8787',
-  request: [
+  request: [ // The provided request array order, is the order Ace follows
 
 
-    // add the Actor node, the Movie node and the actsInMovie relationship to the schema
+    // Empty the graph, aka start fresh
+    { id: 'Empty' },
+
+
+    // Add the Actor node, the Movie node and the actsInMovie relationship to the schema
     {
       id: 'SchemaAdd',
-      x: { // intellisense within x changes based on above id
+      x: { // Intellisense within x changes based on above id
         schema: {
           nodes: {
             Actor: { // Node: Actor
@@ -64,7 +68,10 @@ const response = await ace({
             actsInMovie: { // Relationship: actsInMovie
               id: 'ManyToMany',
               props: {
-                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } } // This is a relationship prop (actsInMovie > _salary). When calling ace() with NodeQuery or RelationshipQuery, it is helpful for relationship props to start with an underscore. Starting relationship props with an underscore helps identify which props are node props (do not start with underscore) and which props are relationship props (start with underscore)
+                // This is a relationship prop (actsInMovie > _salary)
+                // When calling ace() with NodeQuery or RelationshipQuery (as seen below), it is helpful for relationship props to start with an underscore
+                // Starting relationship props with an underscore helps identify which props are node props (do not start with underscore) and which props are relationship props (start with underscore)
+                _salary: { id: 'RelationshipProp', x: { dataType: 'number' } }
               }
             }
           }
@@ -73,9 +80,9 @@ const response = await ace({
     },
 
 
-    // See how the uid for the NodeInsert is _:Matrix or _:Keanu or ...
-    // Thanks to enums placed after _: these nodes may be referenced lower @ RelationshipInsert
-    // Before placing these nodes into the graph, Ace will give these nodes uids and use the created uids in the RelationshipInsert below
+    // See how the uid for the NodeInsert is _:Matrix or _:Keanu or _:Laurence or _:Carrie
+    // Thanks to enums placed after _: these nodes may be referenced below @ RelationshipInsert
+    // Before placing these nodes into the graph, Ace will give these nodes uids AND use the created uids @ RelationshipInsert below
     { id: 'NodeInsert', node: 'Movie', x: { uid: '_:Matrix', name: 'The Matrix' } },
     { id: 'NodeInsert', node: 'Actor', x: { uid: '_:Keanu', firstName: 'Keanu', lastName: 'Reeves' } },
     { id: 'NodeInsert', node: 'Actor', x: { uid: '_:Laurence', firstName: 'Laurence', lastName: 'Fishburne' } },
@@ -93,13 +100,13 @@ const response = await ace({
 
 
     // IF a uid is not specified for NodeInsert as seen below
-      // Ace creates a uid for this node before placing the node into storage AND this node can't be used in relationships for this ace() call like we do above
+      // Ace creates a uid for this node before placing the node into the graph AND this node can't be used in relationships for this ace() call like we do above
     // IF a uid is set (crypto.randomUUID()) for a node
-      // Ace won't create a uid before placing the node into storage AND this node can be used in relationships for this ace() call by using the uid in relationships
+      // Ace won't create a uid before placing the node into the graph AND this node can be used in relationships for this ace() call by using the uid in relationships
     { id: 'NodeInsert', node: 'Movie', x: { name: 'Avatar' } },
 
 
-    // put a backup of the graph @ response.backup (includes data added above)
+    // Put a backup of the graph @ response.backup (includes data added above)
     { id: 'BackupGet', prop: 'backup' },
 
 
@@ -107,39 +114,78 @@ const response = await ace({
     { id: 'SchemaGet', prop: 'schema' },
 
 
-    // NodeQuery --- In SQL this would be: SELECT * FROM Actor --- { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
+    // Put all Actor nodes @ response.actors: { actors: [ { uid: 'abc', firstName: 'Keanu', lastName: 'Reeves' }, ... ] }
     { id: 'NodeQuery', node: 'Actor', prop: 'actors' },
 
 
-    // RelationshipQuery --- Querying by node or by relationship is possible --- { actsInMovie: [ { _uid: 'abc', _salary: 9001, star: { firstName: 'Keanu' }, actsIn: { name: 'The Matrix', ... } } ] }
+    // Put all Movie nodes @ response.movies: { movies: [ { name: 'Avatar' }, { name: 'The Matrix', actors: [ ... ] } ] }
+    {
+      id: 'NodeQuery',
+      node: 'Movie',
+      prop: 'movies',
+      x: { // If x is not defined like the Actor NodeQuery above, all none relationship props (uid, firstName, lastName) will be in the response. If x is defined as we see here, only the requested props in x will be in the response. Intellisense w/in x changes based on the id and node thanks to generated types based on your schema
+        name: true,
+        actors: {
+          _salary: true, // relationship props, as defined above in the schema, start with an underscore and you can see why in the queries it's helpful to start relationship props with an underscore
+          firstName: true,
+          lastName: true,
+        }
+      }
+    },
+
+
+    // Querying by node or by relationship is possible: { actsInMovie: [ { _uid: 'abc', _salary: 9001, actors: { firstName: 'Keanu', ... }, actsIn: { name: 'The Matrix', ... } } ] }
     {
       id: 'RelationshipQuery',
       relationship: 'actsInMovie',
       prop: 'actsInMovie',
       x: {
-        _uid: true, // actsInMovie relationship prop: _uid will be in the response
-        _salary: true, // actsInMovie relationship prop: _salary will be in the response
-        actsIn: true, // Actor.actsIn node prop: b/c no props are specified like in the NodeQuery above, all none relationship props for the Movie node (uid, name) will be in the response
-        actors: { // Movie.actors node prop
-          $o: { alias: 'star' }, // rather then actors, show star in the response
-          firstName: true, // only show the Actor's firstName
-        },
+        _uid: true, // actsInMovie relationship prop
+        _salary: true, // actsInMovie relationship prop
+        actors: true, // Actor node prop. So this will be the actor of the relationship. And b/c we put true here all the Actor none relationship props (uid, firstName, lastName) will be in the response
+        actsIn: true, // Movie node prop. So this will be the movie of the relationship. And b/c we put true here all the Movie none relationship props (uid, name) will be in the response
       }
     },
 
 
-    // RelationshipQuery --- { keanuMatrixRelationship: { _uid: 'abc', _salary: 9001, actor: { firstName: 'Keanu' }, actsIn: { uid: '123' name: 'The Matrix' } } }
+    // Find the Keanu + Matrix Relationship --- { keanuMatrixRelationship: { _uid: 'abc', _salary: 9001, star: { firstName: 'Keanu' }, actsIn: { name: 'The Matrix' } } }
     {
       id: 'RelationshipQuery',
       relationship: 'actsInMovie',
       prop: 'keanuMatrixRelationship',
       x: {
-        $o: {
-          all: true, // place none relationship actsInMovie props into the response, so _uid and _salary
-          findByPropValue: [ { relationships: ['actors'], prop: 'uid' }, 'equals', '_:Keanu' ] // b/c we are doing a find, the response will be an object rather then an array, only the relationship that has an actor with Keanu's uid will be in the response
+        $o: { // $o is where we may put options for this section of the query
+          // B/c we are doing a find (findByPropValue), response.keanuMatrixRelationship will be an object rather then an array
+          // Notice how actors has an alias of star and we use the alias prop in the relationships array
+          // findByPropValue basically means the left side of the operator is a Prop and the right side is a Value
+          // As seen in the next query, many more operators, filters and find options are available
+          // We can write enums like _:Keanu if the enum is defined in this ace() call or we can write the actual value we are looking for
+          findByPropValue: [ { relationships: [ 'star' ], prop: 'uid' }, 'equals', '_:Keanu' ]
         },
-        actors: true, // all none relationship Actor props will be in the response (uid, firstName, lastName)
-        actsIn: true, // all none relationship Movie props will be in the response (uid, name)
+        actsIn: true,
+        actors: {
+          $o: { alias: 'star' }, // response.keanuMatrixRelationship.star rather then response.keanuMatrixRelationship.actors
+          firstName: true,
+        },
+      }
+    },
+
+
+    // Filters return an array & find returns an object
+    // findByOr, findByAnd, filterByOr & filterByAnd are all available
+    {
+      id: 'RelationshipQuery',
+      relationship: 'actsInMovie',
+      prop: 'filter',
+      x: {
+        $o: {
+          filterByOr: [ // responds w/ actors that match any criteria
+            [ { prop: '_salary' }, 'greaterThan', 9000 ], // even though _salary is not be in the response we can filter by it
+            [ { relationships: [ 'star' ], prop: 'firstName' }, 'doesNotEqual', 'Carrie-Anne' ], // relationships array uses the alias (star not actors)
+          ]
+        },
+        actsIn: true,
+        actors: { $o: { alias: 'star' } },
       }
     },
 
@@ -149,57 +195,32 @@ const response = await ace({
       id: 'NodeQuery',
       node: 'Movie',
       prop: 'matrix',
-      x: { // intellisense below changes based on id and node above, if x is not defined, all nodes and all their none relationship props will be in the response
+      x: {
         $o: {
-          findByUid: '_:Matrix' // option: response.matrix will only have the matrix object b/c this option is set, without this find, an array of all movies would be in the response
+          // Without this find, an array of all movies will be in the response.
+          // With this find, only the matrix object will be @ response.matrix
+          findByUid: '_:Matrix'
         },
-        uid: true, // put uid into the response @ response.matrix.uid
+        uid: true,
         name: true,
-        actors: {
+        actors: { // Since no props are defined w/in actors, all none relationship Actor props (uid, firstName, lastName) and the new props (fullName, bonus) will be in the response
           $o: {
-            filterByPropValue: [ { prop: 'firstName' }, 'doesNotEqual', 'Laurence' ], // respond with actors other then Lauence, filterByPropProp is also available where the 2nd index of this array is a prop
-            sort: { prop: 'salary', how: 'dsc' }, // sort actors by salary
-            limit: { count: 2, skip: 1 }, // skip the first actor then show the next 2
-            flow: [ 'filterByPropValue', 'sort', 'limit', 'newProps' ], // do options in this order
-            newProps: {
-              bonus: { // add bonus prop to each actor
-                multiply: [
-                  0.7,
-                  { divide: [ { prop: 'salary' }, 12 ] }
+            sort: { prop: '_salary', how: 'dsc' }, // sort actors by salary
+            limit: { skip: 1, count: 2 }, // skip the first actor then show the next 2
+            flow: [ 'sort', 'limit', 'newProps' ], // do options in this order
+            newProps: { // add these props to each actor
+              fullName: { add: [ { prop: 'firstName' }, ' ',  { prop: 'lastName' } ] },
+              bonus: { // (Salary / 12) + 1000
+                add: [
+                  { divide: [ { prop: '_salary' }, 12 ] }
+                  1000,
                 ]
               },
-              fullName: { add: [ { prop: 'firstName' }, ' ',  { prop: 'lastName' } ] }, // add fullName prop to each actor
             }
           },
-          uid: true, // put Actor.uid into response @ response.matrix.actors[i].uid
-          _uid: true, // put actsInMovie._uid into response @ response.matrix.actors[i]._uid
-          _salary: { alias: 'salary' }, // put actsInMovie._salary into response @ response.matrix.actors[i].salary
         }
       }
     },
-
-
-    // RelationshipQuery --- { actsInMovie: { _uid: 'abc', _salary: 9001, star: { ... }, movie: { ... } }
-    {
-      id: 'RelationshipQuery',
-      relationship: 'actsInMovie',
-      prop: 'actsInMovie',
-      x: {
-        $o: {
-          all: true, // response.actsInMovie will have all not relationship props (_uid, _salary)
-          findByAnd: [ // return the first actor that fulfills all criteria
-            [ { prop: '_salary' }, 'greaterThan', 90 ],
-            [ { prop: 'name' }, 'doesNotEqual', 'Carrie-Anne Moss' ],
-          ]
-        },
-        actors: {
-          $o: { alias: 'star', all: true }, // option: response.actsInMovie[i].star rather then response.actsInMovie[i].actors
-        },
-        actsIn: {
-          $o: { alias: 'movie', all: true }, // option: response.actsInMovie[i].movie rather then response.actsInMovie[i].actsIn
-        }
-      }
-    }
   ]
 })
 ```
@@ -350,9 +371,12 @@ ace types
 1. Graph = Natural Data Storage
     * Node = Neuron
     * Relationships = Synapses
-    * In other words: When we are remembering something (eg: Mom's, Yoga Studio) we are not joining tables in our mind (eg: All Users, All Yoga Studio's), we are just walking the graph, from one node to the next
-1. So graphs resemble a natural, ancient and proven storage technique but before Ace no graph database offered lovely intellisense like Prisma or Drizzle
-1. So Ace unites a graph database with JavaScript intellisense!
+1. Example:
+    * To remember Mom's Yoga Studio, I do not join All Users and All Yoga Studio's in my mind
+    * Instead I just walking the graph, from one node to the next, just like Ace
+1. So graphs resemble how we store data but before Ace no graph database offered lovely intellisense like Prisma or Drizzle
+    * So this is the hole in the market we fill
+    * Ace unites a Graph Database with JavaScript Intellisense!
 
 
 ## 📀 Storage Options
@@ -369,6 +393,8 @@ ace types
 
 
 ## 🤓 Version 1 Roadmap
+1. Batch requests to storage to stay within storage required Maximum count
+  * Storage get() function, if the uids is greater then the maximum count, do the storage.get() in pieces then concat the results
 1. `ace()`
     * Response Types
     * Sanitize / Validate Input 
@@ -386,10 +412,10 @@ ace types
 1. Full Text Index
     * Node Prop
     * Relationship Prop
-1. Batch requests to storage to stay within storage required Maximum count
-  * Storage get() function, if the uids is greater then the maximum count, do the storage.get() in pieces then concat the results
-1. Validate Schema: Node and Prop name do not have a space in them
 1. $o: random
+1. Validations:
+    * Schema: Node and Prop name do not have a space in them
+    * ace(): $ace prop not allowed
 1. New Props: Response support
 1. Comments (param, returns, description, example usage, why, proofread) for all index functions
 1. App Worker > Ace Durable Object
