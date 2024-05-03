@@ -207,7 +207,7 @@ const response = await ace({
               fullName: { add: [ { prop: 'firstName' }, ' ',  { prop: 'lastName' } ] },
               bonus: { // (Salary / 12) + 1000
                 add: [
-                  { divide: [ { prop: '_salary' }, 12 ] }
+                  { divide: [ { prop: '_salary' }, 12 ] },
                   1000,
                 ]
               },
